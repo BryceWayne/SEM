@@ -1,0 +1,5 @@
+from sem import *
+
+
+def lg_1d_standard():
+	return blah
