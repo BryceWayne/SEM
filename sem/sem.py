@@ -31,8 +31,6 @@ def lepoly(n:int, x:float, nargout=1):
 				polylst, poly = poly, polyn
 				pderlst, pder = pder, pdern
 			return pdern, polyn
-
-
 def legslbndm(n:int):
 	if n <= 1:
 		print("n should be bigger than 1")
@@ -50,8 +48,6 @@ def legslbndm(n:int):
 		z = [-1, *z, 1]
 		z = np.array(z).T
 		return z.reshape(n, 1)
-
-
 def legslbdiff(n:int, x:float):
 	if n == 0:
 		return np.array([[]])
@@ -68,3 +64,4 @@ def legslbdiff(n:int, x:float):
 	D[0,0] = -n*(n-1)/4
 	D[n-1,n-1] = -D[0,0]
 	return D
+

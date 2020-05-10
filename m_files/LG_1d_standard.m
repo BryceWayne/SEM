@@ -8,13 +8,12 @@ format short e
 % Two more files are needed here: lepoly.m and legslbndm.m
 
 
-N = 64;
-ep=10^-2;
+N = 256;
+ep=10^-5;
 
 % Compute LGL points
 x = legslbndm(N+1);
 D = legslbdiff(N+1,x);
-
 % Given Boundary conditions, we can find the coefficient of Legendre
 % polynomials
 a(1:N+1) = 0;
@@ -23,13 +22,11 @@ b(1:N+1) = -1;
 % External force
 f(1:N+1) = 1;
 
-% Assign the linear operator
+% Assign the linea r operator
 for ii=1:N-1
     k=ii-1;
     s_diag(ii) = -(4*k+6)*b(ii);
-    
     phi_k_M = D*(lepoly(k,x) + a(ii)*lepoly(k+1,x) + b(ii)*lepoly(k+2,x));
-    
     for jj=1:N-1
         if abs(ii-jj) <= 2
             l = jj-1;
@@ -41,7 +38,6 @@ for ii=1:N-1
 end
 
 S = diag(s_diag);
-
 % Backward Legendre Transform
 for i=1:N
     k=i-1;
@@ -61,7 +57,6 @@ Mass = sparse(ep*S-M);
 
 % Main solver
 u = Mass\bar_f';
-
 % Change the basis
 g(1) = u(1);g(2) = u(2) + a(1)*u(1);
 

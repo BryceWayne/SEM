@@ -9,7 +9,7 @@ format short e
 
 
 N = 64;
-ep=10^-3;
+ep=10^-5;
 sigma = 1;
 % Compute LGL points
 x = legslbndm(N+1);
@@ -102,9 +102,7 @@ end
 bar_f_end = 0;
 for ii=1:N+1
     k=ii-1;
-    
     bar_f_end = bar_f_end + g(ii)*2/(N*(N+1))*sum(phi'.*(lepoly(k,x))./(lepoly(N,x).^2));
-    
 end
 
 bar_f(N) = bar_f_end;
@@ -113,7 +111,6 @@ bar_f(N) = bar_f_end;
 
 % Main solver
 u_temp = Mass\bar_f';
-
 u_sol = zeros(N+1,1);
 
 

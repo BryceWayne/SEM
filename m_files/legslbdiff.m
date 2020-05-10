@@ -12,9 +12,11 @@ if n==0, D=[]; return; end;
 xx=x;y=lepoly(n-1,xx); nx=size(x); 
 if nx(2)>nx(1), y=y'; xx=x'; end;  %% y is a column vector of L_{n-1}(x_k)
   D=(xx./y)*y'-(1./y)*(xx.*y)';  %% compute L_{n-1}(x_j) (x_k-x_j)/L_{n-1}(x_k);     
-                                 % 1/d_{kj} for k not= j (see (3.203)) 
+                              % 1/d_{kj} for k not= j (see (3.203)) 
   D=D+eye(n);                    % add the identity matrix so that 1./D can be operated                                     
+%   D
   D=1./D; 
-  D=D-eye(n); D(1,1)=-n*(n-1)/4; D(n,n)=-D(1,1);  %update the diagonal entries  
+  D=D-eye(n); D(1,1)=-n*(n-1)/4; D(n,n)=-D(1,1);%update the diagonal entries  
+  
   return; 
  
