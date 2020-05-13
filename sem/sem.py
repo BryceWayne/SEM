@@ -64,4 +64,12 @@ def legslbdiff(n:int, x:float):
 	D[0,0] = -n*(n-1)/4
 	D[n-1,n-1] = -D[0,0]
 	return D
+def get_phi(N:int, x:float, sigma:float, epsilon:float) -> float:
+	sol = np.zeros_like(x)
+	for i in range(1,N+2):
+		if x[i-1] < sigma:
+			sol[i-1] = 1- np.exp(-(1+x[i-1])/epsilon)-(1-np.exp(-(1+sigma)/epsilon))*(x[i-1]+1)/(1+sigma)
+		else:
+			sol[i-1] = 0
+	return sol
 
