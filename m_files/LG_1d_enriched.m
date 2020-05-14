@@ -8,8 +8,8 @@ format short e
 
 
 
-N = 64;
-ep=10^-5;
+N = 3;
+ep=10^-2;
 sigma = 1;
 % Compute LGL points
 x = legslbndm(N+1);
@@ -119,7 +119,6 @@ for ij=1:N-1
     i_ind = ij-1;
     u_sol = u_sol + u_temp(ij)*(  lepoly(i_ind,x) + a(ij)*lepoly(i_ind+1,x) + b(ij)*lepoly(i_ind+2,x)  );
 end
-
 u = u_sol + u_temp(N)*phi';
 
 

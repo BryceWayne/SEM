@@ -2,9 +2,9 @@ import numpy as np
 import scipy as sp
 from scipy.sparse import diags
 from pprint import pprint
+from Cython.Build import cythonize
 
-
-def lepoly(n:int, x:float, nargout=1):
+def lepoly(n:int, x:np.ndarray, nargout=1) -> np.ndarray:
 	if nargout == 1:
 		if n == 0:
 			return np.ones_like(x)
@@ -31,7 +31,8 @@ def lepoly(n:int, x:float, nargout=1):
 				polylst, poly = poly, polyn
 				pderlst, pder = pder, pdern
 			return pdern, polyn
-def legslbndm(n:int):
+
+def legslbndm(n:int) -> np.ndarray:
 	if n <= 1:
 		print("n should be bigger than 1")
 		return np.array([[]])
@@ -48,7 +49,7 @@ def legslbndm(n:int):
 		z = [-1, *z, 1]
 		z = np.array(z).T
 		return z.reshape(n, 1)
-def legslbdiff(n:int, x:float):
+def legslbdiff(n:int, x:np.ndarray) -> np.ndarray:
 	if n == 0:
 		return np.array([[]])
 	xx = x
@@ -64,7 +65,7 @@ def legslbdiff(n:int, x:float):
 	D[0,0] = -n*(n-1)/4
 	D[n-1,n-1] = -D[0,0]
 	return D
-def get_phi(N:int, x:float, sigma:float, epsilon:float) -> float:
+def get_phi(N:int, x:np.ndarray, sigma:float, epsilon:float) -> np.ndarray:
 	sol = np.zeros_like(x)
 	for i in range(1,N+2):
 		if x[i-1] < sigma:

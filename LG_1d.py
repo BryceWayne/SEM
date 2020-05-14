@@ -1,16 +1,16 @@
-from sem import sem
+from sem.sem import *
 import numpy as np
 import scipy
 import matplotlib.pyplot as plt
 import cProfile
-from pprint import pprint
 
-def exact(x: float, epsilon: float, enriched=False) -> float:
+
+def exact(x:np.ndarray, epsilon:float, enriched=False) -> np.ndarray:
 	if enriched == False:
 		return 2*(np.exp(-(x+1)/epsilon)-1)/(np.exp(-2/epsilon)-1)-(x+1)
 	else:
 		return (np.exp(-(x+1)/epsilon)-1)/(np.exp(-2/epsilon)-1)-(x+1)/2
-def plotter(x, y, enriched=False, diff=False):
+def plotter(x:np.ndarray, y:np.ndarray, enriched=False, diff=False):
 	if enriched == False:
 		exact_sol = exact(x, epsilon).T[0]
 	else:
@@ -33,9 +33,9 @@ def plotter(x, y, enriched=False, diff=False):
 		plt.xlabel('$x$')
 		plt.ylabel('DIFF')
 		plt.show()
-def lg_1d_standard(N:int, epsilon:float) -> float:
-	x = sem.legslbndm(N+1)
-	D = sem.legslbdiff(N+1, x)
+def lg_1d_standard(N:int, epsilon:float) -> np.ndarray:
+	x = legslbndm(N+1)
+	D = legslbdiff(N+1, x)
 	a = 0
 	b = -1
 	def func(t: float) -> float:
@@ -47,19 +47,19 @@ def lg_1d_standard(N:int, epsilon:float) -> float:
 	for ii in range(1, N):
 		k = ii - 1
 		s_diag[ii-1] = -(4*k+6)*b
-		phi_k_M = D@(sem.lepoly(k,x) + a*sem.lepoly(k+1,x) + b*sem.lepoly(k+2,x))
+		phi_k_M = D@(lepoly(k,x) + a*lepoly(k+1,x) + b*lepoly(k+2,x))
 		for jj in range(1,N):
 			if abs(ii-jj) <=2:
 				l = jj-1
-				psi_l_M = sem.lepoly(l,x) + a*sem.lepoly(l+1,x) + b*sem.lepoly(l+2,x)
-				M[jj-1,ii-1] = sum((psi_l_M*phi_k_M)*2/(N*(N+1))/(sem.lepoly(N,x)**2))
+				psi_l_M = lepoly(l,x) + a*lepoly(l+1,x) + b*lepoly(l+2,x)
+				M[jj-1,ii-1] = np.sum((psi_l_M*phi_k_M)*2/(N*(N+1))/(lepoly(N,x)**2))
 
 	S = s_diag*np.eye(N-1)
 	g = np.zeros((N+1,))
 	for i in range(1,N+1):
 		k = i-1
-		g[i-1] = (2*k+1)/(N*(N+1))*sum(f*(sem.lepoly(k,x))/(sem.lepoly(N,x)**2))
-	g[N-1] = 1/(N+1)*sum(f/sem.lepoly(N,x))
+		g[i-1] = (2*k+1)/(N*(N+1))*np.sum(f*(lepoly(k,x))/(lepoly(N,x)**2))
+	g[N-1] = 1/(N+1)*np.sum(f/lepoly(N,x))
 
 	bar_f = np.zeros((N-1,))
 	for i in range(1,N):
@@ -82,16 +82,16 @@ def lg_1d_standard(N:int, epsilon:float) -> float:
 		_ = 0
 		for j in range(1, N+2):
 			k = j-1
-			L = sem.lepoly(k,x)
+			L = lepoly(k,x)
 			_ += g[j-1]*L[i-1]
 		_ = _[0]
 		u[i-1] = _
 
 	return x, u
-def lg_1d_enriched(N:int, epsilon:float) -> float:
+def lg_1d_enriched(N:int, epsilon:float) -> np.ndarray:
 	sigma = 1
-	x = sem.legslbndm(N+1)
-	D = sem.legslbdiff(N+1, x)
+	x = legslbndm(N+1)
+	D = legslbdiff(N+1, x)
 	a = 0
 	b = -1
 	def func(t: float) -> float:
@@ -99,7 +99,7 @@ def lg_1d_enriched(N:int, epsilon:float) -> float:
 
 	f = 0.5*func(x)
 
-	phi = sem.get_phi(N, x, sigma, epsilon)
+	phi = get_phi(N, x, sigma, epsilon)
 	residual = -(np.exp(-(sigma+1)/epsilon)-1)/(sigma+1)
 	
 	S, M = np.zeros((N-1,N-1)), np.zeros((N-1,N-1))
@@ -107,26 +107,24 @@ def lg_1d_enriched(N:int, epsilon:float) -> float:
 	for ii in range(1, N):
 		k = ii - 1
 
-		phi_k_a12 = sem.lepoly(k,x) + a*sem.lepoly(k+1,x) + b*sem.lepoly(k+2,x)
+		phi_k_a12 = lepoly(k,x) + a*lepoly(k+1,x) + b*lepoly(k+2,x)
 		phi_k_M = D@phi_k_a12
 		phi_k_s = D@phi_k_M
 		for jj in range(1,N):
 			if abs(ii-jj) <=2:
 				l = jj-1
-				psi_l_M = sem.lepoly(l,x) + a*sem.lepoly(l+1,x) + b*sem.lepoly(l+2,x)
-				element = sum((psi_l_M*phi_k_M)*2/(N*(N+1))/(sem.lepoly(N,x)**2))
-				# pprint(element)
-				# M[jj-1,ii-1] = sum((psi_l_M*phi_k_M)*2/(N*(N+1))/(sem.lepoly(N,x)**2))
-				M[jj-1,ii-1] = sum((psi_l_M*phi_k_M)*2/(N*(N+1))/(sem.lepoly(N,x)**2))
+				psi_l_M = lepoly(l,x) + a*lepoly(l+1,x) + b*lepoly(l+2,x)
+				element = np.sum((psi_l_M*phi_k_M)*2/(N*(N+1))/(lepoly(N,x)**2))
+				M[jj-1,ii-1] = np.sum((psi_l_M*phi_k_M)*2/(N*(N+1))/(lepoly(N,x)**2))
 
 			if ii<=jj-2:
 			    q = jj-1
-			    phi_q = sem.lepoly(q,x) + a*sem.lepoly(q+1,x) + b*sem.lepoly(q+2,x)
-			    S[jj-1,ii-1] = sum(phi_k_s*phi_q*2/(N*(N+1))/(sem.lepoly(N,x)**2))
+			    phi_q = lepoly(q,x) + a*lepoly(q+1,x) + b*lepoly(q+2,x)
+			    S[jj-1,ii-1] = np.sum(phi_k_s*phi_q*2/(N*(N+1))/(lepoly(N,x)**2))
 
-		a_12[ii-1] = sum(residual*phi_k_a12*2/(N*(N+1))/(sem.lepoly(N,x)**2))
-		a_21[ii-1] = sum((-epsilon*phi_k_s-phi_k_M)*phi*2/(N*(N+1))/(sem.lepoly(N,x)**2))
-	a_22 = sum(residual*phi*2/(N*(N+1))/(sem.lepoly(N,x)**2))
+		a_12[ii-1] = np.sum(residual*phi_k_a12*2/(N*(N+1))/(lepoly(N,x)**2))
+		a_21[ii-1] = np.sum((-epsilon*phi_k_s-phi_k_M)*phi*2/(N*(N+1))/(lepoly(N,x)**2))
+	a_22 = np.sum(residual*phi*2/(N*(N+1))/(lepoly(N,x)**2))
 
 	Mass = epsilon*S-M
 	a_12 = a_12.reshape(a_12.shape[0], 1)
@@ -139,9 +137,9 @@ def lg_1d_enriched(N:int, epsilon:float) -> float:
 	g = np.zeros((N+1,))
 	for i in range(1,N+1):
 		k = i-1
-		g[i-1] = (2*k+1)/(N*(N+1))*sum(f*(sem.lepoly(k,x))/sem.lepoly(N,x)**2)
+		g[i-1] = (2*k+1)/(N*(N+1))*np.sum(f*(lepoly(k,x))/lepoly(N,x)**2)
 
-	g[N] = 1/(N+1)*sum(f/sem.lepoly(N,x))
+	g[N] = 1/(N+1)*np.sum(f/lepoly(N,x))
 
 	bar_f = np.zeros((N,))
 	for i in range(1, N):
@@ -151,7 +149,7 @@ def lg_1d_enriched(N:int, epsilon:float) -> float:
 	bar_f_end = 0
 	for ii in range(1,N+2):
 		k = ii-1
-		bar_f_end += g[ii-1]*2/(N*(N+1))*sum(phi*(sem.lepoly(k,x))/sem.lepoly(N,x)**2)
+		bar_f_end += g[ii-1]*2/(N*(N+1))*np.sum(phi*(lepoly(k,x))/lepoly(N,x)**2)
 
 	bar_f[N-1] = bar_f_end
 
@@ -160,14 +158,27 @@ def lg_1d_enriched(N:int, epsilon:float) -> float:
 	u_sol = np.zeros((N+1,))
 	for ij in range(1,N):
 		i_ind = ij - 1
-		element = u_temp[ij-1,0]*(sem.lepoly(i_ind,x) + a*sem.lepoly(i_ind+1,x) + b*sem.lepoly(i_ind+2,x))
+		element = u_temp[ij-1,0]*(lepoly(i_ind,x) + a*lepoly(i_ind+1,x) + b*lepoly(i_ind+2,x))
 		u_sol += element.T[0]
 	u = u_sol + (u_temp[N-1]*phi).T[0]
 	return x, u
 
 
-N, epsilon = 32, 1E-5
-# cProfil.run('lg_1d_standard(N, epsilon)')
-# x, sol = lg_1d_standard(N, epsilon)
-x, sol = lg_1d_enriched(N, epsilon)
-plotter(x, sol, enriched=True)
+N, epsilon = 64, 1E-5
+profile = True
+enriched = True
+plot = False
+if profile == True:
+	if enriched == False:
+		cProfile.run('lg_1d_standard(N, epsilon)')
+		x, sol = lg_1d_standard(N, epsilon)
+	else:
+		cProfile.run('lg_1d_enriched(N, epsilon)')
+		x, sol = lg_1d_enriched(N, epsilon)
+else:
+	if enriched == False:
+		x, sol = lg_1d_standard(N, epsilon)
+	else:
+		x, sol = lg_1d_enriched(N, epsilon)
+if plot == True:
+	plotter(x, sol, enriched=True)
