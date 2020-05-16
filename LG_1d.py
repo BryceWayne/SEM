@@ -178,18 +178,6 @@ N, epsilon = 64, 1E-5
 profile = True
 enriched = True
 plot = True
-if profile == True:
-	if enriched == False:
-		cProfile.run('lg_1d_standard(N, epsilon)')
-		x, sol = lg_1d_standard(N, epsilon)
-	else:
-		cProfile.run('lg_1d_enriched(N, epsilon)')
-		x, sol = lg_1d_enriched(N, epsilon)
-else:
-	if enriched == False:
-		x, sol = lg_1d_standard(N, epsilon)
-	else:
-		x, sol = lg_1d_enriched(N, epsilon)
 
 if enriched == False:
 	if profile == True:
