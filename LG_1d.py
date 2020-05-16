@@ -177,7 +177,7 @@ def rk4(x: np.ndarray, t0=0, dt=0.1) -> np.ndarray:
 N, epsilon = 64, 1E-5
 profile = True
 enriched = True
-plot = False
+plot = True
 if profile == True:
 	if enriched == False:
 		cProfile.run('lg_1d_standard(N, epsilon)')
@@ -190,6 +190,16 @@ else:
 		x, sol = lg_1d_standard(N, epsilon)
 	else:
 		x, sol = lg_1d_enriched(N, epsilon)
-if plot == True:
-	plotter(x, sol, enriched=True)
 
+if enriched == False:
+	if profile == True:
+		cProfile.run('lg_1d_standard(N, epsilon)')
+	x, sol = lg_1d_standard(N, epsilon)
+	if plot == True:
+		plotter(x, sol)
+elif enriched == True:
+	if profile == True:
+		cProfile.run('lg_1d_enriched(N, epsilon)')
+	x, sol = lg_1d_enriched(N, epsilon)
+	if plot == True:
+		plotter(x, sol, enriched=True)
