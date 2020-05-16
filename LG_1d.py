@@ -5,12 +5,12 @@ import matplotlib.pyplot as plt
 import cProfile
 
 
-def exact(x:np.ndarray, epsilon:float, enriched=False) -> np.ndarray:
+def exact(x:np.ndarray, epsilon:float, enriched=False: bool) -> np.ndarray:
 	if enriched == False:
 		return 2*(np.exp(-(x+1)/epsilon)-1)/(np.exp(-2/epsilon)-1)-(x+1)
 	else:
 		return (np.exp(-(x+1)/epsilon)-1)/(np.exp(-2/epsilon)-1)-(x+1)/2
-def plotter(x:np.ndarray, y:np.ndarray, enriched=False, diff=False):
+def plotter(x:np.ndarray, y:np.ndarray, enriched=False: bool, diff=False: bool):
 	if enriched == False:
 		exact_sol = exact(x, epsilon).T[0]
 	else:
@@ -162,6 +162,15 @@ def lg_1d_enriched(N:int, epsilon:float) -> np.ndarray:
 		u_sol += element.T[0]
 	u = u_sol + (u_temp[N-1]*phi).T[0]
 	return x, u
+def DE(t: float, x: np.ndarray) -> np.ndarray:
+    return x*(1-x)
+def RK(t: float, x: np.ndarray, dt: float) -> np.ndarray:
+    k1 = DE(t, x)*dt
+    k2 = DE(t, x+0.5*k1)*dt
+    k3 = DE(t, x+0.5*k2)*dt
+    k4 = DE(t, x+k3)*dt
+    return x+1/6*(k1+2*k2+2*k3+k4)
+def rk4(x: np.ndarray, t0=0: float, dt=0.1: float) -> np.ndarray:
 
 
 N, epsilon = 64, 1E-5
@@ -182,3 +191,4 @@ else:
 		x, sol = lg_1d_enriched(N, epsilon)
 if plot == True:
 	plotter(x, sol, enriched=True)
+

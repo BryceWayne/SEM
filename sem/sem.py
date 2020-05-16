@@ -2,7 +2,7 @@ import numpy as np
 import scipy as sp
 from scipy.sparse import diags
 from pprint import pprint
-from Cython.Build import cythonize
+# from Cython.Build import cythonize
 
 def lepoly(n:int, x:np.ndarray, nargout=1) -> np.ndarray:
 	if nargout == 1:
