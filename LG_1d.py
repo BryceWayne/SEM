@@ -5,12 +5,12 @@ import matplotlib.pyplot as plt
 import cProfile
 
 
-def exact(x:np.ndarray, epsilon:float, enriched=False: bool) -> np.ndarray:
+def exact(x:np.ndarray, epsilon:float, enriched=False) -> np.ndarray:
 	if enriched == False:
 		return 2*(np.exp(-(x+1)/epsilon)-1)/(np.exp(-2/epsilon)-1)-(x+1)
 	else:
 		return (np.exp(-(x+1)/epsilon)-1)/(np.exp(-2/epsilon)-1)-(x+1)/2
-def plotter(x:np.ndarray, y:np.ndarray, enriched=False: bool, diff=False: bool):
+def plotter(x:np.ndarray, y:np.ndarray, enriched=False, diff=False):
 	if enriched == False:
 		exact_sol = exact(x, epsilon).T[0]
 	else:
@@ -170,7 +170,8 @@ def RK(t: float, x: np.ndarray, dt: float) -> np.ndarray:
     k3 = DE(t, x+0.5*k2)*dt
     k4 = DE(t, x+k3)*dt
     return x+1/6*(k1+2*k2+2*k3+k4)
-def rk4(x: np.ndarray, t0=0: float, dt=0.1: float) -> np.ndarray:
+def rk4(x: np.ndarray, t0=0, dt=0.1) -> np.ndarray:
+	pass
 
 
 N, epsilon = 64, 1E-5
