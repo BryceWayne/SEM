@@ -109,7 +109,6 @@ def lg_1d_standard(N:int, epsilon:float, exact_flag = False) -> np.ndarray:
 def lg_1d_enriched(N:int, epsilon:float, exact_flag = False) -> np.ndarray:
 	sigma = 1
 	x = legslbndm(N+1)
-	print(x.shape)
 	D = legslbdiff(N+1, x)
 	a = 0
 	b = -1
@@ -180,11 +179,10 @@ def lg_1d_enriched(N:int, epsilon:float, exact_flag = False) -> np.ndarray:
 
 	u_temp = np.linalg.solve(Mass,bar_f)
 	u_temp = u_temp.reshape(u_temp.shape[0],1)
-	u_sol = np.zeros((N,))
+	u_sol = np.zeros((N+1,))
 	for ij in range(1,N):
 		i_ind = ij - 1
 		element = u_temp[ij-1,0]*(lepoly(i_ind,x) + a*lepoly(i_ind+1,x) + b*lepoly(i_ind+2,x))
-		print(element.shape)
 		u_sol += element.T[0]
 	u = u_sol + (u_temp[N-1]*phi).T[0]
 	return x, u

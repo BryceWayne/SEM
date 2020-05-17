@@ -22,15 +22,19 @@ def load_obj(name):
     with open('data/' + name + '.pkl', 'rb') as f:
         return pickle.load(f)
 
-SIZE = 10000
+SIZE = 1000
 N = 63
-epsilon = np.linspace(1E0, 1E-6, 100000)
+epsilon = 1E-1
+# epsilon = np.random.unform(0, 1E-6, SIZE)
 
-data = np.zeros((SIZE, N+1))
-for i in tqdm(range(100)):
-	x, u = lg.lg_1d_enriched(N, np.random.choice(epsilon))
-	u = u.reshape(1,u.shape[0])
-	data[i,:] = u
+data = []
+for i in tqdm(range(SIZE)):
+	# x, u = lg.lg_1d_enriched(N, epsilon[i])
+	x, u, f = lg.lg_1d_standard(N, epsilon)
+	x, u, f = x.reshape(1,x.shape[0]), u.reshape(1,u.shape[0]), f.reshape(1,f.shape[0])
+	data.append([x,u,f])
 
 
+data = np.array(data)
 save_obj(data, f'{SIZE}')
+
