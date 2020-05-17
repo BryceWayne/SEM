@@ -2,9 +2,9 @@
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
+import pickle
 
-
-class LGDataset(Dataset):
+class LGDataset():
     """Legendre-Galerkin Dataset."""
 
     def __init__(self, pickle_file):
@@ -13,7 +13,10 @@ class LGDataset(Dataset):
             pickle_file (string): Path to the pkl file with annotations.
             root_dir (string): Directory with all the images.
         """
-        self.data = load_obj(pickle_file)
+        with open('../data/' + pickle_file + '.pkl', 'rb') as f:
+        	self.data = pickle.load(f)
+        	self.data = self.data[:,:,0,:]
+        	print(self.data.shape)
 
     def __len__(self):
         return len(self.data)
@@ -22,20 +25,17 @@ class LGDataset(Dataset):
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
-        x = self.data
-        u = self.data
-        sample = {'x': x, 'solution': u}
+        x = self.data[:,0,:][idx]
+        u = self.data[:,1,:][idx]
+        f = self.data[:,2,:][idx]
+        sample = {'x': x, 'u': u, 'f': f}
         return sample
-
-    def load_obj(name):
-	    with open(name + '.pkl', 'rb') as f:
-	        return pickle.load(f)
 
 
 def show_solution(solution):
 	plt.figure(1, figsize=(10,6))
 	plt.title('Exact Solution')
-	plt.plot(solution, label='Exact')
+	plt.plot(solution[0], solution[1], label='Exact')
 	plt.xlabel('$x$')
 	plt.ylabel('$y$')
 	plt.legend(shadow=True)
@@ -43,19 +43,11 @@ def show_solution(solution):
 	plt.show()
 
 
-face_dataset = FaceLandmarksDataset(pickle_file='data/test.pkl')
+face_dataset = LGDataset(pickle_file='1000')
 
 for i in range(len(face_dataset)):
-    sample = face_dataset[i]
-
-    print(i, sample['image'].shape, sample['landmarks'].shape)
-
-    ax = plt.subplot(1, 4, i + 1)
-    plt.tight_layout()
-    ax.set_title('Sample #{}'.format(i))
-    ax.axis('off')
-    show_landmarks(**sample)
-
+    sample = face_dataset[i]    
+    show_solution([sample['x'], sample['u']])
     if i == 3:
         plt.show()
         break
