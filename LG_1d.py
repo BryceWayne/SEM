@@ -10,38 +10,56 @@ def exact(x:np.ndarray, epsilon:float, enriched=False) -> np.ndarray:
 		return 2*(np.exp(-(x+1)/epsilon)-1)/(np.exp(-2/epsilon)-1)-(x+1)
 	else:
 		return (np.exp(-(x+1)/epsilon)-1)/(np.exp(-2/epsilon)-1)-(x+1)/2
-def plotter(x:np.ndarray, y:np.ndarray, enriched=False, diff=False):
+def plotter(x:np.ndarray, y:np.ndarray, exact_flag = False, enriched=False, diff=False):
 	if enriched == False:
 		exact_sol = exact(x, epsilon).T[0]
 	else:
 		exact_sol = exact(x, epsilon, enriched=True).T[0]
-	error = np.round(np.linalg.norm(y-exact_sol)/np.linalg.norm(exact_sol), 18)
-	plt.figure(1, figsize=(10,6))
-	plt.plot(x, exact_sol, 'b', label='Exact')
-	plt.plot(x, y, 'ro--', markersize=3, label='Approx')
-	plt.grid(alpha=True)
-	plt.legend(shadow=True)
-	plt.xlabel('$x$')
-	plt.ylabel('$y$')
-	plt.title(f'Parameters: N={N}, $\\varepsilon$={epsilon}\nRelative $L_2$ Error={error}')
-	plt.show()
-	if diff == True:
-		plt.figure(2, figsize=(10,6))
-		plt.plot(x, exact_sol-y, 'bo-', label='Diff')
+
+	if exact_flag == True:
+		error = np.round(np.linalg.norm(y-exact_sol)/np.linalg.norm(exact_sol), 18)
+		plt.figure(1, figsize=(10,6))
+		plt.plot(x, exact_sol, 'b', label='Exact')
+		plt.plot(x, y, 'ro--', markersize=3, label='Approx')
 		plt.grid(alpha=True)
 		plt.legend(shadow=True)
 		plt.xlabel('$x$')
-		plt.ylabel('DIFF')
+		plt.ylabel('$y$')
+		plt.title(f'Parameters: N={N}, $\\varepsilon$={epsilon}\nRelative $L_2$ Error={error}')
 		plt.show()
-def lg_1d_standard(N:int, epsilon:float) -> np.ndarray:
+		if diff == True:
+			plt.figure(2, figsize=(10,6))
+			plt.plot(x, exact_sol-y, 'bo-', label='Diff')
+			plt.grid(alpha=True)
+			plt.legend(shadow=True)
+			plt.xlabel('$x$')
+			plt.ylabel('DIFF')
+			plt.show()
+
+	if exact_flag == False:
+		plt.figure(1, figsize=(10,6))
+		plt.plot(x, y, 'ro--', markersize=3, label='Approx')
+		plt.grid(alpha=True)
+		plt.legend(shadow=True)
+		plt.xlabel('$x$')
+		plt.ylabel('$y$')
+		plt.title(f'Parameters: N={N}, $\\varepsilon$={epsilon}')
+		plt.show()
+def lg_1d_standard(N:int, epsilon:float, exact_flag = False) -> np.ndarray:
 	x = legslbndm(N+1)
 	D = legslbdiff(N+1, x)
 	a = 0
 	b = -1
-	def func(t: float) -> float:
-		return np.ones_like(t)
+	def func(t: float, exact_flag) -> float:
+		# Random force
+		if exact_flag == False:
+			m = 2*np.random.rand(4)
+			return m[0]*np.sin(m[1]*np.pi*t) + m[2]*np.cos(m[3]*np.pi*t)
+		# Exact solution
+		if exact_flag == True:
+			return np.ones_like(t)
 
-	f = func(x)
+	f = func(x, exact_flag)
 	s_diag = np.zeros((N-1,1))
 	M = np.zeros((N-1,N-1))
 	for ii in range(1, N):
@@ -87,17 +105,24 @@ def lg_1d_standard(N:int, epsilon:float) -> np.ndarray:
 		_ = _[0]
 		u[i-1] = _
 
-	return x, u
-def lg_1d_enriched(N:int, epsilon:float) -> np.ndarray:
+	return x, u, f
+def lg_1d_enriched(N:int, epsilon:float, exact_flag = False) -> np.ndarray:
 	sigma = 1
 	x = legslbndm(N+1)
+	print(x.shape)
 	D = legslbdiff(N+1, x)
 	a = 0
 	b = -1
-	def func(t: float) -> float:
-		return np.ones_like(t)
+	def func(t: float, exact_flag: bool) -> float:
+		# Random force
+		if exact_flag == False:
+			m = 2*np.random.rand(4)
+			return m[0]*np.sin(m[1]*np.pi*t) + m[2]*np.cos(m[3]*np.pi*t)
+		# Exact solution
+		if exact_flag == True:
+			return 0.5*np.ones_like(t)
 
-	f = 0.5*func(x)
+	f = func(x, exact_flag)
 
 	phi = get_phi(N, x, sigma, epsilon)
 	residual = -(np.exp(-(sigma+1)/epsilon)-1)/(sigma+1)
@@ -155,10 +180,11 @@ def lg_1d_enriched(N:int, epsilon:float) -> np.ndarray:
 
 	u_temp = np.linalg.solve(Mass,bar_f)
 	u_temp = u_temp.reshape(u_temp.shape[0],1)
-	u_sol = np.zeros((N+1,))
+	u_sol = np.zeros((N,))
 	for ij in range(1,N):
 		i_ind = ij - 1
 		element = u_temp[ij-1,0]*(lepoly(i_ind,x) + a*lepoly(i_ind+1,x) + b*lepoly(i_ind+2,x))
+		print(element.shape)
 		u_sol += element.T[0]
 	u = u_sol + (u_temp[N-1]*phi).T[0]
 	return x, u
@@ -174,20 +200,22 @@ def rk4(x: np.ndarray, t0=0, dt=0.1) -> np.ndarray:
 	pass
 
 
-N, epsilon = 64, 1E-5
-profile = True
-enriched = True
-plot = True
+def debug():
+	N, epsilon = 32, 1E-3
+	profile = False
+	enriched = True
+	plot = True
+	exact_flag = False
 
-if enriched == False:
-	if profile == True:
-		cProfile.run('lg_1d_standard(N, epsilon)')
-	x, sol = lg_1d_standard(N, epsilon)
-	if plot == True:
-		plotter(x, sol)
-elif enriched == True:
-	if profile == True:
-		cProfile.run('lg_1d_enriched(N, epsilon)')
-	x, sol = lg_1d_enriched(N, epsilon)
-	if plot == True:
-		plotter(x, sol, enriched=True)
+	if enriched == False:
+		if profile == True:
+			cProfile.run('lg_1d_standard(N, epsilon)')
+		x, sol, f = lg_1d_standard(N, epsilon, exact_flag)
+		if plot == True:
+			plotter(x, sol, exact_flag)
+	elif enriched == True:
+		if profile == True:
+			cProfile.run('lg_1d_enriched(N, epsilon)')
+		x, sol = lg_1d_enriched(N, epsilon, exact_flag)
+		if plot == True:
+			plotter(x, sol, exact_flag, enriched=True)
