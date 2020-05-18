@@ -3,21 +3,19 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 
-def conv1d(in_planes, out_planes) :
-    return torch.nn.Conv1d(in_channels, out_channels, kernel_size=5, stride=1, padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros')
+def conv1d(in_planes, out_planes, stride=1, bias=True) :
+    return nn.Conv1d(in_planes, out_planes, kernel_size=5, stride=stride, padding=2, bias=bias)
 
 class Net(nn.Module) :
-    def __init__(self, D_in, Filters, D_out) :
-        super(Net,self).__init__()
-        channel = init_channel
-        self.conv1 = conv1d(1,channel)
-        self.conv2 = conv1d(channel, channel)
-        self.fc = nn.Linear(channel,num_classes)
+	def __init__(self, D_in, Filters, D_out) :
+		super(Net,self).__init__()
+		self.conv1 = conv1d(D_in,Filters)
+		# self.conv2 = conv1d(Filters,Filters)
+		self.fc = nn.Linear(64,D_out)
 
-    def forward(self, x) :
-        x = F.relu(self.conv1(x))
-        x = F.relu(self.conv2(x))
-        return self.conv2(x)
+	def forward(self, x) :
+		out = self.conv1(x)
+		out = F.relu(out)
+		out = self.fc(out)
+		return out
 
-    def loss(self) :
-        return torch.nn.MSELoss()
