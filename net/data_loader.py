@@ -21,9 +21,9 @@ class LGDataset():
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
             idx = idx.tolist()
-        x = self.data[:,0,:][idx]
-        u = self.data[:,1,:][idx]
-        f = self.data[:,2,:][idx]
+        x = torch.Tensor([self.data[:,0,:][idx]])
+        u = torch.Tensor([self.data[:,1,:][idx]])
+        f = torch.Tensor([self.data[:,2,:][idx]])
         sample = {'x': x, 'u': u, 'f': f}
         return sample
 
