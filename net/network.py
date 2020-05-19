@@ -10,9 +10,13 @@ class Net(nn.Module) :
 	def __init__(self, d_in, filters, d_out) :
 		super(Net,self).__init__()
 		self.conv = conv1d(d_in, filters)
-		self.conv1 = conv1d(filters, filters)
+		self.conv1 = conv1d(filters, 2*filters)
+		filters *= 2
 		self.conv2 = conv1d(filters, 2*filters)
-		self.fc = nn.Linear(1, 1)
+		self.fc1 = nn.Linear(2*filters**2, d_out)
+		self.fc2 = nn.Linear(1024, d_out)
+		self.d_in = d_out
+		self.d_out = d_out
 
 	def forward(self, x) :
 		out = self.conv(x)
@@ -20,6 +24,8 @@ class Net(nn.Module) :
 		out = self.conv1(out)
 		out = F.relu(out)
 		out = self.conv2(out)
-		out = self.fc(out)
+		out = out.view(100, -1)
+		out = self.fc1(out)
+		out = out.view(out.shape[0], 1, out.shape[1])
 		return out
 
