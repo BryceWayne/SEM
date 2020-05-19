@@ -38,7 +38,7 @@ criterion = torch.nn.MSELoss(reduction="sum")
 optimizer = torch.optim.SGD(model.parameters(), lr=1e-5, momentum=0.9)
 
 
-for epoch in tqdm(range(100)):
+for epoch in tqdm(range(50)):
 	for batch_idx, sample_batch in enumerate(trainloader):
 		x = Variable(sample_batch['f']).to(device).permute(0,2,1)
 		y = Variable(sample_batch['u']).to(device).permute(0,2,1)
@@ -50,19 +50,19 @@ for epoch in tqdm(range(100)):
 	print(f"Loss: {loss}")
 
 #Get out of sample data
-test_data = LGDataset(pickle_file='1000')
-testloader = torch.utils.data.DataLoader(test_data, batch_size=N, shuffle=True)
-for batch_idx, sample_batch in enumerate(testloader):
-		x, y = Variable(sample_batch['f']).to(device), Variable(sample_batch['u']).to(device)
-		break 
+# test_data = LGDataset(pickle_file='1000')
+# testloader = torch.utils.data.DataLoader(test_data, batch_size=N, shuffle=True)
+# for batch_idx, sample_batch in enumerate(testloader):
+# 		x, y = Variable(sample_batch['f']).to(device), Variable(sample_batch['u']).to(device)
+# 		break 
 
 def relative_l2(measured, theoretical):
 	return np.linalg.norm((measured-theoretical)/np.linalg.norm(theoretical))
 
 for _ in range(3):
 	yhat = y_pred[_,:,0].to('cpu').detach().numpy()
-	f = x[_,0,:].to('cpu').detach().numpy()
-	u = y[_,0,:].to('cpu').detach().numpy()
+	f = x[_,:,0].to('cpu').detach().numpy()
+	u = y[_,:,0].to('cpu').detach().numpy()
 	error = relative_l2(yhat, u)
 	plt.figure(_, figsize=(10,6))
 	plt.grid(alpha=0.618)
