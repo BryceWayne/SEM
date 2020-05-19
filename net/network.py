@@ -3,23 +3,23 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 
-def conv1d(in_planes, out_planes, stride=1, bias=True) :
-    return nn.Conv1d(in_planes, out_planes, kernel_size=3, stride=stride, padding=1, bias=bias)
+def conv1d(in_planes, out_planes, stride=1, bias=True, kernel_size=5) :
+    return nn.Conv1d(in_planes, out_planes, kernel_size=5, stride=stride, padding=2, bias=bias)
 
 class Net(nn.Module) :
-	def __init__(self, D_in, Filters, D_out) :
+	def __init__(self, d_in, filters, d_out) :
 		super(Net,self).__init__()
-		self.conv1 = conv1d(1, 1)
-		self.conv2 = conv1d(1, 1)
-		self.fc = nn.Linear(64, D_out)
+		self.conv = conv1d(d_in, filters)
+		self.conv1 = conv1d(filters, filters)
+		self.conv2 = conv1d(filters, 2*filters)
+		self.fc = nn.Linear(1, 1)
 
 	def forward(self, x) :
-		out = self.conv1(x)
+		out = self.conv(x)
+		out = F.relu(out)
+		out = self.conv1(out)
 		out = F.relu(out)
 		out = self.conv2(out)
-		out = F.relu(out)
-		out = self.conv2(out)
-		out = F.relu(out)
 		out = self.fc(out)
 		return out
 

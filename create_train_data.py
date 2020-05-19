@@ -22,6 +22,7 @@ def create(N:int, epsilon:float):
 	x, u, f = lg.lg_1d_standard(N, epsilon)
 	x, u, f = x.reshape(1,x.shape[0]), u.reshape(1,u.shape[0]), f.reshape(1,f.shape[0])
 	return x, u, f
+
 SIZE = 10000
 N = 63
 epsilon = 1E-1

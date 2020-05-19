@@ -28,6 +28,26 @@ class LGDataset():
         return sample
 
 
+def online_mean_and_sd(pickle_file):
+    """Compute the mean and sd in an online fashion
+
+        Var[x] = E[X^2] - E^2[X]
+    """
+    cnt = 0
+    fst_moment = torch.empty(1)
+    snd_moment = torch.empty(1)
+    data = load_obj(pickle_file)
+    f = torch.Tensor(data[:,2,:])
+    sum_ = torch.sum(f, dim=[0])
+    sum_of_square = torch.sum(f ** 2, dim=[0])
+    fst_moment = (f.shape[0] * fst_moment + sum_) / (f.shape[0] + f.shape[1])
+    snd_moment = (f.shape[0] * snd_moment + sum_of_square) / (f.shape[0] + f.shape[1])
+    return fst_moment, torch.sqrt(snd_moment - fst_moment ** 2)
+def load_obj(name):
+    with open('../data/' + name + '.pkl', 'rb') as f:
+        data = pickle.load(f)
+        data = data[:,:,0,:]
+    return data
 def show_solution(solution):
 	x, y = solution[0], solution[1]
 	plt.figure(1, figsize=(10,6))
