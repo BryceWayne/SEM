@@ -197,6 +197,8 @@ def RK(t: float, x: np.ndarray, dt: float) -> np.ndarray:
 def rk4(x: np.ndarray, t0=0, dt=0.1) -> np.ndarray:
 	pass
 
+def reconstruct(u):
+	
 
 def debug():
 	N, epsilon = 32, 1E-3

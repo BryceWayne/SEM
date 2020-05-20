@@ -4,7 +4,7 @@ import torch
 from torch.autograd import Variable
 from torchvision import transforms
 import network
-from data_loader import LGDataset, show_solution, online_mean_and_sd
+from data_loader import LGDataset, show_solution, normalize
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
@@ -17,18 +17,14 @@ else:
   dev = "cpu"  
 device = torch.device(dev)  
 
+FILE = '50000'
 # Load the dataset
-# transform = transforms.Compose([transforms.Normalize([0.124646], [0.9978144168])])
-lg_dataset = LGDataset(pickle_file='50000')
-# first, second = online_mean_and_sd(pickle_file='10000')
-# print("First:", first.mean().item())
-# print("Second:", second.mean().item())
-# end
+norm = normalize(pickle_file=FILE)
+transform = transforms.Compose([transforms.Normalize([norm[0].mean().item()], [norm[1].mean().item()])])
+lg_dataset = LGDataset(pickle_file=FILE, transform=transform)
 
 # N is batch size; D_in is input dimension; D_out is output dimension.
-N, D_in, Filters, D_out = int(0.002*len(lg_dataset)), 1, 32, 64
-print("N:", N)
-#Define transform on data to normalize
+N, D_in, Filters, D_out = 100, 1, 32, 64
 #Batch DataLoader with shuffle
 trainloader = torch.utils.data.DataLoader(lg_dataset, batch_size=N, shuffle=True)
 # Construct our model by instantiating the class
@@ -36,10 +32,11 @@ model = network.Net(D_in, Filters, D_out)
 model.to(device)
 # Construct our loss function and an Optimizer.
 criterion = torch.nn.MSELoss(reduction="sum")
-optimizer = torch.optim.SGD(model.parameters(), lr=1e-5, momentum=0.9)
+optimizer = torch.optim.SGD(model.parameters(), lr=1e-6, momentum=0.9)
 
 
-for epoch in tqdm(range(5)):
+EPOCHS = 5
+for epoch in tqdm(range(EPOCHS)):
 	for batch_idx, sample_batch in enumerate(trainloader):
 		x = Variable(sample_batch['f']).to(device)
 		y = Variable(sample_batch['u']).to(device)
@@ -50,26 +47,30 @@ for epoch in tqdm(range(5)):
 		loss = criterion(y_pred, y)
 		loss.backward()
 		optimizer.step()
-	print(f"\nLoss: {np.round(float(loss.to('cpu').detach()),6)}")
+	print(f"\nLoss: {np.round(float(loss.to('cpu').detach()), 6)}")
 
 # SAVE MODEL
-torch.save(model.state_dict(), 'model.pt')
+# torch.save(model.state_dict(), 'model.pt')
 # # LOAD MODEL
 # model = network.Net(D_in, Filters, D_out)
 # model.load_state_dict(torch.load('model.pt'))
 # model.eval()
+
 #Get out of sample data
-test_data = LGDataset(pickle_file='1000')
-testloader = torch.utils.data.DataLoader(test_data, batch_size=N, shuffle=True)
-for batch_idx, sample_batch in enumerate(testloader):
-		x = Variable(sample_batch['f']).to(device)
-		y = Variable(sample_batch['u']).to(device)
-		break 
+# FILE = '1000'
+# norm = normalize(pickle_file=FILE)
+# transform = transforms.Compose([transforms.Normalize([norm[0].mean().item()], [norm[1].mean().item()])])
+# test_data = LGDataset(pickle_file=FILE, transform=transform)
+# testloader = torch.utils.data.DataLoader(test_data, batch_size=N, shuffle=True)
+# for batch_idx, sample_batch in enumerate(testloader):
+# 		x = Variable(sample_batch['f']).to(device)
+# 		y = Variable(sample_batch['u']).to(device)
+# 		break 
 
 def relative_l2(measured, theoretical):
-	return np.linalg.norm((measured-theoretical)/np.linalg.norm(theoretical))
+	return np.linalg.norm(measured-theoretical, ord=2)/np.linalg.norm(theoretical, ord=2)
 
-for _ in range(3):
+for _ in range(5):
 	yhat = y_pred[_,0,:].to('cpu').detach().numpy()
 	f = x[_,0,:].to('cpu').detach().numpy()
 	u = y[_,0,:].to('cpu').detach().numpy()

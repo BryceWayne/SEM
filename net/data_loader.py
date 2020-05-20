@@ -7,7 +7,7 @@ import pickle
 class LGDataset():
     """Legendre-Galerkin Dataset."""
 
-    def __init__(self, pickle_file):
+    def __init__(self, pickle_file, transform=None):
         """
         Args:
             pickle_file (string): Path to the pkl file with annotations.
@@ -16,6 +16,7 @@ class LGDataset():
         with open('../data/' + pickle_file + '.pkl', 'rb') as f:
         	self.data = pickle.load(f)
         	self.data = self.data[:,:,0,:]
+        self.transform = transform 
     def __len__(self):
         return len(self.data)
     def __getitem__(self, idx):
@@ -24,11 +25,14 @@ class LGDataset():
         x = torch.Tensor([self.data[:,0,:][idx]])
         u = torch.Tensor([self.data[:,1,:][idx]])
         f = torch.Tensor([self.data[:,2,:][idx]])
+        if self.transform:
+            f = f.view(1, 1, 64)
+            f = self.transform(f).view(1, 64)
         sample = {'x': x, 'u': u, 'f': f}
         return sample
 
 
-def online_mean_and_sd(pickle_file):
+def normalize(pickle_file):
     """Compute the mean and sd in an online fashion
 
         Var[x] = E[X^2] - E^2[X]
