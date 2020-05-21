@@ -1,6 +1,7 @@
 import torch
 from torch import nn
 
+
 a = torch.randn(100, 1, 64)
 print("Input:", a.shape)
 m = nn.Conv1d(1, 32, 5, padding=2) 

@@ -13,7 +13,7 @@ class LGDataset():
             pickle_file (string): Path to the pkl file with annotations.
             root_dir (string): Directory with all the images.
         """
-        with open('../data/' + pickle_file + '.pkl', 'rb') as f:
+        with open('./data/' + pickle_file + '.pkl', 'rb') as f:
         	self.data = pickle.load(f)
         	self.data = self.data[:,:,0,:]
         self.transform = transform 
@@ -48,7 +48,7 @@ def normalize(pickle_file):
     snd_moment = (f.shape[0] * snd_moment + sum_of_square) / (f.shape[0] + f.shape[1])
     return fst_moment, torch.sqrt(snd_moment - fst_moment ** 2)
 def load_obj(name):
-    with open('../data/' + name + '.pkl', 'rb') as f:
+    with open('./data/' + name + '.pkl', 'rb') as f:
         data = pickle.load(f)
         data = data[:,:,0,:]
     return data

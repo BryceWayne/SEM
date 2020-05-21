@@ -198,7 +198,14 @@ def rk4(x: np.ndarray, t0=0, dt=0.1) -> np.ndarray:
 	pass
 
 def reconstruct(u):
-	
+	a, b, N = 0, -1, len(u) - 1
+	x = legslbndm(N+1)
+	u_sol = np.zeros((N+1,))
+	for ij in range(1,N):
+		i_ind = ij - 1
+		element = u[ij-1]*(lepoly(i_ind,x) + a*lepoly(i_ind+1,x) + b*lepoly(i_ind+2,x))
+		u_sol += element.T[0]
+	return u_sol
 
 def debug():
 	N, epsilon = 32, 1E-3
