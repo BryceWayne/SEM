@@ -36,11 +36,10 @@ device = torch.device(dev)
 
 FILE = '10000'
 # Load the dataset
-norm = normalize(pickle_file=FILE)
-print(f"Mean: {norm[0].mean()}\nSDev: {norm[1].mean()}")
-transform = transforms.Compose([transforms.Normalize([norm[0].mean().item()], [norm[1].mean().item()])])
-lg_dataset = LGDataset(pickle_file=FILE, transform=transform) #, transform=transform
-
+# norm = normalize(pickle_file=FILE)
+# print(f"Mean: {norm[0].mean()}\nSDev: {norm[1].mean()}")
+# transform = transforms.Compose([transforms.Normalize([norm[0].mean().item()], [norm[1].mean().item()])])
+lg_dataset = LGDataset(pickle_file=FILE) #, transform=transform
 # N is batch size; D_in is input dimension; D_out is output dimension.
 N, D_in, Filters, D_out = 50, 1, 32, 64
 #Batch DataLoader with shuffle
@@ -52,8 +51,8 @@ def weights_init(m):
         torch.nn.init.zeros_(m.bias)
 model1 = network.Net(D_in, Filters, D_out)
 model2 = network.U(D_in, Filters, D_out)
-model1.apply(weights_init)
-model2.apply(weights_init)
+# model1.apply(weights_init)
+# model2.apply(weights_init)
 model1.to(device)
 model2.to(device)
 # Construct our loss function and an Optimizer.
@@ -61,7 +60,7 @@ criterion1 = torch.nn.L1Loss()
 criterion2 = torch.nn.MSELoss(reduction="sum")
 criterion3 = torch.nn.MSELoss(reduction="sum")
 optimizer1 = torch.optim.SGD(model1.parameters(), lr=1e-5, momentum=0.9)
-optimizer2 = torch.optim.SGD(model2.parameters(), lr=1e-5, momentum=0.9)
+optimizer2 = torch.optim.SGD(model2.parameters(), lr=1e-6, momentum=0.9)
 scheduler1 = torch.optim.lr_scheduler.MultiStepLR(optimizer1, milestones=[25,100,150,200,400], gamma=0.1)
 scheduler2 = torch.optim.lr_scheduler.MultiStepLR(optimizer2, milestones=[25,100,150,200,400], gamma=0.1)
 
@@ -72,11 +71,14 @@ for epoch in tqdm(range(EPOCHS)):
 		f = Variable(sample_batch['f']).to(device)
 		a = Variable(sample_batch['a']).reshape(N, D_out).to(device)
 		u = Variable(sample_batch['u']).reshape(N, D_out).to(device)
+		"""
+		f -> alphas -> u
+		"""
 		# PREDICT ALPHAS
 		optimizer1.zero_grad()
 		a_pred = model1(f)
 		assert a_pred.shape == a.shape
-		loss1 = criterion2(a_pred, a)
+		loss1 = criterion1(a_pred, a)
 		# RECONSTRUCT U
 		a_pred = a_pred.reshape(N, 1, D_out)
 		optimizer2.zero_grad()
@@ -144,20 +146,52 @@ for _ in range(L):
 plt.show()
 
 #Get out of sample data
-FILE = '1000'
-norm = normalize(pickle_file=FILE)
-transform = transforms.Compose([transforms.Normalize([norm[0].mean().item()], [norm[1].mean().item()])])
-test_data = LGDataset(pickle_file=FILE, transform=transform)
-testloader = torch.utils.data.DataLoader(test_data, batch_size=N, shuffle=True)
-for batch_idx, sample_batch in enumerate(testloader):
-		f = Variable(sample_batch['f']).to(device)
-		u = Variable(sample_batch['u']).to(device)
-		break 
+# FILE = '1000'
+# norm = normalize(pickle_file=FILE)
+# transform = transforms.Compose([transforms.Normalize([norm[0].mean().item()], [norm[1].mean().item()])])
+# test_data = LGDataset(pickle_file=FILE, transform=transform)
+# testloader = torch.utils.data.DataLoader(test_data, batch_size=N, shuffle=True)
+# for batch_idx, sample_batch in enumerate(testloader):
+# 		f = Variable(sample_batch['f']).to(device)
+# 		u = Variable(sample_batch['u']).to(device)
+# 		break 
 
-model1.eval()
-model2.eval()
-optimizer1.zero_grad()
-optimizer2.zero_grad()
-a_pred = model1(f)
-a_pred = a_pred.reshape(N, 1, D_out)
-u_pred = model2(a_pred)
+# model1.eval()
+# model2.eval()
+# optimizer1.zero_grad()
+# optimizer2.zero_grad()
+# a_pred = model1(f)
+# a_pred = a_pred.reshape(N, 1, D_out)
+# u_pred = model2(a_pred)
+# L = 2
+# for _ in range(L):
+# 	ff = f[_,0,:].to('cpu').detach().numpy()
+# 	aa = a[_,:].to('cpu').detach().numpy()
+# 	xx = sample_batch['x'][_,0,:].numpy()
+# 	mae_error = mae(ahat, aa)
+# 	l2_error = relative_l2(ahat, aa)
+# 	plt.figure(_, figsize=(10,6))
+# 	plt.xlim(-1,1)	
+# 	plt.grid(alpha=0.618)
+# 	plt.xlabel('$x$')
+# 	plt.ylabel('$y$')
+# 	plt.title(f'Example {_+1}\nMAE Error: {mae_error}\nRel. $L_2$ Error: {l2_error}')
+# 	plt.plot(xx, aa, 'r-', label='$\\alpha$')
+# 	plt.plot(xx, ahat, 'b--', label='$\\hat{\\alpha}$')
+# 	# plt.plot(xx, f, 'g', label='$f$')
+# 	plt.legend(shadow=True)
+# 	uhat = u_pred[_,:].to('cpu').detach().numpy()
+# 	uu = u[_,:].to('cpu').detach().numpy()
+# 	mae_error = mae(uhat, uu)
+# 	l2_error = relative_l2(uhat, uu)
+# 	plt.figure(L + _ + 1, figsize=(10,6))
+# 	plt.xlim(-1,1)
+# 	plt.grid(alpha=0.618)
+# 	plt.xlabel('$x$')
+# 	plt.ylabel('$u$')
+# 	plt.title(f'Example {_+1}\nMAE Error: {mae_error}\nRel. $L_2$ Error: {l2_error}')
+# 	plt.plot(xx, uu, 'r-', label='$u$')
+# 	plt.plot(xx, uhat, 'b--', label='$\\hat{u}$')
+# 	# plt.plot(xx, f, 'g', label='$f$')
+# 	plt.legend(shadow=True)
+# plt.show()

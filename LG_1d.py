@@ -104,7 +104,6 @@ def lg_1d_standard(N:int, epsilon:float, exact_flag = False) -> np.ndarray:
 			_ += g[j-1]*L[i-1]
 		_ = _[0]
 		u[i-1] = _
-
 	return x, u, f, alphas
 def lg_1d_enriched(N:int, epsilon:float, exact_flag = False) -> np.ndarray:
 	sigma = 1
