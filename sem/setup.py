@@ -1,4 +1,4 @@
 from distutils.core import setup
 from Cython.Build import cythonize
 
-setup(ext_modules = cythonize('lepoly.pyx', annotate=True))
+setup(name='fastlepoly', ext_modules = cythonize('fastlepoly.pyx', annotate=True))

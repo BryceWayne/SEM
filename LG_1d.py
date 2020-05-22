@@ -94,7 +94,7 @@ def lg_1d_standard(N:int, epsilon:float, exact_flag = False) -> np.ndarray:
 
 	g[N-1] = a*u[N-2] + b*u[N-3]
 	g[N] = b*u[N-2]
-
+	alphas = np.copy(g)
 	u = np.zeros((N+1,))
 	for i in range(1,N+2):
 		_ = 0
@@ -105,7 +105,7 @@ def lg_1d_standard(N:int, epsilon:float, exact_flag = False) -> np.ndarray:
 		_ = _[0]
 		u[i-1] = _
 
-	return x, u, f
+	return x, u, f, alphas
 def lg_1d_enriched(N:int, epsilon:float, exact_flag = False) -> np.ndarray:
 	sigma = 1
 	x = legslbndm(N+1)
@@ -196,8 +196,7 @@ def RK(t: float, x: np.ndarray, dt: float) -> np.ndarray:
     return x+1/6*(k1+2*k2+2*k3+k4)
 def rk4(x: np.ndarray, t0=0, dt=0.1) -> np.ndarray:
 	pass
-
-def reconstruct(x, u):
+def reconstruct(x: np.ndarray, u:np.ndarray):
 	a, b, N = 0, -1, len(u) - 1
 	u_sol = np.zeros((N+1,))
 	for ij in range(1,N):
@@ -205,8 +204,7 @@ def reconstruct(x, u):
 		element = u[ij-1]*(lepoly(i_ind,x) + a*lepoly(i_ind+1,x) + b*lepoly(i_ind+2,x))
 		u_sol += element.T[0]
 	return u_sol
-
-def derivs(u, N=63):
+def derivs(u:np.ndarray, N=63):
 	x = legslbndm(N+1)
 	D = legslbdiff(N+1, x)
 	u = u.reshape(N+1,1)
@@ -233,3 +231,4 @@ def debug():
 		x, sol = lg_1d_enriched(N, epsilon, exact_flag)
 		if plot == True:
 			plotter(x, sol, exact_flag, enriched=True)
+

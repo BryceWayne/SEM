@@ -6,9 +6,8 @@ import pickle, os
 # from Cython.Build import cythonize
 
 def load_obj(pickle_file):
-	with open('./data/' + pickle_file + '.pkl', 'rb') as f:
+	with open('data/' + pickle_file + '.pkl', 'rb') as f:
 		return pickle.load(f)
-
 def save_obj(obj, name):
 	cwd = os.getcwd()
 	path = os.path.join(cwd,'data')
@@ -16,8 +15,6 @@ def save_obj(obj, name):
 		os.makedirs('data')
 	with open('data/'+ name + '.pkl', 'wb') as f:
 		pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
-
-
 def lepoly(n:int, x:np.ndarray, nargout=1) -> np.ndarray:
 	if nargout == 1:
 		if n == 0:
@@ -50,7 +47,6 @@ def lepoly(n:int, x:np.ndarray, nargout=1) -> np.ndarray:
 				polylst, poly = poly, polyn
 				pderlst, pder = pder, pdern
 			return pdern, polyn
-
 def legslbndm(n:int) -> np.ndarray:
 	if n <= 1:
 		print("n should be bigger than 1")
@@ -92,4 +88,3 @@ def get_phi(N:int, x:np.ndarray, sigma:float, epsilon:float) -> np.ndarray:
 		else:
 			sol[i-1] = 0
 	return sol
-

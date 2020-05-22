@@ -3,6 +3,8 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle
+from pprint import pprint
+
 
 class LGDataset():
     """Legendre-Galerkin Dataset."""
@@ -15,20 +17,22 @@ class LGDataset():
         """
         with open('./data/' + pickle_file + '.pkl', 'rb') as f:
         	self.data = pickle.load(f)
-        	self.data = self.data[:,:,0,:]
+        	self.data = self.data[:,:,:,:]
         self.transform = transform 
     def __len__(self):
         return len(self.data)
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
             idx = idx.tolist()
-        x = torch.Tensor([self.data[:,0,:][idx]])
-        u = torch.Tensor([self.data[:,1,:][idx]])
-        f = torch.Tensor([self.data[:,2,:][idx]])
+        x = torch.Tensor([self.data[:,0,:][idx]]).reshape(1, 64)
+        u = torch.Tensor([self.data[:,1,:][idx]]).reshape(1, 64)
+        f = torch.Tensor([self.data[:,2,:][idx]]).reshape(1, 64)
+        a = torch.Tensor([self.data[:,3,:][idx]]).reshape(1, 64)
         if self.transform:
             f = f.view(1, 1, 64)
             f = self.transform(f).view(1, 64)
-        sample = {'x': x, 'u': u, 'f': f}
+        sample = {'x': x, 'u': u, 'f': f, 'a': a}
+        # pprint(sample)
         return sample
 
 

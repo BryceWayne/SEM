@@ -70,12 +70,42 @@ class Net(nn.Module) :
 		# out = self.pool(out)
 		out = self.conv2(out)
 		out = F.relu(out)
-		# out = self.conv3(out)
+		out = self.conv3(out)
 		# out = F.relu(out)
 		# print(out.shape)
 		out = out.view(-1, 32*64)
 		out = self.fc1(out)
 		# out = self.fc2(out)
-		out = out.view(out.shape[0], 1, self.d_out)
+		out = out.view(out.shape[0], self.d_out)
 		return out
+
+
+class U(nn.Module) :
+    def __init__(self, d_in, filters, d_out) :
+        super(U,self).__init__()
+        self.d_in = d_in
+        self.filters = filters
+        self.d_out = d_out
+        self.conv1 = conv1d(d_in, filters)
+        self.conv2 = conv1d(filters, filters)
+        self.conv3 = conv1d(filters, filters)
+        self.resblock = ResBlock(filters, filters)
+        self.pool = nn.MaxPool1d(5, padding=2)
+        self.fc1 = nn.Linear(2048, d_out, bias=True)
+        self.fc2 = nn.Linear(4*d_out, d_out, bias=True)
+
+    def forward(self, x) :
+        out = self.conv1(x)
+        out = F.relu(out)
+        # out = self.pool(out)
+        out = self.conv2(out)
+        out = F.relu(out)
+        out = self.conv3(out)
+        # out = F.relu(out)
+        # print(out.shape)
+        out = out.view(-1, 32*64)
+        out = self.fc1(out)
+        # out = self.fc2(out)
+        out = out.view(out.shape[0], self.d_out)
+        return out
 
