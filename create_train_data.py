@@ -23,10 +23,10 @@ def create(N:int, epsilon:float):
 	x, u, f = x.reshape(1,x.shape[0]), u.reshape(1,u.shape[0]), f.reshape(1,f.shape[0])
 	return x, u, f
 
-SIZE = 10000
+SIZE = 100
 N = 63
 epsilon = 1E-1
-# epsilon = np.random.unform(0, 1E-6, SIZE)
+# epsilon = np.random.unform(1E0, 1E-6, SIZE)
 
 data = []
 for i in tqdm(range(SIZE)):
