@@ -32,7 +32,7 @@ class LGDataset():
         if self.transform_f:
             f = f.view(1, 1, 64)
             f = self.transform_f(f).view(1, 64)
-        if self.transform_f:
+        if self.transform_a:
             a = a.view(1, 1, 64)
             a = self.transform_a(a).view(1, 64)
         sample = {'x': x, 'u': u, 'f': f, 'a': a}
