@@ -12,9 +12,9 @@ from tqdm import tqdm
 import LG_1d
 
 def plotter(xx, sample, T):
-	uhat = T[0,:].numpy()
-	ff = sample['f'][0,0,:].numpy()
-	uu = sample['u'][0,0,:].numpy()
+	uhat = T[0,:].detach().numpy()
+	ff = sample['f'][0,0,:].detach().numpy()
+	uu = sample['u'][0,0,:].detach().numpy()
 	mae_error = mae(uhat, uu)
 	l2_error = relative_l2(uhat, uu)
 	plt.figure(figsize=(10,6))
@@ -56,10 +56,10 @@ for batch_idx, sample_batch in enumerate(testloader):
 	break 
 
 # # LOAD MODEL
-model = network.Net(D_in, Filters, D_out)
-model.load_state_dict(torch.load('model.pt'))
+model = network.U(D_in, Filters, D_out)
+model.load_state_dict(torch.load('./model.pt'))
 model.eval()
-u_pred = model2(f)
+u_pred = model(f)
 xx = sample_batch['x'][0,0,:]
 plotter(xx, sample_batch, u_pred)
 

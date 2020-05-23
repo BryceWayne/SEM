@@ -78,7 +78,7 @@ optimizer2 = torch.optim.SGD(model2.parameters(), lr=1e-5, momentum=0.9)
 scheduler1 = torch.optim.lr_scheduler.MultiStepLR(optimizer1, milestones=[10,20,30,40,45], gamma=0.1)
 scheduler2 = torch.optim.lr_scheduler.MultiStepLR(optimizer2, milestones=[20,40,60,80], gamma=0.1)
 
-EPOCHS = 10
+EPOCHS = 11
 for epoch in tqdm(range(EPOCHS)):
 	for batch_idx, sample_batch in enumerate(trainloader):
 		f = Variable(sample_batch['f']).to(device)

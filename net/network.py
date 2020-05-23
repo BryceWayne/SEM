@@ -28,9 +28,9 @@ class ResBlock(nn.Module) :
         super(ResBlock,self).__init__()
         self.n1 = norm(in_planes, norm_type)
         self.relu = nn.ReLU(inplace=True)
-        self.conv1 = conv1d(in_planes, 96)
-        self.n2 = norm(96, norm_type)
-        self.conv2 = conv1d(96, 96)
+        self.conv1 = conv1d(in_planes, 32)
+        self.n2 = norm(32, norm_type)
+        self.conv2 = conv1d(32, 32)
         self.coef = coef
         self.residual = nn.Sequential(
                 self.n1,
@@ -63,11 +63,16 @@ class Net(nn.Module) :
 
     def forward(self, x):
         out = self.conv1(x)
-        for _ in range(40):
-            out = F.relu(self.resblock(out))
-        out = self.avg(out)
+        out = F.relu(out)
+        # out = self.pool(out)
+        out = self.conv2(out)
+        out = F.relu(out)
+        out = self.conv3(out)
+        # out = F.relu(out)
+        # print(out.shape)
         out = out.view(-1, 32*64)
         out = self.fc1(out)
+        # out = self.fc2(out)
         out = out.view(out.shape[0], self.d_out)
         return out
 
