@@ -3,7 +3,11 @@ import os
 import LG_1d as lg
 import numpy as np
 from tqdm import tqdm
+import argparse
 
+parser = argparse.ArgumentParser("SEM")
+parser.add_argument("--size", type=int, default=10000)
+parser.add_argument("--N", type=int, default=63)
 
 def save_obj(obj, name):
 	cwd = os.getcwd()
@@ -20,8 +24,8 @@ def create(N:int, epsilon:float):
 	a = a.reshape(1,a.shape[0])
 	return x, u, f, a
 
-SIZE = 10000
-N = 63
+SIZE = args.size
+N = args.N
 epsilon = 1E-1
 # epsilon = np.random.unform(1E0, 1E-6, SIZE)
 
@@ -33,6 +37,4 @@ for i in tqdm(range(SIZE)):
 
 data = np.array(data)
 
-save_obj(data, f'{SIZE}')
-
-#END
+save_obj(data, f'{SIZE}N{N}')

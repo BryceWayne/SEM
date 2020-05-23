@@ -10,7 +10,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 import LG_1d
+import argparse
 
+parser = argparse.ArgumentParser("SEM")
+parser.add_argument("--epochs", type=int, default=100)
+parser.add_argument("--sched", type=list, default=[10,20,40,60,80])
 
 def plotter(xx, sample, T, epoch):
 	uhat = T[0,:].to('cpu').detach().numpy()
@@ -21,7 +25,7 @@ def plotter(xx, sample, T, epoch):
 	plt.figure(figsize=(10,6))
 	plt.title(f'Example Epoch {epoch}\nMAE Error: {mae_error}\nRel. $L_2$ Error: {l2_error}')
 	plt.plot(xx, uu, 'r-', label='$u$')
-	plt.plot(xx, uhat, 'bo', label='$\\hat{u}$')
+	plt.plot(xx, uhat, 'bo', mfc='none', label='$\\hat{u}$')
 	plt.plot(xx, ff, 'g', label='$f$')
 	plt.xlim(-1,1)
 	plt.grid(alpha=0.618)
@@ -78,9 +82,9 @@ optimizer1 = torch.optim.SGD(model1.parameters(), lr=1e-5, momentum=0.9)
 optimizer2 = torch.optim.SGD(model2.parameters(), lr=1e-5, momentum=0.9)
 # optimizer2a = torch.optim.LBFGS(model2.parameters(), history_size=N, max_iter=4)
 scheduler1 = torch.optim.lr_scheduler.MultiStepLR(optimizer1, milestones=[10,20,30,40,45], gamma=0.1)
-scheduler2 = torch.optim.lr_scheduler.MultiStepLR(optimizer2, milestones=[20,40,60,80], gamma=0.1)
+scheduler2 = torch.optim.lr_scheduler.MultiStepLR(optimizer2, milestones=args.sched, gamma=0.1)
 
-EPOCHS = 100
+EPOCHS = args.epochs
 for epoch in tqdm(range(EPOCHS)):
 	for batch_idx, sample_batch in enumerate(trainloader):
 		f = Variable(sample_batch['f']).to(device)
