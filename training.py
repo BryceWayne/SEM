@@ -25,7 +25,7 @@ def plotter(xx, sample, T, epoch):
 	mae_error = mae(uhat, uu)
 	l2_error = relative_l2(uhat, uu)
 	plt.figure(figsize=(10,6))
-	plt.title(f'Example Epoch {epoch}\nMAE Error: {mae_error}\nRel. $L_2$ Error: {l2_error}')
+	plt.title(f'Example Epoch {epoch}\nMAE Error: {np.round(mae_error, 6)}\nRel. $L_2$ Error: {np.round(l2_error, 6)}')
 	plt.plot(xx, uu, 'r-', label='$u$')
 	plt.plot(xx, uhat, 'bo', mfc='none', label='$\\hat{u}$')
 	plt.plot(xx, ff, 'g', label='$f$')
@@ -34,7 +34,7 @@ def plotter(xx, sample, T, epoch):
 	plt.xlabel('$x$')
 	plt.ylabel('$y$')
 	plt.legend(shadow=True)
-	plt.savefig(f'epoch{epoch}.png')
+	plt.savefig(f'./epoch{epoch}.png')
 	# plt.show()
 	plt.close()
 
@@ -55,11 +55,11 @@ FILE = '10000'
 # Load the dataset
 # norm_f = normalize(pickle_file=FILE, dim='f')
 norm_f = (0.1254, 0.9999)
-print(f"f Mean: {norm_f[0]}\nSDev: {norm_f[1]}")
+# print(f"f Mean: {norm_f[0]}\nSDev: {norm_f[1]}")
 transform_f = transforms.Compose([transforms.Normalize([norm_f[0]], [norm_f[1]])])
 # norm_a = normalize(pickle_file=FILE, dim='a')
-norm_a = (3.1141098588705063E-09, 0.032493)
-print(f"a Mean: {norm_a[0]}\nSDev: {norm_a[1]}")
+norm_a = (3.11411E-09, 0.032493)
+# print(f"a Mean: {norm_a[0]}\nSDev: {norm_a[1]}")
 transform_a = transforms.Compose([transforms.Normalize([norm_a[0]], [norm_a[1]])])
 lg_dataset = LGDataset(pickle_file=FILE, transform_f= transform_f, transform_a=transform_a) #, transform=transform
 # N is batch size; D_in is input dimension; D_out is output dimension.
@@ -105,9 +105,6 @@ for epoch in tqdm(range(EPOCHS)):
 		optimizer2.zero_grad()
 		u_pred = model2(f)
 		assert u_pred.shape == u.shape
-		# 1000 EPOCHS w just MSE on u ######################
-		#
-		####################################################
 		loss2 = criterion2(u_pred, u)
 		# loss1.backward(retain_graph=True)
 		loss2.backward()
