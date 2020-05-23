@@ -56,7 +56,7 @@ for batch_idx, sample_batch in enumerate(testloader):
 	break 
 
 # # LOAD MODEL
-model = network.U(D_in, Filters, D_out)
+model = network.Net(D_in, Filters, D_out)
 model.load_state_dict(torch.load('./model.pt'))
 model.eval()
 u_pred = model(f)
