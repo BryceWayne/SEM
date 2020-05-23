@@ -28,7 +28,7 @@ def plotter(xx, sample, T, epoch):
 	plt.xlabel('$x$')
 	plt.ylabel('$y$')
 	plt.legend(shadow=True)
-	plt.savefig('epoch{epoch}.png')
+	plt.savefig(f'epoch{epoch}.png')
 	plt.show()
 
 def relative_l2(measured, theoretical):
