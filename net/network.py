@@ -71,7 +71,7 @@ class Net(nn.Module) :
         out = F.relu(self.conv3(out))
         out = F.relu(self.conv4(out))
         out = F.relu(self.conv5(out))
-        out = out.view(-1, 5*self.filters*6self.d_out)
+        out = out.view(-1, 5*self.filters*self.d_out)
         out = self.fc1(out)
         # out = self.fc2(out)
         out = out.view(out.shape[0], self.d_out)
