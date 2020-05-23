@@ -29,7 +29,8 @@ def plotter(xx, sample, T, epoch):
 	plt.ylabel('$y$')
 	plt.legend(shadow=True)
 	plt.savefig(f'epoch{epoch}.png')
-	plt.show()
+	# plt.show()
+	plt.close()
 
 def relative_l2(measured, theoretical):
 	return np.linalg.norm(measured-theoretical, ord=2)/np.linalg.norm(theoretical, ord=2)
@@ -101,7 +102,7 @@ for epoch in tqdm(range(EPOCHS)):
 		# 1000 EPOCHS w just MSE on u ######################
 		#
 		####################################################
-		loss2 = criterion1(u_pred, u) + criterion2(u_pred, u)
+		loss2 = criterion2(u_pred, u)
 		# loss1.backward(retain_graph=True)
 		loss2.backward()
 		# optimizer1.step()

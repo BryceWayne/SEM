@@ -11,23 +11,6 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 import LG_1d
 
-def plotter(xx, sample, T):
-	uhat = T[0,:].detach().numpy()
-	ff = sample['f'][0,0,:].detach().numpy()
-	uu = sample['u'][0,0,:].detach().numpy()
-	mae_error = mae(uhat, uu)
-	l2_error = relative_l2(uhat, uu)
-	plt.figure(figsize=(10,6))
-	plt.title(f'Example\nMAE Error: {mae_error}\nRel. $L_2$ Error: {l2_error}')
-	plt.plot(xx, uu, 'r-', label='$u$')
-	plt.plot(xx, uhat, 'bo', label='$\\hat{u}$')
-	plt.plot(xx, ff, 'g', label='$f$')
-	plt.xlim(-1,1)
-	plt.grid(alpha=0.618)
-	plt.xlabel('$x$')
-	plt.ylabel('$y$')
-	plt.legend(shadow=True)
-	plt.show()
 
 def relative_l2(measured, theoretical):
 	return np.linalg.norm(measured-theoretical, ord=2)/np.linalg.norm(theoretical, ord=2)
@@ -61,7 +44,6 @@ model.load_state_dict(torch.load('./model.pt'))
 model.eval()
 u_pred = model(f)
 xx = sample_batch['x'][0,0,:]
-plotter(xx, sample_batch, u_pred)
 uhat = u_pred[0,:].detach().numpy()
 ff = sample_batch['f'][0,0,:].detach().numpy()
 uu = sample_batch['u'][0,0,:].detach().numpy()
@@ -78,4 +60,5 @@ plt.xlabel('$x$')
 plt.ylabel('$y$')
 plt.legend(shadow=True)
 plt.savefig('out_of_sample.png')
-plt.show()
+# plt.show()
+plt.close()
