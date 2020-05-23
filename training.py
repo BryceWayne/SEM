@@ -114,7 +114,7 @@ for epoch in tqdm(range(EPOCHS)):
 		plotter(xx, sample_batch, u_pred)
 
 # SAVE MODEL
-torch.save(model.state_dict(), 'model.pt')
+torch.save(model2.state_dict(), 'model.pt')
 # # LOAD MODEL
 # model = network.Net(D_in, Filters, D_out)
 # model.load_state_dict(torch.load('model.pt'))
