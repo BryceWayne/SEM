@@ -169,7 +169,7 @@ for _ in range(L):
 	plt.xlabel('$x$')
 	plt.ylabel('$u$')
 	plt.title(f'Example {_+1}\nMAE Error: {mae_error}\nRel. $L_2$ Error: {l2_error}')
-	plt.plot(xx, uu, 'r-', label='$u$')
+	plt.plot(xx, uu[0], 'r-', label='$u$')
 	plt.plot(xx, uhat, 'b--', label='$\\hat{u}$')
 	plt.plot(xx, ff, 'g', label='$f$')
 	plt.legend(shadow=True)
