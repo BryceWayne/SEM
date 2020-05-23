@@ -99,7 +99,7 @@ for epoch in tqdm(range(EPOCHS)):
 	# scheduler1.step()
 	scheduler2.step()
 	# print(f"\nLoss1: {np.round(float(loss1.to('cpu').detach()), 6)}")
-	print(f"\nLoss2: {np.round(float(loss2.to('cpu').detach()), 6)}")
+	print(f"Loss: {np.round(float(loss2.to('cpu').detach()), 6)}")
 	# if epoch % 10 == 0 and epoch > 0:
 	# 	xx = sample_batch['x'][0,0,:]
 	# 	plotter(xx, sample_batch, a_pred)
