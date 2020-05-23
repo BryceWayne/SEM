@@ -12,14 +12,14 @@ from tqdm import tqdm
 import LG_1d
 
 
-def plotter(xx, sample, T):
+def plotter(xx, sample, T, epoch):
 	uhat = T[0,:].to('cpu').detach().numpy()
 	ff = sample['f'][0,0,:].to('cpu').detach().numpy()
 	uu = sample['u'][0,0,:].to('cpu').detach().numpy()
 	mae_error = mae(uhat, uu)
 	l2_error = relative_l2(uhat, uu)
 	plt.figure(figsize=(10,6))
-	plt.title(f'Example\nMAE Error: {mae_error}\nRel. $L_2$ Error: {l2_error}')
+	plt.title(f'Example Epoch {epoch}\nMAE Error: {mae_error}\nRel. $L_2$ Error: {l2_error}')
 	plt.plot(xx, uu, 'r-', label='$u$')
 	plt.plot(xx, uhat, 'bo', label='$\\hat{u}$')
 	plt.plot(xx, ff, 'g', label='$f$')
@@ -28,6 +28,7 @@ def plotter(xx, sample, T):
 	plt.xlabel('$x$')
 	plt.ylabel('$y$')
 	plt.legend(shadow=True)
+	plt.savefig('epoch{epoch}.png')
 	plt.show()
 
 def relative_l2(measured, theoretical):
@@ -111,7 +112,7 @@ for epoch in tqdm(range(EPOCHS)):
 	print(f"Loss: {np.round(float(loss2.to('cpu').detach()), 6)}")
 	if epoch % 10 == 0 and epoch > 0:
 		xx = sample_batch['x'][0,0,:]
-		plotter(xx, sample_batch, u_pred)
+		plotter(xx, sample_batch, u_pred, epoch)
 
 # SAVE MODEL
 torch.save(model2.state_dict(), 'model.pt')
