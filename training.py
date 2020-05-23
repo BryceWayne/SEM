@@ -13,18 +13,18 @@ import LG_1d
 
 
 def plotter(xx, sample, T):
-	ahat = T[0,:].to('cpu').detach().numpy()
-	f = sample['f'][0,0,:].to('cpu').detach().numpy()
-	a = sample['a'][0,0,:].to('cpu').detach().numpy()
+	uhat = T[0,:].to('cpu').detach().numpy()
+	ff = sample['f'][0,0,:].to('cpu').detach().numpy()
+	uu = sample['u'][0,0,:].to('cpu').detach().numpy()
 	plt.figure(figsize=(10,6))
 	plt.xlim(-1,1)
 	plt.grid(alpha=0.618)
 	plt.xlabel('$x$')
 	plt.ylabel('$y$')
 	plt.title(f'Example')
-	plt.plot(xx, a, 'r-', label='$\\alpha$')
-	plt.plot(xx, ahat, 'b--', label='$\\hat{\\alpha}$')
-	# plt.plot(xx, f, 'g', label='$f$')
+	plt.plot(xx, uu, 'r-', label='$\\alpha$')
+	plt.plot(xx, uhat, 'b--', label='$\\hat{\\alpha}$')
+	plt.plot(xx, ff, 'g', label='$f$')
 	plt.legend(shadow=True)
 	plt.show()
 # Check if CUDA is available and then use it.
@@ -69,7 +69,7 @@ optimizer2 = torch.optim.SGD(model2.parameters(), lr=1e-5, momentum=0.9)
 scheduler1 = torch.optim.lr_scheduler.MultiStepLR(optimizer1, milestones=[10,20,30,40,45], gamma=0.1)
 scheduler2 = torch.optim.lr_scheduler.MultiStepLR(optimizer2, milestones=[20,40,60,80], gamma=0.1)
 
-EPOCHS = 100
+EPOCHS = 10
 for epoch in tqdm(range(EPOCHS)):
 	for batch_idx, sample_batch in enumerate(trainloader):
 		f = Variable(sample_batch['f']).to(device)
@@ -100,9 +100,9 @@ for epoch in tqdm(range(EPOCHS)):
 	scheduler2.step()
 	# print(f"\nLoss1: {np.round(float(loss1.to('cpu').detach()), 6)}")
 	print(f"Loss: {np.round(float(loss2.to('cpu').detach()), 6)}")
-	# if epoch % 10 == 0 and epoch > 0:
-	# 	xx = sample_batch['x'][0,0,:]
-	# 	plotter(xx, sample_batch, a_pred)
+	if epoch % 10 == 0 and epoch > 0:
+		xx = sample_batch['x'][0,0,:]
+		plotter(xx, sample_batch, u_pred)
 
 # SAVE MODEL
 # torch.save(model.state_dict(), 'model.pt')
