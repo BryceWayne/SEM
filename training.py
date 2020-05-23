@@ -15,6 +15,8 @@ import argparse
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--epochs", type=int, default=100)
 parser.add_argument("--sched", type=list, default=[10,20,40,60,80])
+args = parser.parse_args()
+
 
 def plotter(xx, sample, T, epoch):
 	uhat = T[0,:].to('cpu').detach().numpy()

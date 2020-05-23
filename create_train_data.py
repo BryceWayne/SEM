@@ -8,6 +8,8 @@ import argparse
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--size", type=int, default=10000)
 parser.add_argument("--N", type=int, default=63)
+args = parser.parse_args()
+
 
 def save_obj(obj, name):
 	cwd = os.getcwd()
