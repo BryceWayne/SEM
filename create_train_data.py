@@ -20,7 +20,7 @@ def create(N:int, epsilon:float):
 	a = a.reshape(1,a.shape[0])
 	return x, u, f, a
 
-SIZE = 10000
+SIZE = 100000
 N = 63
 epsilon = 1E-1
 # epsilon = np.random.unform(1E0, 1E-6, SIZE)
