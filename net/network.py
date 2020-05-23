@@ -57,11 +57,11 @@ class Net(nn.Module) :
         self.filters = filters
         self.d_out = d_out
         self.conv1 = conv1d(d_in, filters)
-        self.conv2 = conv1d(filters, filters)
-        self.conv3 = conv1d(filters, filters)
+        self.conv2 = conv1d(filters, 2*filters)
+        self.conv3 = conv1d(2*filters, 3*filters)
         self.resblock = ResBlock(filters, filters)
         self.pool = nn.MaxPool1d(5, padding=2)
-        self.fc1 = nn.Linear(2048, d_out, bias=True)
+        self.fc1 = nn.Linear(96*64, d_out, bias=True)
 
     def forward(self, x):
         out = self.conv1(x)
@@ -69,7 +69,7 @@ class Net(nn.Module) :
         out = self.conv2(out)
         out = F.relu(out)
         out = self.conv3(out)
-        out = out.view(-1, 32*64)
+        out = out.view(-1, 96*64)
         out = self.fc1(out)
         out = out.view(out.shape[0], self.d_out)
         return out

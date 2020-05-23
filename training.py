@@ -13,7 +13,7 @@ import LG_1d
 import argparse
 
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--epochs", type=int, default=100)
+parser.add_argument("--epochs", type=int, default=10)
 parser.add_argument("--sched", type=list, default=[10,20,40,60,80])
 args = parser.parse_args()
 
@@ -72,7 +72,7 @@ def weights_init(m):
         torch.nn.init.xavier_uniform_(m.weight)
         torch.nn.init.zeros_(m.bias)
 model1 = network.Net(D_in, Filters, D_out)
-model2 = network.U(D_in, Filters, D_out)
+model2 = network.Net(D_in, Filters, D_out)
 model1.apply(weights_init)
 model2.apply(weights_init)
 model1.to(device)
