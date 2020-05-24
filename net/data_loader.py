@@ -29,6 +29,7 @@ class LGDataset():
         u = torch.Tensor([self.data[:,1,:][idx]]).reshape(1, 64)
         f = torch.Tensor([self.data[:,2,:][idx]]).reshape(1, 64)
         a = torch.Tensor([self.data[:,3,:][idx]]).reshape(1, 64)
+        a = a[:, 0:8]
         if self.transform_f:
             f = f.view(1, 1, 64)
             f = self.transform_f(f).view(1, 64)
