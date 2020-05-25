@@ -22,17 +22,17 @@ def lepoly(n:int, x:np.ndarray, nargout=1) -> np.ndarray:
 		elif n == 1:
 			return x
 		else:
-			try:
-				polyn = load_obj(f"LG{n}")
-				return polyn
-			except:
-				polylst = np.ones_like(x) #L_0(x)=1
-				poly = x                  #L_1(x)=x
-				for k in range(2,n+1):
-					polyn = ((2*k-1)*x*poly-(k-1)*polylst)/k
-					polylst, poly = poly, polyn
-				save_obj(polyn, name=f'LG{n}')
-				return polyn
+			# try:
+			# 	polyn = load_obj(f"LG{n}")
+			# 	return polyn
+			# except:
+			polylst = np.ones_like(x) #L_0(x)=1
+			poly = x                  #L_1(x)=x
+			for k in range(2,n+1):
+				polyn = ((2*k-1)*x*poly-(k-1)*polylst)/k
+				polylst, poly = poly, polyn
+			save_obj(polyn, name=f'LG{n}')
+			return polyn
 	elif nargout == 2:
 		if n == 0:
 			return np.zeros_like(x), np.ones_like(x)

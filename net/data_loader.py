@@ -9,7 +9,7 @@ from pprint import pprint
 class LGDataset():
     """Legendre-Galerkin Dataset."""
 
-    def __init__(self, pickle_file, transform_f=None, transform_a=None):
+    def __init__(self, pickle_file, transform_f=None, transform_a=None, subsample=None):
         """
         Args:
             pickle_file (string): Path to the pkl file with annotations.
@@ -20,6 +20,7 @@ class LGDataset():
         	self.data = self.data[:,:,:,:]
         self.transform_f = transform_f
         self.transform_a = transform_a
+        self.subsample = subsample
     def __len__(self):
         return len(self.data)
     def __getitem__(self, idx):
@@ -29,7 +30,8 @@ class LGDataset():
         u = torch.Tensor([self.data[:,1,:][idx]]).reshape(1, 64)
         f = torch.Tensor([self.data[:,2,:][idx]]).reshape(1, 64)
         a = torch.Tensor([self.data[:,3,:][idx]]).reshape(1, 64)
-        a = a[:, 0:8]
+        if self.subsample:
+            a = a[:,:self.subsample]
         if self.transform_f:
             f = f.view(1, 1, 64)
             f = self.transform_f(f).view(1, 64)
