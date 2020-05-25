@@ -11,6 +11,9 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 import LG_1d
 import argparse
+import gc
+gc.collect()
+torch.cuda.empty_cache()
 
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--epochs", type=int, default=11)
@@ -108,13 +111,13 @@ criterion1 = torch.nn.L1Loss()
 criterion2 = torch.nn.MSELoss(reduction="sum")
 # optimizer1 = torch.optim.SGD(model1.parameters(), lr=1e-6, momentum=0.9)
 optimizer1 = torch.optim.LBFGS(model1.parameters(), history_size=10, max_iter=5)
-scheduler1 = torch.optim.lr_scheduler.MultiStepLR(optimizer1, milestones=args.sched, gamma=0.1)
+scheduler1 = torch.optim.lr_scheduler.MultiStepLR(optimizer1, milestones=args.sched, gamma=0.9)
 
 EPOCHS = args.epochs
 for epoch in tqdm(range(EPOCHS)):
 	for batch_idx, sample_batch in enumerate(trainloader):
 		f = Variable(sample_batch['f']).to(device)
-		a = Variable(sample_batch['a']).reshape(N, D_out).to(device)
+		# a = Variable(sample_batch['a']).reshape(N, D_out).to(device)
 		u = Variable(sample_batch['u']).reshape(N, D_out).to(device)
 		"""
 		f -> ?alphas -> u
