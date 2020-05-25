@@ -30,14 +30,14 @@ class LGDataset():
         u = torch.Tensor([self.data[:,1,:][idx]]).reshape(1, 32)
         f = torch.Tensor([self.data[:,2,:][idx]]).reshape(1, 32)
         # a = torch.Tensor([self.data[:,3,:][idx]]).reshape(1, 32)
-        if self.subsample:
-            a = a[:,:self.subsample]
+        # if self.subsample:
+        #     a = a[:,:self.subsample]
         if self.transform_f:
             f = f.view(1, 1, 32)
             f = self.transform_f(f).view(1, 32)
-        if self.transform_a:
-            a = a.view(1, 1, 64)
-            a = self.transform_a(a).view(1, 64)
+        # if self.transform_a:
+        #     a = a.view(1, 1, 64)
+        #     a = self.transform_a(a).view(1, 64)
         sample = {'x': x, 'u': u, 'f': f} #, 'a': a
         # pprint(sample)
         return sample
