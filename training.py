@@ -84,7 +84,7 @@ else:
   dev = "cpu"
 device = torch.device(dev)  
 
-N, D_in, Filters, D_out = 5000, 1, 32, 32
+N, D_in, Filters, D_out = 1000, 1, 32, 32
 FILE = str(args.file)
 # Load the dataset
 # norm_f = normalize(pickle_file=FILE, dim='f')
@@ -111,7 +111,7 @@ model1.to(device)
 criterion1 = torch.nn.L1Loss()
 criterion2 = torch.nn.MSELoss(reduction="sum")
 # optimizer1 = torch.optim.SGD(model1.parameters(), lr=1e-6, momentum=0.9)
-optimizer1 = torch.optim.LBFGS(model1.parameters(), history_size=10, max_iter=5)
+optimizer1 = torch.optim.LBFGS(model1.parameters(), history_size=25, max_iter=10)
 scheduler1 = torch.optim.lr_scheduler.MultiStepLR(optimizer1, milestones=args.sched, gamma=0.9)
 
 EPOCHS = args.epochs
