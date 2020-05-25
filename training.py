@@ -84,7 +84,7 @@ else:
   dev = "cpu"
 device = torch.device(dev)  
 
-N, D_in, Filters, D_out = 5000, 1, 32, 64
+N, D_in, Filters, D_out = 5000, 1, 32, 32
 FILE = str(args.file)
 # Load the dataset
 # norm_f = normalize(pickle_file=FILE, dim='f')

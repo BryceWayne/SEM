@@ -26,19 +26,19 @@ class LGDataset():
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
             idx = idx.tolist()
-        x = torch.Tensor([self.data[:,0,:][idx]]).reshape(1, 64)
-        u = torch.Tensor([self.data[:,1,:][idx]]).reshape(1, 64)
-        f = torch.Tensor([self.data[:,2,:][idx]]).reshape(1, 64)
-        a = torch.Tensor([self.data[:,3,:][idx]]).reshape(1, 64)
+        x = torch.Tensor([self.data[:,0,:][idx]]).reshape(1, 32)
+        u = torch.Tensor([self.data[:,1,:][idx]]).reshape(1, 32)
+        f = torch.Tensor([self.data[:,2,:][idx]]).reshape(1, 32)
+        # a = torch.Tensor([self.data[:,3,:][idx]]).reshape(1, 32)
         if self.subsample:
             a = a[:,:self.subsample]
         if self.transform_f:
-            f = f.view(1, 1, 64)
-            f = self.transform_f(f).view(1, 64)
+            f = f.view(1, 1, 32)
+            f = self.transform_f(f).view(1, 32)
         if self.transform_a:
             a = a.view(1, 1, 64)
             a = self.transform_a(a).view(1, 64)
-        sample = {'x': x, 'u': u, 'f': f, 'a': a}
+        sample = {'x': x, 'u': u, 'f': f} #, 'a': a
         # pprint(sample)
         return sample
 
