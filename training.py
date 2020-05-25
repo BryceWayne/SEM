@@ -13,7 +13,7 @@ import LG_1d
 import argparse
 
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--epochs", type=int, default=201)
+parser.add_argument("--epochs", type=int, default=21)
 parser.add_argument("--sched", type=list, default=[20,40,60,80,90])
 args = parser.parse_args()
 
@@ -147,7 +147,7 @@ for epoch in tqdm(range(EPOCHS)):
 		plotter(xx, sample_batch, u_pred, epoch)
 
 # SAVE MODEL
-torch.save(model2.state_dict(), 'model.pt')
+torch.save(model1.state_dict(), 'model.pt')
 # # LOAD MODEL
 # model = network.Net(D_in, Filters, D_out)
 # model.load_state_dict(torch.load('model.pt'))
