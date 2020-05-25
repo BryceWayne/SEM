@@ -111,7 +111,7 @@ model1.to(device)
 criterion1 = torch.nn.L1Loss()
 criterion2 = torch.nn.MSELoss(reduction="sum")
 # optimizer1 = torch.optim.SGD(model1.parameters(), lr=1e-6, momentum=0.9)
-optimizer1 = torch.optim.LBFGS(model1.parameters(), history_size=25, max_iter=10)
+optimizer1 = torch.optim.LBFGS(model1.parameters(), tolerance_grad=1e-10, tolerance_change=1e-10)
 scheduler1 = torch.optim.lr_scheduler.MultiStepLR(optimizer1, milestones=args.sched, gamma=0.9)
 
 EPOCHS = args.epochs
