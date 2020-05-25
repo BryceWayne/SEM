@@ -61,7 +61,7 @@ def normalize(pickle_file, dim):
     sum_of_square = torch.sum(f ** 2, dim=[0])
     fst_moment = (f.shape[0] * fst_moment + sum_) / (f.shape[0] + f.shape[1])
     snd_moment = (f.shape[0] * snd_moment + sum_of_square) / (f.shape[0] + f.shape[1])
-    return fst_moment, torch.sqrt(snd_moment - fst_moment ** 2)
+    return fst_moment.mean().item(), torch.sqrt(snd_moment - fst_moment ** 2).mean().item()
 def load_obj(name):
     with open('./data/' + name + '.pkl', 'rb') as f:
         data = pickle.load(f)

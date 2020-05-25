@@ -13,8 +13,8 @@ import LG_1d
 import argparse
 
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--epochs", type=int, default=21)
-parser.add_argument("--sched", type=list, default=[20,40,60,80,90])
+parser.add_argument("--epochs", type=int, default=11)
+parser.add_argument("--sched", type=list, default=[25,50,75,100])
 args = parser.parse_args()
 
 
@@ -79,7 +79,7 @@ else:
   dev = "cpu"
 device = torch.device(dev)  
 
-N, D_in, Filters, D_out = 100, 1, 32, 64
+N, D_in, Filters, D_out = 2000, 1, 32, 64
 FILE = '10000'
 # Load the dataset
 # norm_f = normalize(pickle_file=FILE, dim='f')

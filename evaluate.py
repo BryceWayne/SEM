@@ -27,11 +27,11 @@ N, D_in, Filters, D_out = 100, 1, 32, 64
 
 # #Get out of sample data
 FILE = '1000'
-norm_f = normalize(pickle_file=FILE, dim='f')
-norm_f = (norm_f[0].mean().item(), norm_f[1].mean().item())
-print(f"f Mean: {norm_f[0]}\nSDev: {norm_f[1]}")
-transform_f = transforms.Compose([transforms.Normalize([norm_f[0]], [norm_f[1]])])
-test_data = LGDataset(pickle_file=FILE, transform_f=transform_f)
+# norm_f = normalize(pickle_file=FILE, dim='f')
+# norm_f = (norm_f[0].mean().item(), norm_f[1].mean().item())
+# print(f"f Mean: {norm_f[0]}\nSDev: {norm_f[1]}")
+# transform_f = transforms.Compose([transforms.Normalize([norm_f[0]], [norm_f[1]])])
+test_data = LGDataset(pickle_file=FILE)
 testloader = torch.utils.data.DataLoader(test_data, batch_size=N, shuffle=True)
 for batch_idx, sample_batch in enumerate(testloader):
 	f = Variable(sample_batch['f'])
@@ -59,6 +59,6 @@ plt.grid(alpha=0.618)
 plt.xlabel('$x$')
 plt.ylabel('$y$')
 plt.legend(shadow=True)
-plt.savefig('out_of_sample.png')
+plt.savefig('./pics/out_of_sample.png')
 # plt.show()
 plt.close()
