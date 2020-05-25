@@ -29,6 +29,7 @@ def plotter(xx, sample, T, epoch):
 	plt.title(f'Solution Example Epoch {epoch}\n'\
 		      f'Solution MAE Error: {np.round(mae_error, 6)}\n'\
 		      f'Solution Rel. $L_2$ Error: {np.round(l2_error, 6)}')
+	# xx = range(len(uu))
 	plt.plot(xx, uu, 'r-o', mfc='none', label='$u$')
 	plt.plot(xx, uhat, 'b--', mfc='none', label='$\\hat{u}$')
 	plt.plot(xx, ff, 'g', label='$f$')
@@ -79,7 +80,7 @@ else:
   dev = "cpu"
 device = torch.device(dev)  
 
-N, D_in, Filters, D_out = 2000, 1, 32, 64
+N, D_in, Filters, D_out = 5000, 1, 32, 64
 FILE = '10000'
 # Load the dataset
 # norm_f = normalize(pickle_file=FILE, dim='f')
@@ -90,7 +91,7 @@ transform_f = transforms.Compose([transforms.Normalize([norm_f[0]], [norm_f[1]])
 # norm_a = (3.11411E-09, 0.032493)
 # print(f"a Mean: {norm_a[0]}\nSDev: {norm_a[1]}")
 # transform_a = transforms.Compose([transforms.Normalize([norm_a[0]], [norm_a[1]])])
-lg_dataset = LGDataset(pickle_file=FILE, transform_f=transform_f, subsample=D_out) #, transform_f= transform_f, transform_a=transform_a
+lg_dataset = LGDataset(pickle_file=FILE, subsample=D_out) #, transform_f= transform_f, transform_a=transform_a
 # N is batch size; D_in is input dimension; D_out is output dimension.
 #Batch DataLoader with shuffle
 trainloader = torch.utils.data.DataLoader(lg_dataset, batch_size=N, shuffle=True)
@@ -131,7 +132,7 @@ for epoch in tqdm(range(EPOCHS)):
 			# 	f_pred[_,:] = torch.tensor((-1E-1*uxx-ux).T[0]).to(device)
 			# f_out = f.clone().reshape(N, D_out)
 			# f_pred.reshape(N, D_out)
-			loss1 = criterion1(u_pred, u)# + criterion2(f_pred, f_out)
+			loss1 = criterion2(u_pred, u)# + criterion2(f_pred, f_out)
 			if loss1.requires_grad:
 				loss1.backward()
 			return u_pred, loss1
@@ -139,7 +140,7 @@ for epoch in tqdm(range(EPOCHS)):
 		u_pred, loss1 = closure()
 		# print(f"\nLoss1: {np.round(float(loss1.to('cpu').detach()), 6)}")
 		optimizer1.step(loss1.item)
-	scheduler1.step()
+	# scheduler1.step()
 	print(f"\nLoss1: {np.round(float(loss1.to('cpu').detach()), 6)}")
 	# end
 	if epoch % 10 == 0 and epoch > 0:
