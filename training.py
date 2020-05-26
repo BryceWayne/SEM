@@ -16,6 +16,7 @@ gc.collect()
 torch.cuda.empty_cache()
 
 parser = argparse.ArgumentParser("SEM")
+parser.add_argument("--N", type=int, default=1000)
 parser.add_argument("--file", type=int, default=10000)
 parser.add_argument("--epochs", type=int, default=11)
 parser.add_argument("--sched", type=list, default=[25,50,75,100])
@@ -84,7 +85,7 @@ else:
   dev = "cpu"
 device = torch.device(dev)  
 
-N, D_in, Filters, D_out = 1000, 1, 32, 32
+N, D_in, Filters, D_out = args.N, 1, 32, 32
 FILE = str(args.file)
 # Load the dataset
 # norm_f = normalize(pickle_file=FILE, dim='f')
