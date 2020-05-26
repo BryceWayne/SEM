@@ -136,7 +136,7 @@ for epoch in tqdm(range(EPOCHS)):
 			# 	f_pred[_,:] = torch.tensor((-1E-1*uxx-ux).T[0]).to(device)
 			# f_out = f.clone().reshape(N, D_out)
 			# f_pred.reshape(N, D_out)
-			loss1 = criterion2(u_pred, u)# + criterion2(f_pred, f_out)
+			loss1 = criterion1(u_pred, u) + criterion2(u_pred, u)# + criterion2(f_pred, f_out)
 			if loss1.requires_grad:
 				loss1.backward()
 			return u_pred, loss1
