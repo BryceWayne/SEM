@@ -66,7 +66,7 @@ class Net(nn.Module) :
         self.fc1 = nn.Linear(5*filters*d_out, d_out, bias=True) #3*self.filters*self.d_out
         self.fc2 = nn.Linear(2*d_out, d_out, bias=True)
     def forward(self, x):
-        out = self.conv1(x)
+        out = F.relu(self.conv1(x))
         out = F.relu(self.conv2(out))
         out = F.relu(self.conv3(out))
         out = F.relu(self.conv4(out))
