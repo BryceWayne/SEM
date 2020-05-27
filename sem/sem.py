@@ -31,7 +31,7 @@ def lepoly(n:int, x:np.ndarray, nargout=1) -> np.ndarray:
 			for k in range(2,n+1):
 				polyn = ((2*k-1)*x*poly-(k-1)*polylst)/k
 				polylst, poly = poly, polyn
-			save_obj(polyn, name=f'LG{n}')
+			# save_obj(polyn, name=f'LG{n}')
 			return polyn
 	elif nargout == 2:
 		if n == 0:
