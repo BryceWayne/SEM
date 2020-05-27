@@ -9,6 +9,7 @@ import argparse
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--size", type=int, default=10000)
 parser.add_argument("--N", type=int, default=63)
+parser.add_argument("--eps", type=bool, default=False)
 args = parser.parse_args()
 
 
@@ -91,7 +92,7 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False):
 
 	def loop(N, epsilon, size, lepolys, eps_flag):
 		if eps_flag == True:
-			epsilons = np.random.unform(1E0, 1E-6, SIZE)
+			epsilons = np.random.uniform(1E0, 1E-6, SIZE)
 		data = []
 		U, F, ALPHAS, PARAMS = [], [], [], []
 		for n in tqdm(range(size)):
@@ -112,6 +113,7 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False):
 SIZE = args.size
 N = args.N
 epsilon = 1E-1
+EPS_FLAG = args.eps
 # epsilon = np.random.unform(1E0, 1E-6, SIZE)
 
 # data = []
@@ -120,7 +122,7 @@ epsilon = 1E-1
 # 	x, u, f, a = create(N, epsilon)
 # 	data.append([x,u,f,a])
 
-data = create_fast(N, epsilon, SIZE, False)
+data = create_fast(N, epsilon, SIZE, EPS_FLAG)
 
 data = np.array(data)
 
