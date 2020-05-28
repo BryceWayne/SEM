@@ -8,7 +8,7 @@ import argparse
 
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--size", type=int, default=10000)
-parser.add_argument("--N", type=int, default=63)
+parser.add_argument("--N", type=int, default=31)
 parser.add_argument("--eps", type=bool, default=False)
 args = parser.parse_args()
 

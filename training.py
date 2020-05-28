@@ -29,8 +29,9 @@ def legslbndm(n=64):
 
 
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--N", type=int, default=10000)
+parser.add_argument("--batch", type=int, default=10000)
 parser.add_argument("--file", type=int, default=10000)
+parser.add_argument("--N", type=int, default=31)
 parser.add_argument("--epochs", type=int, default=11)
 parser.add_argument("--sched", type=list, default=[25,50,75,100])
 args = parser.parse_args()
@@ -38,7 +39,6 @@ args = parser.parse_args()
 
 def plotter(xx, sample, T, epoch):
 	uhat = T[0,:].to('cpu').detach().numpy()
-	# xx = sample['x'][0,0,:].to('cpu').detach().numpy()
 	ff = sample['f'][0,0,:].to('cpu').detach().numpy()
 	uu = sample['u'][0,0,:].to('cpu').detach().numpy()
 	mae_error = mae(uhat, uu)
@@ -98,14 +98,13 @@ else:
   dev = "cpu"
 device = torch.device(dev)  
 
-N, D_in, Filters, D_out = args.N, 1, 32, 64
-FILE = str(args.file)
-FILE = '10000N63'
+N, D_in, Filters, D_out = args.batch, 1, 32, args.N+1
+FILE = str(args.file) + str(args.N)
 # Load the dataset
 # norm_f = normalize(pickle_file=FILE, dim='f')
-norm_f = (0.1254, 0.9999)
+# norm_f = (0.1254, 0.9999)
 # print(f"f Mean: {norm_f[0]}\nSDev: {norm_f[1]}")
-transform_f = transforms.Compose([transforms.Normalize([norm_f[0]], [norm_f[1]])])
+# transform_f = transforms.Compose([transforms.Normalize([norm_f[0]], [norm_f[1]])])
 # norm_a = normalize(pickle_file=FILE, dim='a')
 # norm_a = (3.11411E-09, 0.032493)
 # print(f"a Mean: {norm_a[0]}\nSDev: {norm_a[1]}")
