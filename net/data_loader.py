@@ -9,7 +9,7 @@ from pprint import pprint
 class LGDataset():
     """Legendre-Galerkin Dataset."""
 
-    def __init__(self, pickle_file, transform_f=None, transform_a=None, subsample=None):
+    def __init__(self, pickle_file, shape=64, transform_f=None, transform_a=None, subsample=None):
         """
         Args:
             pickle_file (string): Path to the pkl file with annotations.
@@ -21,20 +21,21 @@ class LGDataset():
         self.transform_f = transform_f
         self.transform_a = transform_a
         self.subsample = subsample
+        self.shape = shape
     def __len__(self):
         return len(self.data)
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
             idx = idx.tolist()
-        u = torch.Tensor([self.data[:,0][idx]]).reshape(1, 64)
-        f = torch.Tensor([self.data[:,1][idx]]).reshape(1, 64)
-        a = torch.Tensor([self.data[:,2][idx]]).reshape(1, 64)
+        u = torch.Tensor([self.data[:,0][idx]]).reshape(1, self.shape)
+        f = torch.Tensor([self.data[:,1][idx]]).reshape(1, self.shape)
+        a = torch.Tensor([self.data[:,2][idx]]).reshape(1, self.shape)
         p = torch.Tensor([self.data[:,3][idx]]).reshape(1, 4)
         # if self.subsample:
         #     a = a[:,:self.subsample]
         if self.transform_f:
-            f = f.view(1, 1, 64)
-            f = self.transform_f(f).view(1, 64)
+            f = f.view(1, 1, self.shape)
+            f = self.transform_f(f).view(1, self.shape)
         # if self.transform_a:
         #     a = a.view(1, 1, 64)
         #     a = self.transform_a(a).view(1, 64)

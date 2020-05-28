@@ -26,7 +26,7 @@ def legslbndm(n=64):
 
 
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--file", type=int, default=1000)
+parser.add_argument("--file", type=str, default='100N31')
 args = parser.parse_args()
 
 
@@ -40,16 +40,19 @@ if torch.cuda.is_available():
   dev = "cuda:0" 
 else:  
   dev = "cpu"
-device = torch.device(dev)  
-N, D_in, Filters, D_out = 1000, 1, 32, 64
+device = torch.device(dev)
+
+SHAPE = args.file.split('N')[1] + 1
+BATCH = int(args.file.split('N')[0])
+N, D_in, Filters, D_out = BATCH, 1, 32, SHAPE
 
 # #Get out of sample data
-FILE = '100N63'
+FILE = args.file
 # norm_f = normalize(pickle_file=FILE, dim='f')
 # norm_f = (norm_f[0].mean().item(), norm_f[1].mean().item())
 # print(f"f Mean: {norm_f[0]}\nSDev: {norm_f[1]}")
 # transform_f = transforms.Compose([transforms.Normalize([norm_f[0]], [norm_f[1]])])
-test_data = LGDataset(pickle_file=FILE)
+test_data = LGDataset(pickle_file=FILE, shape=SHAPE)
 testloader = torch.utils.data.DataLoader(test_data, batch_size=N, shuffle=True)
 for batch_idx, sample_batch in enumerate(testloader):
 	f = Variable(sample_batch['f'])

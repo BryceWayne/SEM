@@ -98,7 +98,8 @@ else:
   dev = "cpu"
 device = torch.device(dev)  
 
-N, D_in, Filters, D_out = args.batch, 1, 32, args.N+1
+SHAPE = args.N + 1
+N, D_in, Filters, D_out = args.batch, 1, 32, SHAPE
 FILE = str(args.file) + 'N' + str(args.N)
 # Load the dataset
 # norm_f = normalize(pickle_file=FILE, dim='f')
@@ -109,7 +110,7 @@ FILE = str(args.file) + 'N' + str(args.N)
 # norm_a = (3.11411E-09, 0.032493)
 # print(f"a Mean: {norm_a[0]}\nSDev: {norm_a[1]}")
 # transform_a = transforms.Compose([transforms.Normalize([norm_a[0]], [norm_a[1]])])
-lg_dataset = LGDataset(pickle_file=FILE, subsample=D_out) #, transform_f= transform_f, transform_a=transform_a
+lg_dataset = LGDataset(pickle_file=FILE, shape=SHAPE, subsample=D_out) #, transform_f= transform_f, transform_a=transform_a
 # N is batch size; D_in is input dimension; D_out is output dimension.
 #Batch DataLoader with shuffle
 trainloader = torch.utils.data.DataLoader(lg_dataset, batch_size=N, shuffle=True)
