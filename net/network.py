@@ -63,7 +63,7 @@ class Net(nn.Module) :
         self.conv5 = conv1d(4*filters, 5*filters, kernel_size=7)
         self.resblock = ResBlock(filters, filters)
         self.pool = nn.MaxPool1d(kernel_size=7, stride=1, padding=3)
-        self.fc1 = nn.Linear(filters*d_out, d_out, bias=True)
+        self.fc1 = nn.Linear(5*filters*d_out, d_out, bias=True)
     def forward(self, x):
         out = F.relu(self.conv1(x))
         out = F.relu(self.conv2(out))
