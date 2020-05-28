@@ -11,6 +11,8 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 import LG_1d
 import argparse
+import scipy as sp
+from scipy.sparse import diags
 
 def legslbndm(n=64):
 	av = np.zeros((1,n-2)).T
