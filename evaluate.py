@@ -10,6 +10,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 import LG_1d
+import argparse
+
+
+parser = argparse.ArgumentParser("SEM")
+parser.add_argument("--file", type=int, default=1000)
+args = parser.parse_args()
 
 
 def relative_l2(measured, theoretical):
@@ -26,7 +32,7 @@ device = torch.device(dev)
 N, D_in, Filters, D_out = 1000, 1, 32, 64
 
 # #Get out of sample data
-FILE = '1000'
+FILE = '100N63'
 # norm_f = normalize(pickle_file=FILE, dim='f')
 # norm_f = (norm_f[0].mean().item(), norm_f[1].mean().item())
 # print(f"f Mean: {norm_f[0]}\nSDev: {norm_f[1]}")
