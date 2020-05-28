@@ -164,6 +164,7 @@ for epoch in tqdm(range(EPOCHS)):
 	# end
 	if epoch % 10 == 0 and epoch > 0:
 		xx = legslbndm(D_out)
+		#Comment
 		plotter(xx, sample_batch, u_pred, epoch)
 
 # SAVE MODEL
