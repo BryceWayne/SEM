@@ -43,7 +43,6 @@ else:
 device = torch.device(dev)
 
 SHAPE = int(args.file.split('N')[1]) + 1
-print(SHAPE)
 BATCH = int(args.file.split('N')[0])
 N, D_in, Filters, D_out = BATCH, 1, 32, SHAPE
 
@@ -65,7 +64,7 @@ model = network.Net(D_in, Filters, D_out)
 model.load_state_dict(torch.load('./model.pt'))
 model.eval()
 u_pred = model(f)
-xx = legslbndm()
+xx = legslbndm(SHAPE)
 uhat = u_pred[0,:].detach().numpy()
 ff = sample_batch['f'][0,0,:].detach().numpy()
 uu = sample_batch['u'][0,0,:].detach().numpy()
