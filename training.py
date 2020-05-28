@@ -134,7 +134,7 @@ for epoch in tqdm(range(EPOCHS)):
 	for batch_idx, sample_batch in enumerate(trainloader):
 		f = Variable(sample_batch['f']).to(device)
 		# a = Variable(sample_batch['a']).reshape(N, D_out).to(device)
-		u = Variable(sample_batch['u']).reshape(N, D_out).to(device)
+		u = Variable(sample_batch['u']).to(device)
 		"""
 		f -> ?alphas -> u
 		"""
