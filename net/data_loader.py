@@ -16,8 +16,8 @@ class LGDataset():
             root_dir (string): Directory with all the images.
         """
         with open('./data/' + pickle_file + '.pkl', 'rb') as f:
-        	self.data = pickle.load(f)
-        	self.data = self.data[:,:,:,:]
+            self.data = pickle.load(f)
+            self.data = self.data[:,:]
         self.transform_f = transform_f
         self.transform_a = transform_a
         self.subsample = subsample
@@ -26,20 +26,19 @@ class LGDataset():
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
             idx = idx.tolist()
-        x = torch.Tensor([self.data[:,0,:][idx]]).reshape(1, 32)
-        u = torch.Tensor([self.data[:,1,:][idx]]).reshape(1, 32)
-        f = torch.Tensor([self.data[:,2,:][idx]]).reshape(1, 32)
-        # a = torch.Tensor([self.data[:,3,:][idx]]).reshape(1, 32)
+        u = torch.Tensor([self.data[:,0][idx]]).reshape(1, 64)
+        f = torch.Tensor([self.data[:,1][idx]]).reshape(1, 64)
+        a = torch.Tensor([self.data[:,2][idx]]).reshape(1, 64)
+        p = torch.Tensor([self.data[:,3][idx]]).reshape(1, 4)
         # if self.subsample:
         #     a = a[:,:self.subsample]
         if self.transform_f:
-            f = f.view(1, 1, 32)
-            f = self.transform_f(f).view(1, 32)
+            f = f.view(1, 1, 64)
+            f = self.transform_f(f).view(1, 64)
         # if self.transform_a:
         #     a = a.view(1, 1, 64)
         #     a = self.transform_a(a).view(1, 64)
-        sample = {'x': x, 'u': u, 'f': f} #, 'a': a
-        # pprint(sample)
+        sample = {'u': u, 'f': f, 'a': a, 'p': p}
         return sample
 
 
@@ -49,9 +48,9 @@ def normalize(pickle_file, dim):
         Var[x] = E[X^2] - E^2[X]
     """
     if dim == 'f':
-        dim = 2
+        dim = 1
     elif dim == 'a':
-        dim = 3
+        dim = 2
     cnt = 0
     fst_moment = torch.empty(1)
     snd_moment = torch.empty(1)

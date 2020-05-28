@@ -11,12 +11,25 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 import LG_1d
 import argparse
+import scipy as sp
+from scipy.sparse import diags
 import gc
 gc.collect()
 torch.cuda.empty_cache()
 
+def legslbndm(n=64):
+	av = np.zeros((1,n-2)).T
+	j = np.array([list(range(1, n-2))])
+	bv = j*(j+2)/((2*j+1)*(2*j+3))
+	A = diags([np.sqrt(bv), 0, np.sqrt(bv)], [-1, 0, 1], shape=(n-2,n-2))
+	z = np.sort(np.linalg.eig(A.toarray())[0])
+	z = [-1, *z, 1]
+	z = np.array(z).T
+	return z.reshape(n, 1)
+
+
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--N", type=int, default=1000)
+parser.add_argument("--N", type=int, default=10000)
 parser.add_argument("--file", type=int, default=10000)
 parser.add_argument("--epochs", type=int, default=11)
 parser.add_argument("--sched", type=list, default=[25,50,75,100])
@@ -25,7 +38,7 @@ args = parser.parse_args()
 
 def plotter(xx, sample, T, epoch):
 	uhat = T[0,:].to('cpu').detach().numpy()
-	xx = sample['x'][0,0,:].to('cpu').detach().numpy()
+	# xx = sample['x'][0,0,:].to('cpu').detach().numpy()
 	ff = sample['f'][0,0,:].to('cpu').detach().numpy()
 	uu = sample['u'][0,0,:].to('cpu').detach().numpy()
 	mae_error = mae(uhat, uu)
@@ -85,8 +98,9 @@ else:
   dev = "cpu"
 device = torch.device(dev)  
 
-N, D_in, Filters, D_out = args.N, 1, 32, 32
+N, D_in, Filters, D_out = args.N, 1, 32, 64
 FILE = str(args.file)
+FILE = '10000N63'
 # Load the dataset
 # norm_f = normalize(pickle_file=FILE, dim='f')
 norm_f = (0.1254, 0.9999)
@@ -112,7 +126,7 @@ model1.to(device)
 criterion1 = torch.nn.L1Loss()
 criterion2 = torch.nn.MSELoss(reduction="sum")
 # optimizer1 = torch.optim.SGD(model1.parameters(), lr=1e-6, momentum=0.9)
-optimizer1 = torch.optim.LBFGS(model1.parameters(), tolerance_grad=1e-12, tolerance_change=1e-12)
+optimizer1 = torch.optim.LBFGS(model1.parameters(), tolerance_grad=1e-09, tolerance_change=1e-12)
 scheduler1 = torch.optim.lr_scheduler.MultiStepLR(optimizer1, milestones=args.sched, gamma=0.9)
 
 EPOCHS = args.epochs
@@ -137,7 +151,7 @@ for epoch in tqdm(range(EPOCHS)):
 			# 	f_pred[_,:] = torch.tensor((-1E-1*uxx-ux).T[0]).to(device)
 			# f_out = f.clone().reshape(N, D_out)
 			# f_pred.reshape(N, D_out)
-			loss1 = criterion1(u_pred, u) + criterion2(u_pred, u)# + criterion2(f_pred, f_out)
+			loss1 = criterion2(u_pred, u)# + criterion2(f_pred, f_out)
 			if loss1.requires_grad:
 				loss1.backward()
 			return u_pred, loss1
@@ -149,7 +163,7 @@ for epoch in tqdm(range(EPOCHS)):
 	print(f"\nLoss1: {np.round(float(loss1.to('cpu').detach()), 6)}")
 	# end
 	if epoch % 10 == 0 and epoch > 0:
-		xx = sample_batch['x'][0,0,:]
+		xx = legslbndm(D_out)
 		plotter(xx, sample_batch, u_pred, epoch)
 
 # SAVE MODEL

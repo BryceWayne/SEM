@@ -29,7 +29,6 @@ def create(N:int, epsilon:float):
 	return x, u, f, a
 
 
-
 def create_fast(N:int, epsilon:float, size:int, eps_flag=False):
 	def func(t: float) -> float:
 		# Random force
@@ -98,8 +97,8 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False):
 		for n in tqdm(range(size)):
 			if eps_flag == True:
 				epsilon = epsilons[n]
-			u, f, alpha, p = generate(x, D, a, b, lepolys, epsilon)
-			data.append([u, f, alpha, p, epsilon])
+			u, f, alphas, params = generate(x, D, a, b, lepolys, epsilon)
+			data.append([u, f, alphas, params, epsilon])
 		return data
 
 

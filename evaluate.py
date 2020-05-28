@@ -23,7 +23,7 @@ if torch.cuda.is_available():
 else:  
   dev = "cpu"
 device = torch.device(dev)  
-N, D_in, Filters, D_out = 100, 1, 32, 64
+N, D_in, Filters, D_out = 1000, 1, 32, 64
 
 # #Get out of sample data
 FILE = '1000'
