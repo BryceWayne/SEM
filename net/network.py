@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import numpy as np
 
 def conv1d(in_planes, out_planes, stride=1, bias=True, kernel_size=7, padding=3, dialation=1) :
-    return nn.Conv1d(in_planes, out_planes, kernel_size=kernel_size, stride=stride, padding=3, bias=bias)
+    return nn.Conv1d(in_planes, out_planes, kernel_size=kernel_size, stride=stride, padding=padding, bias=bias)
 
 def norm(planes, norm_type="g") :
     if norm_type == "g" :
@@ -56,13 +56,12 @@ class Net(nn.Module) :
         self.d_in = d_in
         self.filters = filters
         self.d_out = d_out
-        self.conv1 = conv1d(d_in, filters, kernel_size=7)
-        self.conv2 = conv1d(filters, 2*filters, kernel_size=7)
-        self.conv3 = conv1d(2*filters, 3*filters, kernel_size=7)
-        self.conv4 = conv1d(3*filters, 4*filters, kernel_size=7)
-        self.conv5 = conv1d(4*filters, 5*filters, kernel_size=7)
+        self.conv1 = conv1d(d_in, filters, kernel_size=7, padding=3)
+        self.conv2 = conv1d(filters, 2*filters, kernel_size=7, padding=3)
+        self.conv3 = conv1d(2*filters, 3*filters, kernel_size=7, padding=3)
+        self.conv4 = conv1d(3*filters, 4*filters, kernel_size=7, padding=3)
+        self.conv5 = conv1d(4*filters, 5*filters, kernel_size=7, padding=3)
         self.resblock = ResBlock(filters, filters)
-        self.pool = nn.MaxPool1d(kernel_size=7, stride=1, padding=3)
         self.fc1 = nn.Linear(5*filters*d_out, d_out, bias=True)
     def forward(self, x):
         out = F.relu(self.conv1(x))
