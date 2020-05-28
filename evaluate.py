@@ -42,7 +42,8 @@ else:
   dev = "cpu"
 device = torch.device(dev)
 
-SHAPE = args.file.split('N')[1] + 1
+SHAPE = int(args.file.split('N')[1]) + 1
+print(SHAPE)
 BATCH = int(args.file.split('N')[0])
 N, D_in, Filters, D_out = BATCH, 1, 32, SHAPE
 
