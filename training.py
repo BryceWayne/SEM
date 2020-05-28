@@ -143,7 +143,7 @@ for epoch in tqdm(range(EPOCHS)):
 			if torch.is_grad_enabled():
 				optimizer1.zero_grad()
 			u_pred = model1(f)
-			u = u.view(u_pred.shape[0], u_pred.shape[1])
+			u = u.reshape(N, D_out)
 			assert u_pred.shape == u.shape
 			# RECONSTRUCT
 			# f_pred = u_pred.clone()
