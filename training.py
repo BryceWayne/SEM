@@ -143,6 +143,8 @@ for epoch in tqdm(range(EPOCHS)):
 				optimizer1.zero_grad()
 			u_pred = model1(f)
 			assert u_pred.shape == u.shape
+			print('u', u.shape)
+			print('u_pred', u_pred.shape)
 			# RECONSTRUCT
 			# f_pred = u_pred.clone()
 			# for _ in range(len(u_pred[:,0])):
