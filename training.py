@@ -14,24 +14,16 @@ import argparse
 import scipy as sp
 from scipy.sparse import diags
 import gc
+from sem.sem import legslbndm
+import subprocess, os	
+
+
 gc.collect()
 torch.cuda.empty_cache()
 
-def legslbndm(n=64):
-	av = np.zeros((1,n-2)).T
-	j = np.array([list(range(1, n-2))])
-	bv = j*(j+2)/((2*j+1)*(2*j+3))
-	A = diags([np.sqrt(bv), 0, np.sqrt(bv)], [-1, 0, 1], shape=(n-2,n-2))
-	z = np.sort(np.linalg.eig(A.toarray())[0])
-	z = [-1, *z, 1]
-	z = np.array(z).T
-	return z.reshape(n, 1)
-
-
 parser = argparse.ArgumentParser("SEM")
+parser.add_argument("--file", type=str, default='10000N63')
 parser.add_argument("--batch", type=int, default=10000)
-parser.add_argument("--file", type=int, default=10000)
-parser.add_argument("--N", type=int, default=31)
 parser.add_argument("--epochs", type=int, default=11)
 parser.add_argument("--sched", type=list, default=[25,50,75,100])
 args = parser.parse_args()
@@ -47,7 +39,6 @@ def plotter(xx, sample, T, epoch):
 	plt.title(f'Solution Example Epoch {epoch}\n'\
 		      f'Solution MAE Error: {np.round(mae_error, 6)}\n'\
 		      f'Solution Rel. $L_2$ Error: {np.round(l2_error, 6)}')
-	# xx = range(len(uu))
 	plt.plot(xx, uu, 'r-o', mfc='none', label='$u$')
 	plt.plot(xx, uhat, 'b--', mfc='none', label='$\\hat{u}$')
 	plt.plot(xx, ff, 'g', label='$f$')
@@ -59,30 +50,6 @@ def plotter(xx, sample, T, epoch):
 	plt.savefig(f'./pics/epoch{epoch}.png')
 	# plt.show()
 	plt.close()
-	#####################################
-	# uhat = np.append(uhat[0], np.zeros(64-D_out))
-	# uhat = uhat[0]
-	# u_sol = LG_1d.reconstruct(uhat)
-	# u = sample['u'][0,0,:].to('cpu').detach().numpy()
-	# # mae_error = mae(u_sol, u)
-	# # l2_error = relative_l2(u_sol, u)
-	# plt.figure(figsize=(10,6))
-	# plt.title(f'Reconstruction Example Epoch {epoch}\n'\
-	# 	      f'Reconstruction MAE Error: {np.round(mae_error, 6)}\n'\
-	# 	      f'Reconstruction Rel. $L_2$ Error: {np.round(l2_error, 6)}')
-	# x = np.linspace(-1, 1, len(u), endpoint=True)
-	# plt.plot(x, u, 'r-', mfc='none', label='$u$')
-	# x = np.linspace(-1, 1, len(u_sol), endpoint=True)
-	# plt.plot(x, u_sol, 'b-x', mfc='none', label='$\\hat{u}$')
-	# # plt.plot(xx, ff, 'g', label='$f$')
-	# # plt.xlim(-1,1)
-	# plt.grid(alpha=0.618)
-	# plt.xlabel('$x$')
-	# plt.ylabel('$u$')
-	# plt.legend(shadow=True)
-	# plt.savefig(f'./u{epoch}.png')
-	# # plt.show()
-	# plt.close()
 
 
 def relative_l2(measured, theoretical):
@@ -98,9 +65,10 @@ else:
   dev = "cpu"
 device = torch.device(dev)  
 
-SHAPE = args.N + 1
-N, D_in, Filters, D_out = args.batch, 1, 32, SHAPE
-FILE = str(args.file) + 'N' + str(args.N)
+FILE = args.file
+SHAPE = int(args.file.split('N')[1]) + 1
+BATCH = int(args.file.split('N')[0])
+N, D_in, Filters, D_out = BATCH, 1, 32, SHAPE
 # Load the dataset
 # norm_f = normalize(pickle_file=FILE, dim='f')
 # norm_f = (0.1254, 0.9999)
@@ -110,7 +78,11 @@ FILE = str(args.file) + 'N' + str(args.N)
 # norm_a = (3.11411E-09, 0.032493)
 # print(f"a Mean: {norm_a[0]}\nSDev: {norm_a[1]}")
 # transform_a = transforms.Compose([transforms.Normalize([norm_a[0]], [norm_a[1]])])
-lg_dataset = LGDataset(pickle_file=FILE, shape=SHAPE, subsample=D_out) #, transform_f= transform_f, transform_a=transform_a
+try:
+	lg_dataset = LGDataset(pickle_file=FILE, shape=SHAPE, subsample=D_out)
+except:
+	subprocess.call(f'python create_train_data.py --size {BATCH} --N {SHAPE - 1}')
+	lg_dataset = LGDataset(pickle_file=FILE, shape=SHAPE, subsample=D_out)
 # N is batch size; D_in is input dimension; D_out is output dimension.
 #Batch DataLoader with shuffle
 trainloader = torch.utils.data.DataLoader(lg_dataset, batch_size=N, shuffle=True)
@@ -125,15 +97,15 @@ model1.to(device)
 # Construct our loss function and an Optimizer.
 criterion1 = torch.nn.L1Loss()
 criterion2 = torch.nn.MSELoss(reduction="sum")
-# optimizer1 = torch.optim.SGD(model1.parameters(), lr=1e-6, momentum=0.9)
-optimizer1 = torch.optim.LBFGS(model1.parameters(), history_size=args.batch, tolerance_grad=1e-09, tolerance_change=1e-12)
+optimizer1 = torch.optim.SGD(model1.parameters(), lr=1e-6, momentum=0.9)
+# optimizer1 = torch.optim.LBFGS(model1.parameters(), history_size=args.batch, tolerance_grad=1e-09, tolerance_change=1e-12)
 scheduler1 = torch.optim.lr_scheduler.MultiStepLR(optimizer1, milestones=args.sched, gamma=0.9)
 
 EPOCHS = args.epochs
 for epoch in tqdm(range(EPOCHS)):
 	for batch_idx, sample_batch in enumerate(trainloader):
 		f = Variable(sample_batch['f']).to(device)
-		# a = Variable(sample_batch['a']).reshape(N, D_out).to(device)
+		a = Variable(sample_batch['a']).to(device)
 		u = Variable(sample_batch['u']).to(device)
 		"""
 		f -> ?alphas -> u
@@ -163,15 +135,9 @@ for epoch in tqdm(range(EPOCHS)):
 		optimizer1.step(loss1.item)
 	# scheduler1.step()
 	print(f"\nLoss1: {np.round(float(loss1.to('cpu').detach()), 6)}")
-	# end
 	if epoch % 10 == 0 and epoch > 0:
 		xx = legslbndm(D_out)
-		#Comment	
 		plotter(xx, sample_batch, u_pred, epoch)
 
 # SAVE MODEL
 torch.save(model1.state_dict(), 'model.pt')
-# # LOAD MODEL
-# model = network.Net(D_in, Filters, D_out)
-# model.load_state_dict(torch.load('model.pt'))
-# model.eval()

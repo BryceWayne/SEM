@@ -13,16 +13,7 @@ import LG_1d
 import argparse
 import scipy as sp
 from scipy.sparse import diags
-
-def legslbndm(n=64):
-	av = np.zeros((1,n-2)).T
-	j = np.array([list(range(1, n-2))])
-	bv = j*(j+2)/((2*j+1)*(2*j+3))
-	A = diags([np.sqrt(bv), 0, np.sqrt(bv)], [-1, 0, 1], shape=(n-2,n-2))
-	z = np.sort(np.linalg.eig(A.toarray())[0])
-	z = [-1, *z, 1]
-	z = np.array(z).T
-	return z.reshape(n, 1)
+from sem.sem import legslbndm
 
 
 parser = argparse.ArgumentParser("SEM")
