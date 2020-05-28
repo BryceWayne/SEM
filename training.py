@@ -99,7 +99,7 @@ else:
 device = torch.device(dev)  
 
 N, D_in, Filters, D_out = args.batch, 1, 32, args.N+1
-FILE = str(args.file) + str(args.N)
+FILE = str(args.file) + 'N' + str(args.N)
 # Load the dataset
 # norm_f = normalize(pickle_file=FILE, dim='f')
 # norm_f = (0.1254, 0.9999)
