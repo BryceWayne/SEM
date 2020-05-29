@@ -47,9 +47,10 @@ def plotter(xx, sample, T, epoch):
 	plt.title(f'Alphas Example Epoch {epoch}\n'\
 		      f'Alphas MAE Error: {np.round(mae_error, 6)}\n'\
 		      f'Alphas Rel. $L_2$ Error: {np.round(l2_error, 6)}')
-	plt.plot(xx, uu, 'r-o', mfc='none', label='$u$')
-	plt.plot(xx, uhat, 'b--', mfc='none', label='$\\hat{u}$')
-	plt.plot(xx, ff, 'g', label='$f$')
+	plt.plot(xx, uu, 'b-o', mfc='none', label='$u$')
+	plt.plot(xx, uhat, 'r--', mfc='none', label='$\\hat{u}$')
+	XX_ = np.linspace(-1,1, len(xx), endpoint=True)
+	plt.plot(xx_, ff, 'g', label='$f$')
 	plt.xlim(-1,1)
 	plt.grid(alpha=0.618)
 	plt.xlabel('$x$')
