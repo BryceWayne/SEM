@@ -146,7 +146,7 @@ for epoch in tqdm(range(EPOCHS)):
 	print(f"\nLoss1: {np.round(float(loss1.to('cpu').detach()), 6)}")
 	if epoch % 10 == 0 and epoch > 0:
 		plotter(xx, sample_batch, u_pred, epoch)
-	end
+
 
 # SAVE MODEL
 torch.save(model1.state_dict(), 'model.pt')
