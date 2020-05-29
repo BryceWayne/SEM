@@ -14,9 +14,8 @@ import argparse
 import scipy as sp
 from scipy.sparse import diags
 import gc
-from sem.sem import legslbndm
-import subprocess, os	
-
+from sem.sem import legslbndm, lepoly
+import subprocess, os
 
 gc.collect()
 torch.cuda.empty_cache()
@@ -28,8 +27,17 @@ parser.add_argument("--epochs", type=int, default=11)
 parser.add_argument("--sched", type=list, default=[25,50,75,100])
 args = parser.parse_args()
 
+FILE = args.file
+SHAPE = int(args.file.split('N')[1]) + 1
+BATCH = int(args.file.split('N')[0])
+# N is batch size; D_in is input dimension; D_out is output dimension.
+N, D_in, Filters, D_out = BATCH, 1, 32, SHAPE
 
 def plotter(xx, sample, T, epoch):
+	def relative_l2(measured, theoretical):
+		return np.linalg.norm(measured-theoretical, ord=2)/np.linalg.norm(theoretical, ord=2)
+	def mae(measured, theoretical):
+		return np.linalg.norm(measured-theoretical, ord=1)/len(theoretical)
 	uhat = T[0,:].to('cpu').detach().numpy()
 	ff = sample['f'][0,0,:].to('cpu').detach().numpy()
 	uu = sample['u'][0,0,:].to('cpu').detach().numpy()
@@ -51,12 +59,24 @@ def plotter(xx, sample, T, epoch):
 	# plt.show()
 	plt.close()
 
-
-def relative_l2(measured, theoretical):
-	return np.linalg.norm(measured-theoretical, ord=2)/np.linalg.norm(theoretical, ord=2)
-
-def mae(measured, theoretical):
-	return np.linalg.norm(measured-theoretical, ord=1)/len(theoretical)
+xx = legslbndm(D_out)
+def gen_lepolys(N, x):
+	lepolys = {}
+	for i in range(N+3):
+		lepolys[i] = lepoly(i, x)
+	return lepolys
+lepolys = gen_lepolys(SHAPE, xx)
+def reconstruct(N, alphas, lepolys):
+	u = np.zeros((N+1,))
+	for i in range(1,N+2):
+		_ = 0
+		for j in range(1, N+2):
+			k = j-1
+			L = lepolys[k]
+			_ += alphas[j-1]*L[i-1]
+		_ = _[0]
+		u[i-1] = _
+	return u
 
 # Check if CUDA is available and then use it.
 if torch.cuda.is_available():  
@@ -65,10 +85,6 @@ else:
   dev = "cpu"
 device = torch.device(dev)  
 
-FILE = args.file
-SHAPE = int(args.file.split('N')[1]) + 1
-BATCH = int(args.file.split('N')[0])
-N, D_in, Filters, D_out = BATCH, 1, 32, SHAPE
 # Load the dataset
 # norm_f = normalize(pickle_file=FILE, dim='f')
 # norm_f = (0.1254, 0.9999)
@@ -83,16 +99,17 @@ try:
 except:
 	subprocess.call(f'python create_train_data.py --size {BATCH} --N {SHAPE - 1}')
 	lg_dataset = LGDataset(pickle_file=FILE, shape=SHAPE, subsample=D_out)
-# N is batch size; D_in is input dimension; D_out is output dimension.
 #Batch DataLoader with shuffle
 trainloader = torch.utils.data.DataLoader(lg_dataset, batch_size=N, shuffle=True)
 # Construct our model by instantiating the class
+model1 = network.Net(D_in, Filters, D_out)
 def weights_init(m):
     if isinstance(m, nn.Conv1d) or isinstance(m, nn.Linear):
         torch.nn.init.xavier_uniform_(m.weight)
         torch.nn.init.zeros_(m.bias)
-model1 = network.Net(D_in, Filters, D_out)
+# XAVIER INITIALIZATION
 model1.apply(weights_init)
+# SEND TO GPU
 model1.to(device)
 # Construct our loss function and an Optimizer.
 criterion1 = torch.nn.L1Loss()
@@ -108,36 +125,28 @@ for epoch in tqdm(range(EPOCHS)):
 		a = Variable(sample_batch['a']).to(device)
 		u = Variable(sample_batch['u']).to(device)
 		"""
-		f -> ?alphas -> u
+		f -> alphas -> ?u
 		"""
 		def closure():
 			global u
 			if torch.is_grad_enabled():
 				optimizer1.zero_grad()
-			u_pred = model1(f)
-			u = u.reshape(N, D_out)
-			assert u_pred.shape == u.shape
+			a_pred = model1(f)
+			a = a.reshape(N, D_out)
+			assert a_pred.shape == a.shape
 			# RECONSTRUCT
-			# f_pred = u_pred.clone()
-			# for _ in range(len(u_pred[:,0])):
-			# 	DE = LG_1d.reconstruct(u_pred[_,:].to('cpu').detach().numpy())
-			# 	ux, uxx = LG_1d.derivs(DE)
-			# 	f_pred[_,:] = torch.tensor((-1E-1*uxx-ux).T[0]).to(device)
-			# f_out = f.clone().reshape(N, D_out)
-			# f_pred.reshape(N, D_out)
-			loss1 = criterion2(u_pred, u)# + criterion2(f_pred, f_out)
+			loss1 = criterion2(a_pred, a)# + criterion2(-1E-1*u_pred, f_out)
 			if loss1.requires_grad:
 				loss1.backward()
-			return u_pred, loss1
-        
-		u_pred, loss1 = closure()
+			return a_pred, loss1
+		a_pred, loss1 = closure()
 		# print(f"\nLoss1: {np.round(float(loss1.to('cpu').detach()), 6)}")
 		optimizer1.step(loss1.item)
 	# scheduler1.step()
 	print(f"\nLoss1: {np.round(float(loss1.to('cpu').detach()), 6)}")
 	if epoch % 10 == 0 and epoch > 0:
-		xx = legslbndm(D_out)
 		plotter(xx, sample_batch, u_pred, epoch)
+	end
 
 # SAVE MODEL
 torch.save(model1.state_dict(), 'model.pt')
