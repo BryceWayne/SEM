@@ -40,13 +40,13 @@ def plotter(xx, sample, T, epoch):
 		return np.linalg.norm(measured-theoretical, ord=1)/len(theoretical)
 	uhat = T[0,:].to('cpu').detach().numpy()
 	ff = sample['f'][0,0,:].to('cpu').detach().numpy()
-	uu = sample['u'][0,0,:].to('cpu').detach().numpy()
+	uu = sample['a'][0,0,:].to('cpu').detach().numpy()
 	mae_error = mae(uhat, uu)
 	l2_error = relative_l2(uhat, uu)
 	plt.figure(figsize=(10,6))
-	plt.title(f'Solution Example Epoch {epoch}\n'\
-		      f'Solution MAE Error: {np.round(mae_error, 6)}\n'\
-		      f'Solution Rel. $L_2$ Error: {np.round(l2_error, 6)}')
+	plt.title(f'Alphas Example Epoch {epoch}\n'\
+		      f'Alphas MAE Error: {np.round(mae_error, 6)}\n'\
+		      f'Alphas Rel. $L_2$ Error: {np.round(l2_error, 6)}')
 	plt.plot(xx, uu, 'r-o', mfc='none', label='$u$')
 	plt.plot(xx, uhat, 'b--', mfc='none', label='$\\hat{u}$')
 	plt.plot(xx, ff, 'g', label='$f$')
@@ -145,7 +145,7 @@ for epoch in tqdm(range(EPOCHS)):
 	# scheduler1.step()
 	print(f"\nLoss1: {np.round(float(loss1.to('cpu').detach()), 6)}")
 	if epoch % 10 == 0 and epoch > 0:
-		plotter(xx, sample_batch, u_pred, epoch)
+		plotter(xx, sample_batch, a_pred, epoch)
 
 
 # SAVE MODEL
