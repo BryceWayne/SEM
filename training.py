@@ -128,7 +128,7 @@ for epoch in tqdm(range(EPOCHS)):
 		f -> alphas -> ?u
 		"""
 		def closure():
-			global u
+			global f, a, u
 			if torch.is_grad_enabled():
 				optimizer1.zero_grad()
 			a_pred = model1(f)
