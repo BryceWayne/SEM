@@ -164,7 +164,7 @@ for epoch in tqdm(range(EPOCHS)):
 			loss1 = criterion2(a_pred, a)
 			if loss1.requires_grad:
 				loss1.backward()
-			return a_pred, u.T[0], loss1
+			return a_pred, u, loss1
 		a_pred, u_pred, loss1 = closure()
 		# print(f"\nLoss1: {np.round(float(loss1.to('cpu').detach()), 6)}")
 		optimizer1.step(loss1.item)
