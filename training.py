@@ -87,7 +87,8 @@ def reconstruct(N, alphas, lepolys):
 	T = T.to('cpu').detach().numpy()
 	alphas = alphas.to('cpu').detach().numpy()
 	for ii in range(i):
-		temp = alphas[ii,:].reshape(j, 1)
+		temp = alphas[ii,:].clone().reshape(j, 1)
+		temp.requires_grad = False
 		sol = np.zeros((j,1))
 		for jj in range(1,j):
 			i_ind = jj - 1
