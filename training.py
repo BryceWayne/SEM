@@ -160,10 +160,7 @@ for epoch in tqdm(range(EPOCHS)):
 			"""
 			COMPUTE LOSS
 			"""
-			if epoch < 20:
-				loss1 = criterion2(a_pred, a)
-			else:
-				loss1 = criterion2(a_pred, a) + criterion2(u_pred, u)
+			loss1 = criterion2(a_pred, a)
 			if loss1.requires_grad:
 				loss1.backward()
 			return a_pred, u_pred, loss1
