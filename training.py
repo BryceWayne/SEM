@@ -37,14 +37,14 @@ def plotter(xx, sample, a_pred, epoch):
 		return np.linalg.norm(measured-theoretical, ord=1)/len(theoretical)
 	ahat = a_pred[0,:].to('cpu').detach().numpy()
 	aa = sample['a'][0,0,:].to('cpu').detach().numpy()
-	uhat = u_pred[0,:].to('cpu').detach().numpy()
+	# uhat = u_pred[0,:].to('cpu').detach().numpy()
 	uu = sample['u'][0,0,:].to('cpu').detach().numpy()
 	ff = sample['f'][0,0,:].to('cpu').detach().numpy()
 	xxx = np.linspace(-1,1, len(xx)+2, endpoint=True)
 	mae_error_a = mae(ahat, aa)
 	l2_error_a = relative_l2(ahat, aa)
-	mae_error_u = mae(uhat, uu)
-	l2_error_u = relative_l2(uhat, uu)
+	# mae_error_u = mae(uhat, uu)
+	# l2_error_u = relative_l2(uhat, uu)
 	plt.figure(1, figsize=(10,6))
 	plt.title(f'Alphas Example Epoch {epoch}\n'\
 		      f'Alphas MAE Error: {np.round(mae_error_a, 6)}\n'\
@@ -121,7 +121,7 @@ except:
 #Batch DataLoader with shuffle
 trainloader = torch.utils.data.DataLoader(lg_dataset, batch_size=N, shuffle=True)
 # Construct our model by instantiating the class
-model1 = network.Net(D_in, Filters, D_out)
+model1 = network.Net(D_in, Filters, D_out, kernel_size=7, padding=3)
 def weights_init(m):
     if isinstance(m, nn.Conv1d) or isinstance(m, nn.Linear):
         torch.nn.init.xavier_uniform_(m.weight)
