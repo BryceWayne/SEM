@@ -151,7 +151,7 @@ for epoch in tqdm(range(EPOCHS)):
 			if torch.is_grad_enabled():
 				optimizer1.zero_grad()
 			a_pred = model1(f)
-			# a = a.reshape(N, D_out-2)
+			a = a.reshape(N, D_out-2)
 			assert a_pred.shape == a.shape
 			"""
 			RECONSTRUCT SOLUTIONS
