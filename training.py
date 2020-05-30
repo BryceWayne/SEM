@@ -95,9 +95,6 @@ def reconstruct(N, alphas, lepolys):
 		sol = np.zeros((j,1))
 		for jj in range(1,j-2):
 			i_ind = jj - 1
-			# print(jj, i_ind)
-			# print(sol.shape)
-			# print(a.shape, lepolys[i_ind].shape, lepolys[i_ind+2].shape)
 			sol += a[i_ind]*(lepolys[i_ind]-lepolys[i_ind+2])
 		T[ii,:] = sol.T[0]
 	return T
