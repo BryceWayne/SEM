@@ -19,45 +19,59 @@ import subprocess, os
 
 gc.collect()
 torch.cuda.empty_cache()
-
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--file", type=str, default='10000N63')
 parser.add_argument("--batch", type=int, default=10000)
 parser.add_argument("--epochs", type=int, default=11)
 parser.add_argument("--sched", type=list, default=[25,50,75,100])
 args = parser.parse_args()
-
 FILE = args.file
 SHAPE = int(args.file.split('N')[1]) + 1
 BATCH = int(args.file.split('N')[0])
-# N is batch size; D_in is input dimension; D_out is output dimension.
 N, D_in, Filters, D_out = BATCH, 1, 32, SHAPE
 
-def plotter(xx, sample, T, epoch):
+def plotter(xx, sample, a_pred, u_pred, epoch):
 	def relative_l2(measured, theoretical):
 		return np.linalg.norm(measured-theoretical, ord=2)/np.linalg.norm(theoretical, ord=2)
 	def mae(measured, theoretical):
 		return np.linalg.norm(measured-theoretical, ord=1)/len(theoretical)
-	uhat = T[0,:].to('cpu').detach().numpy()
+	ahat = a_pred[0,:].to('cpu').detach().numpy()
+	aa = sample['a'][0,0,:].to('cpu').detach().numpy()
+	uhat = u_pred[0,:].to('cpu').detach().numpy()
+	uu = sample['u'][0,0,:].to('cpu').detach().numpy()
 	ff = sample['f'][0,0,:].to('cpu').detach().numpy()
-	uu = sample['a'][0,0,:].to('cpu').detach().numpy()
-	mae_error = mae(uhat, uu)
-	l2_error = relative_l2(uhat, uu)
-	plt.figure(figsize=(10,6))
-	plt.title(f'Alphas Example Epoch {epoch}\n'\
-		      f'Alphas MAE Error: {np.round(mae_error, 6)}\n'\
-		      f'Alphas Rel. $L_2$ Error: {np.round(l2_error, 6)}')
-	plt.plot(xx, uu, 'b-o', mfc='none', label='$u$')
-	plt.plot(xx, uhat, 'r--', mfc='none', label='$\\hat{u}$')
 	xxx = np.linspace(-1,1, len(xx), endpoint=True)
-	plt.plot(xxx, ff, 'g', label='$f$')
+	mae_error_a = mae(ahat, aa)
+	l2_error_a = relative_l2(ahat, aa)
+	mae_error_u = mae(uhat, uu)
+	l2_error_u = relative_l2(uhat, u)
+	plt.figure(1, figsize=(10,6))
+	plt.title(f'Alphas Example Epoch {epoch}\n'\
+		      f'Alphas MAE Error: {np.round(mae_error_a, 6)}\n'\
+		      f'Alphas Rel. $L_2$ Error: {np.round(l2_error_a, 6)}')
+	plt.plot(xx, aa, 'r-', mfc='none', label='$\\alpha$')
+	plt.plot(xx, ahat, 'bo', mfc='none', label='$\\hat{\\alpha}$')
+	plt.plot(xxx, ff, 'g-', label='$f$')
 	plt.xlim(-1,1)
 	plt.grid(alpha=0.618)
 	plt.xlabel('$x$')
 	plt.ylabel('$y$')
 	plt.legend(shadow=True)
-	plt.savefig(f'./pics/epoch{epoch}.png')
-	# plt.show()
+	plt.savefig(f'./pics/alphas_epoch{epoch}.png')
+	plt.figure(2, figsize=(10,6))
+	plt.title(f'Reconstruction Example Epoch {epoch}\n'\
+		      f'Reconstruction MAE Error: {np.round(mae_error_u, 6)}\n'\
+		      f'Reconstruction Rel. $L_2$ Error: {np.round(l2_error_u, 6)}')
+	plt.plot(xx, uu, 'r-', mfc='none', label='$u$')
+	plt.plot(xx, uhat, 'bo', mfc='none', label='$\\hat{u}$')
+	plt.plot(xxx, ff, 'g-', label='$f$')
+	plt.xlim(-1,1)
+	plt.grid(alpha=0.618)
+	plt.xlabel('$x$')
+	plt.ylabel('$y$')
+	plt.legend(shadow=True)
+	plt.savefig(f'./pics/reconstruction_epoch{epoch}.png')
+	plt.show()
 	plt.close()
 
 xx = legslbndm(D_out)
@@ -68,16 +82,17 @@ def gen_lepolys(N, x):
 	return lepolys
 lepolys = gen_lepolys(SHAPE, xx)
 def reconstruct(N, alphas, lepolys):
-	u = np.zeros((N+1,))
-	for i in range(1,N+2):
-		_ = 0
-		for j in range(1, N+2):
-			k = j-1
-			L = lepolys[k]
-			_ += alphas[j-1]*L[i-1]
-		_ = _[0]
-		u[i-1] = _
-	return u
+	T = torch.zeros_like(alphas.clone())
+	i, j = T.shape
+	T = T.to('cpu').detach().numpy()
+	alphas = alphas.to('cpu').detach().numpy()
+	temp = alphas[0,:].reshape(j, 1)
+	for ii in range(i):
+		sol = np.zeros((j,1))
+		for jj in range(j):
+			sol += temp[jj]*(lepolys[jj]-lepolys[jj+2])
+		T[ii,:] = sol.T[0]
+	return T
 
 # Check if CUDA is available and then use it.
 if torch.cuda.is_available():  
@@ -135,18 +150,30 @@ for epoch in tqdm(range(EPOCHS)):
 			a_pred = model1(f)
 			a = a.reshape(N, D_out)
 			assert a_pred.shape == a.shape
-			# RECONSTRUCT
-			loss1 = criterion2(a_pred, a)# + criterion2(-1E-1*u_pred, f_out)
+			"""
+			RECONSTRUCT SOLUTIONS
+			"""
+			u_pred = reconstruct(N, a_pred.clone(), lepolys)
+			u_pred = torch.from_numpy(u_pred).to(device)
+			u = u.reshape(N, D_out)
+			assert u_pred.shape == u.shape
+			"""
+			COMPUTE LOSS
+			"""
+			if epoch < 20:
+				loss1 = criterion2(a_pred, a)
+			else:
+				loss1 = criterion2(a_pred, a) + criterion2(u_pred, u)
 			if loss1.requires_grad:
 				loss1.backward()
-			return a_pred, loss1
-		a_pred, loss1 = closure()
+			return a_pred, u_pred, loss1
+		a_pred, u_pred, loss1 = closure()
 		# print(f"\nLoss1: {np.round(float(loss1.to('cpu').detach()), 6)}")
 		optimizer1.step(loss1.item)
 	# scheduler1.step()
 	print(f"\nLoss1: {np.round(float(loss1.to('cpu').detach()), 6)}")
 	if epoch % 10 == 0 and epoch > 0:
-		plotter(xx, sample_batch, a_pred, epoch)
+		plotter(xx, sample_batch, a_pred, u_pred, epoch)
 
 
 # SAVE MODEL
