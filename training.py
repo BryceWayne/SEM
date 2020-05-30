@@ -44,7 +44,7 @@ def plotter(xx, sample, a_pred, u_pred, epoch):
 	mae_error_a = mae(ahat, aa)
 	l2_error_a = relative_l2(ahat, aa)
 	mae_error_u = mae(uhat, uu)
-	l2_error_u = relative_l2(uhat, u)
+	l2_error_u = relative_l2(uhat, uu)
 	plt.figure(1, figsize=(10,6))
 	plt.title(f'Alphas Example Epoch {epoch}\n'\
 		      f'Alphas MAE Error: {np.round(mae_error_a, 6)}\n'\
