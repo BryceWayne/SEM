@@ -89,8 +89,9 @@ def reconstruct(N, alphas, lepolys):
 	temp = alphas[0,:].reshape(j, 1)
 	for ii in range(i):
 		sol = np.zeros((j,1))
-		for jj in range(j):
-			sol += temp[jj]*(lepolys[jj]-lepolys[jj+2])
+		for jj in range(1,j-1):
+			i_ind = jj - 1
+			sol += temp[jj]*(lepolys[i_ind]-lepolys[i_ind+2])
 		T[ii,:] = sol.T[0]
 	return T
 
