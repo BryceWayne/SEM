@@ -82,12 +82,10 @@ def gen_lepolys(N, x):
 	return lepolys
 lepolys = gen_lepolys(SHAPE, xx)
 def reconstruct(N, alphas, lepolys):
-	T = torch.zeros_like(alphas.clone(), requires_grad=False)
+	T = torch.zeros_like(alphas.clone())
 	i, j = T.shape
 	T = T.to('cpu').detach().numpy()
-	temp = alphas.clone()
-	temp.requires_grad = False
-	temp = temp.to('cpu').detach().numpy()
+	temp = alphas.clone().to('cpu').detach().numpy()
 	for ii in range(i):
 		a = temp[ii,:].reshape(j, 1)
 		sol = np.zeros((j,1))
