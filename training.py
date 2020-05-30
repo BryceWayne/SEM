@@ -81,7 +81,7 @@ def plotter(xx, sample, a_pred, u_pred, epoch):
 xx = legslbndm(D_out)
 def gen_lepolys(N, x):
 	lepolys = {}
-	for i in range(N+5):
+	for i in range(N):
 		lepolys[i] = lepoly(i, x)
 	return lepolys
 lepolys = gen_lepolys(SHAPE, xx)
@@ -94,7 +94,7 @@ def reconstruct(N, alphas, lepolys):
 	for ii in range(i):
 		a = temp[ii,:].reshape(j-2, 1)
 		sol = np.zeros((j,1))
-		for jj in range(1,j-2):
+		for jj in range(1,j-1):
 			i_ind = jj - 1
 			sol += a[i_ind]*(lepolys[i_ind]-lepolys[i_ind+2])
 		T[ii,:] = sol.T[0]
@@ -138,7 +138,7 @@ criterion1 = torch.nn.L1Loss()
 criterion2 = torch.nn.MSELoss(reduction="sum")
 # optimizer1 = torch.optim.SGD(model1.parameters(), lr=1e-6, momentum=0.9)
 optimizer1 = torch.optim.LBFGS(model1.parameters(), history_size=args.batch, tolerance_grad=1e-9, tolerance_change=1e-9)
-scheduler1 = torch.optim.lr_scheduler.MultiStepLR(optimizer1, milestones=args.sched, gamma=0.9)
+# scheduler1 = torch.optim.lr_scheduler.MultiStepLR(optimizer1, milestones=args.sched, gamma=0.9)
 
 EPOCHS = args.epochs
 for epoch in tqdm(range(EPOCHS)):
@@ -166,7 +166,7 @@ for epoch in tqdm(range(EPOCHS)):
 			"""
 			COMPUTE LOSS
 			"""
-			if epoch < 100:
+			if epoch < 10000:
 				loss1 = criterion2(a_pred, a)
 			else:
 				loss1 = criterion2(a_pred, a) + criterion2(u_pred, u)
