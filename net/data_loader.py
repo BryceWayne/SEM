@@ -29,7 +29,7 @@ class LGDataset():
             idx = idx.tolist()
         u = torch.Tensor([self.data[:,0][idx]]).reshape(1, self.shape)
         f = torch.Tensor([self.data[:,1][idx]]).reshape(1, self.shape)
-        a = torch.Tensor([self.data[:,2][idx]]).reshape(1, self.shape)
+        a = torch.Tensor([self.data[:,2][idx]]).reshape(1, self.shape-2)
         p = torch.Tensor([self.data[:,3][idx]]).reshape(1, 4)
         # if self.subsample:
         #     a = a[:,:self.subsample]

@@ -69,6 +69,7 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False):
 
 		Mass = epsilon*S-M
 		u = np.linalg.solve(Mass, bar_f)
+		alphas = np.copy(u)
 		g[0], g[1] = u[0], u[1] + a*u[0]
 
 		for i in range(3, N):
@@ -77,7 +78,6 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False):
 
 		g[N-1] = a*u[N-2] + b*u[N-3]
 		g[N] = b*u[N-2]
-		alphas = np.copy(g)
 		u = np.zeros((N+1,))
 		for i in range(1,N+2):
 			_ = 0

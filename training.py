@@ -74,7 +74,7 @@ def plotter(xx, sample, a_pred, u_pred, epoch):
 	plt.show()
 	plt.close()
 
-xx = legslbndm(D_out)
+xx = legslbndm(D_out-2)
 def gen_lepolys(N, x):
 	lepolys = {}
 	for i in range(N+3):
@@ -149,7 +149,7 @@ for epoch in tqdm(range(EPOCHS)):
 			if torch.is_grad_enabled():
 				optimizer1.zero_grad()
 			a_pred = model1(f)
-			a = a.reshape(N, D_out)
+			a = a.reshape(N, D_out-2)
 			assert a_pred.shape == a.shape
 			"""
 			RECONSTRUCT SOLUTIONS
