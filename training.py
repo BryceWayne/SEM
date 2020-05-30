@@ -20,8 +20,8 @@ import subprocess, os
 gc.collect()
 torch.cuda.empty_cache()
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--file", type=str, default='10000N63')
-parser.add_argument("--batch", type=int, default=10000)
+parser.add_argument("--file", type=str, default='10000N31')
+parser.add_argument("--batch", type=int, default=1000)
 parser.add_argument("--epochs", type=int, default=11)
 parser.add_argument("--sched", type=list, default=[25,50,75,100])
 args = parser.parse_args()
@@ -30,7 +30,7 @@ SHAPE = int(args.file.split('N')[1]) + 1
 BATCH = int(args.file.split('N')[0])
 N, D_in, Filters, D_out = BATCH, 1, 32, SHAPE
 
-def plotter(xx, sample, a_pred, u_pred, epoch):
+def plotter(xx, sample, a_pred, epoch):
 	def relative_l2(measured, theoretical):
 		return np.linalg.norm(measured-theoretical, ord=2)/np.linalg.norm(theoretical, ord=2)
 	def mae(measured, theoretical):
@@ -58,21 +58,21 @@ def plotter(xx, sample, a_pred, u_pred, epoch):
 	plt.ylabel('$y$')
 	plt.legend(shadow=True)
 	plt.savefig(f'./pics/alphas_epoch{epoch}.png')
-	global D_out
-	xx = legslbndm(D_out)
-	plt.figure(2, figsize=(10,6))
-	plt.title(f'Reconstruction Example Epoch {epoch}\n'\
-		      f'Reconstruction MAE Error: {np.round(mae_error_u, 6)}\n'\
-		      f'Reconstruction Rel. $L_2$ Error: {np.round(l2_error_u, 6)}')
-	plt.plot(xx, uu, 'r-', mfc='none', label='$u$')
-	plt.plot(xx, uhat.T, 'bo', mfc='none', label='$\\hat{u}$')
-	plt.plot(xxx, ff, 'g-', label='$f$')
-	plt.xlim(-1,1)
-	plt.grid(alpha=0.618)
-	plt.xlabel('$x$')
-	plt.ylabel('$y$')
-	plt.legend(shadow=True)
-	plt.savefig(f'./pics/reconstruction_epoch{epoch}.png')
+	# global D_out
+	# xx = legslbndm(D_out)
+	# plt.figure(2, figsize=(10,6))
+	# plt.title(f'Reconstruction Example Epoch {epoch}\n'\
+	# 	      f'Reconstruction MAE Error: {np.round(mae_error_u, 6)}\n'\
+	# 	      f'Reconstruction Rel. $L_2$ Error: {np.round(l2_error_u, 6)}')
+	# plt.plot(xx, uu, 'r-', mfc='none', label='$u$')
+	# plt.plot(xx, uhat.T, 'bo', mfc='none', label='$\\hat{u}$')
+	# plt.plot(xxx, ff, 'g-', label='$f$')
+	# plt.xlim(-1,1)
+	# plt.grid(alpha=0.618)
+	# plt.xlabel('$x$')
+	# plt.ylabel('$y$')
+	# plt.legend(shadow=True)
+	# plt.savefig(f'./pics/reconstruction_epoch{epoch}.png')
 	plt.show()
 	plt.close()
 
@@ -166,14 +166,14 @@ for epoch in tqdm(range(EPOCHS)):
 			loss1 = criterion2(a_pred, a)
 			if loss1.requires_grad:
 				loss1.backward()
-			return a_pred, u, loss1
-		a_pred, u_pred, loss1 = closure()
+			return a_pred, loss1
+		a_pred, loss1 = closure()
 		# print(f"\nLoss1: {np.round(float(loss1.to('cpu').detach()), 6)}")
 		optimizer1.step(loss1.item)
 	# scheduler1.step()
 	print(f"\nLoss1: {np.round(float(loss1.to('cpu').detach()), 6)}")
 	if epoch % 10 == 0 and epoch > 0:
-		plotter(xx, sample_batch, a_pred, u_pred, epoch)
+		plotter(xx, sample_batch, a_pred, epoch)
 
 
 # SAVE MODEL

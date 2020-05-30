@@ -73,7 +73,6 @@ class Net(nn.Module) :
         out = self.conv5(out)
         out = out.flatten(start_dim=1)
         out = self.fc1(out)
-        print(out.shape)
         out = out.view(out.shape[0], self.d_out)
         return out
 
