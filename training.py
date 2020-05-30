@@ -40,7 +40,7 @@ def plotter(xx, sample, a_pred, u_pred, epoch):
 	uhat = u_pred[0,:].to('cpu').detach().numpy()
 	uu = sample['u'][0,0,:].to('cpu').detach().numpy()
 	ff = sample['f'][0,0,:].to('cpu').detach().numpy()
-	xxx = np.linspace(-1,1, len(xx), endpoint=True)
+	xxx = np.linspace(-1,1, len(xx)+2, endpoint=True)
 	mae_error_a = mae(ahat, aa)
 	l2_error_a = relative_l2(ahat, aa)
 	mae_error_u = mae(uhat, uu)
