@@ -56,13 +56,13 @@ class Net(nn.Module) :
         self.d_in = d_in
         self.filters = filters
         self.d_out = d_out - 2
-        self.kernel = kernel_size
-        self.padding = padding
-        self.conv1 = conv1d(d_in, filters, kernel_size=self.kernel, padding=self.padding)
-        self.conv2 = conv1d(filters, 2*filters, kernel_size=self.kernel, padding=self.padding)
-        self.conv3 = conv1d(2*filters, 3*filters, kernel_size=self.kernel, padding=self.padding)
-        self.conv4 = conv1d(3*filters, 4*filters, kernel_size=self.kernel, padding=self.padding)
-        self.conv5 = conv1d(4*filters, 5*filters, kernel_size=self.kernel, padding=self.padding)
+        self.kern = kernel_size
+        self.pad = padding
+        self.conv1 = conv1d(d_in, filters, kernel_size=self.kern, padding=self.pad)
+        self.conv2 = conv1d(filters, 2*filters, kernel_size=self.kern, padding=self.pad)
+        self.conv3 = conv1d(2*filters, 3*filters, kernel_size=self.kern, padding=self.pad)
+        self.conv4 = conv1d(3*filters, 4*filters, kernel_size=self.kern, padding=self.pad)
+        self.conv5 = conv1d(4*filters, 5*filters, kernel_size=self.kern, padding=self.pad)
         self.resblock = ResBlock(filters, filters)
         self.fc1 = nn.Linear(5*filters*(self.d_out+2), self.d_out, bias=True)
     def forward(self, x):

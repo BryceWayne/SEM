@@ -116,7 +116,7 @@ device = torch.device(dev)
 try:
 	lg_dataset = LGDataset(pickle_file=FILE, shape=SHAPE, subsample=D_out)
 except:
-	subprocess.call(f'python create_train_data.py --size {BATCH} --N {SHAPE - 1}')
+	subprocess.call(f'python create_train_data.py --size {BATCH} --N {SHAPE - 1}', shell=True)
 	lg_dataset = LGDataset(pickle_file=FILE, shape=SHAPE, subsample=D_out)
 #Batch DataLoader with shuffle
 trainloader = torch.utils.data.DataLoader(lg_dataset, batch_size=N, shuffle=True)
