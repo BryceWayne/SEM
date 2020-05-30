@@ -22,7 +22,7 @@ torch.cuda.empty_cache()
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--file", type=str, default='100N31')
 parser.add_argument("--batch", type=int, default=100)
-parser.add_argument("--epochs", type=int, default=101)
+parser.add_argument("--epochs", type=int, default=11)
 parser.add_argument("--sched", type=list, default=[25,50,75,100])
 args = parser.parse_args()
 FILE = args.file
