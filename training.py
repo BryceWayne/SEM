@@ -58,6 +58,8 @@ def plotter(xx, sample, a_pred, u_pred, epoch):
 	plt.ylabel('$y$')
 	plt.legend(shadow=True)
 	plt.savefig(f'./pics/alphas_epoch{epoch}.png')
+	global D_out
+	xx = legslbndm(D_out)
 	plt.figure(2, figsize=(10,6))
 	plt.title(f'Reconstruction Example Epoch {epoch}\n'\
 		      f'Reconstruction MAE Error: {np.round(mae_error_u, 6)}\n'\
