@@ -87,6 +87,8 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False):
 				_ += g[j-1]*L[i-1]
 			_ = _[0]
 			u[i-1] = _
+		print(alphas.shape)
+		end
 		return u, f, alphas, params
 
 	def loop(N, epsilon, size, lepolys, eps_flag):
