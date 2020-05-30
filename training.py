@@ -132,7 +132,7 @@ model1.to(device)
 criterion1 = torch.nn.L1Loss()
 criterion2 = torch.nn.MSELoss(reduction="sum")
 # optimizer1 = torch.optim.SGD(model1.parameters(), lr=1e-6, momentum=0.9)
-optimizer1 = torch.optim.LBFGS(model1.parameters(), history_size=args.batch, tolerance_grad=1e-09, tolerance_change=1e-12)
+optimizer1 = torch.optim.LBFGS(model1.parameters(), history_size=args.batch, tolerance_grad=1e-14, tolerance_change=1e-14)
 scheduler1 = torch.optim.lr_scheduler.MultiStepLR(optimizer1, milestones=args.sched, gamma=0.9)
 
 EPOCHS = args.epochs
@@ -154,17 +154,17 @@ for epoch in tqdm(range(EPOCHS)):
 			"""
 			RECONSTRUCT SOLUTIONS
 			"""
-			u_pred = reconstruct(N, a_pred.clone(), lepolys)
-			u_pred = torch.from_numpy(u_pred).to(device)
-			u = u.reshape(N, D_out)
-			assert u_pred.shape == u.shape
+			# u_pred = reconstruct(N, a_pred.clone(), lepolys)
+			# u_pred = torch.from_numpy(u_pred).to(device)
+			# u = u.reshape(N, D_out)
+			# assert u_pred.shape == u.shape
 			"""
 			COMPUTE LOSS
 			"""
 			loss1 = criterion2(a_pred, a)
 			if loss1.requires_grad:
 				loss1.backward()
-			return a_pred, u_pred, loss1
+			return a_pred, u, loss1
 		a_pred, u_pred, loss1 = closure()
 		# print(f"\nLoss1: {np.round(float(loss1.to('cpu').detach()), 6)}")
 		optimizer1.step(loss1.item)
