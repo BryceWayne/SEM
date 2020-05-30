@@ -85,14 +85,15 @@ def reconstruct(N, alphas, lepolys):
 	T = torch.zeros_like(alphas.clone(), requires_grad=False)
 	i, j = T.shape
 	T = T.to('cpu').detach().numpy()
-	alphas = alphas.to('cpu').detach().numpy()
+	temp = alphas.clone()
+	temp.requires_grad = False
+	temp = temp.to('cpu').detach().numpy()
 	for ii in range(i):
-		temp = alphas[ii,:].clone().reshape(j, 1)
-		temp.requires_grad = False
+		a = temp[ii,:].reshape(j, 1)
 		sol = np.zeros((j,1))
 		for jj in range(1,j):
 			i_ind = jj - 1
-			sol += temp[jj]*(lepolys[i_ind]-lepolys[i_ind+2])
+			sol += a[jj]*(lepolys[i_ind]-lepolys[i_ind+2])
 		T[ii,:] = sol.T[0]
 	return T
 
