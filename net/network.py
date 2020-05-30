@@ -51,16 +51,18 @@ class ResBlock(nn.Module) :
         nn.init.zeros_(self.n1.weight)
 
 class Net(nn.Module) :
-    def __init__(self, d_in, filters, d_out) :
+    def __init__(self, d_in, filters, d_out, kernel_size=5, padding=2) :
         super(Net,self).__init__()
         self.d_in = d_in
         self.filters = filters
         self.d_out = d_out
-        self.conv1 = conv1d(d_in, filters, kernel_size=7, padding=3)
-        self.conv2 = conv1d(filters, 2*filters, kernel_size=7, padding=3)
-        self.conv3 = conv1d(2*filters, 3*filters, kernel_size=7, padding=3)
-        self.conv4 = conv1d(3*filters, 4*filters, kernel_size=7, padding=3)
-        self.conv5 = conv1d(4*filters, 5*filters, kernel_size=7, padding=3)
+        self.kernel = kernel_size
+        self.padding = padding
+        self.conv1 = conv1d(d_in, filters, kernel_size=self.kernel, padding=self.padding)
+        self.conv2 = conv1d(filters, 2*filters, kernel_size=self.kernel, padding=self.padding)
+        self.conv3 = conv1d(2*filters, 3*filters, kernel_size=self.kernel, padding=self.padding)
+        self.conv4 = conv1d(3*filters, 4*filters, kernel_size=self.kernel, padding=self.padding)
+        self.conv5 = conv1d(4*filters, 5*filters, kernel_size=self.kernel, padding=self.padding)
         self.resblock = ResBlock(filters, filters)
         self.fc1 = nn.Linear(5*filters*d_out, d_out, bias=True)
     def forward(self, x):
