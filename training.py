@@ -21,10 +21,10 @@ from reconstruct import *
 gc.collect()
 torch.cuda.empty_cache()
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--file", type=str, default='1000N63')
+parser.add_argument("--file", type=str, default='1000N15')
 parser.add_argument("--batch", type=int, default=1000)
-parser.add_argument("--epochs", type=int, default=200)
-parser.add_argument("--ks", type=int, default=9)
+parser.add_argument("--epochs", type=int, default=50)
+parser.add_argument("--ks", type=int, default=7)
 args = parser.parse_args()
 KERNEL_SIZE = args.ks
 PADDING = (args.ks - 1)//2
@@ -64,7 +64,7 @@ model1.to(device)
 # Construct our loss function and an Optimizer.
 criterion1 = torch.nn.L1Loss()
 criterion2 = torch.nn.MSELoss(reduction="sum")
-optimizer1 = torch.optim.LBFGS(model1.parameters(), history_size=args.batch//10, tolerance_grad=1e-14, tolerance_change=1e-14, max_eval=50)
+optimizer1 = torch.optim.LBFGS(model1.parameters(), history_size=args.batch, tolerance_grad=1e-14, tolerance_change=1e-14, max_eval=50)
 
 EPOCHS = args.epochs
 for epoch in tqdm(range(EPOCHS)):
@@ -97,20 +97,17 @@ for epoch in tqdm(range(EPOCHS)):
 			"""
 			COMPUTE LOSS
 			"""
-			if epoch < EPOCHS//2:
-				loss1 = criterion2(a_pred, a)
-			else:
-				loss1 = criterion2(a_pred, a) + criterion2(DE, f)			
+			loss1 = criterion2(a_pred, a) + criterion1(u_pred, u) + criterion1(DE, f)			
 			if loss1.requires_grad:
 				loss1.backward()
 			return a_pred, u_pred, DE, loss1
 		a_pred, u_pred, DE, loss1 = closure(f, a, u)
 		optimizer1.step(loss1.item)
 	print(f"\nLoss1: {np.round(float(loss1.to('cpu').detach()), 6)}")
-	if epoch % 10 == 0 and 0 <= epoch < EPOCHS//2:
-		plotter(xx, sample_batch, a_pred, u_pred, epoch)
-	elif epoch % 10 == 0 and EPOCHS//2 <= epoch:
+	if epoch % 10 == 0 and 0 <= epoch < EPOCHS:
 		plotter(xx, sample_batch, a_pred, u_pred, epoch, DE=DE)
+	# elif epoch % 10 == 0 and EPOCHS//2 <= epoch:
+	# 	plotter(xx, sample_batch, a_pred, u_pred, epoch, DE=DE)
 	# SAVE MODEL
 	# torch.save(model1.state_dict(), f'model_{epoch}.pt')
 # SAVE MODEL

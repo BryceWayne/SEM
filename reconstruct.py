@@ -24,7 +24,7 @@ def gen_lepolys(N, x):
 def diff(N, T):
 	x = legslbndm(N+1)
 	D = torch.from_numpy(legslbdiff(N+1, x)).to(device).float()
-	T_ = T.clone().detach()
+	T_ = T.clone()
 	for i in range(T.shape[0]):
 		element = torch.mm(D,T[i,:].reshape(T.shape[1], 1)).reshape(T.shape[1],)
 		T_[i,:] = element
@@ -52,7 +52,7 @@ def reconstruct(N, alphas, lepolys):
 def ODE(N, eps, u):
 	ux = diff(N, u)
 	uxx = diff(N, ux)
-	return eps*uxx + ux
+	return -eps*uxx - ux
 
 
 def ODE2(N, eps, u, alphas, lepolys, D):
@@ -68,7 +68,7 @@ def ODE2(N, eps, u, alphas, lepolys, D):
 		M[i_ind,:] = torch.transpose(eps*d2 + d1, 0, 1)
 
 	for ii in range(i):
-		a = alphas[ii,:].reshape(1, j-2)
+		a = alphas[ii,:].detach().reshape(1, j-2)
 		sol = torch.mm(a,M).reshape(j,)
 		T[ii,:] = sol
 	return T
