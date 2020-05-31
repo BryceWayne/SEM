@@ -1,31 +1,32 @@
 #evaluate.py
-import random
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
 from torchvision import transforms
 import net.network as network
-from net.data_loader import LGDataset, show_solution, normalize
+from net.data_loader import *
 import numpy as np
 import matplotlib.pyplot as plt
-from tqdm import tqdm
 import LG_1d
 import argparse
-import scipy as sp
-from scipy.sparse import diags
-from sem.sem import legslbndm, lepoly
-from reconstruct import reconstruct, gen_lepolys
+from sem.sem import *
+from reconstruct import *
 import subprocess
 
 
-parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--file", type=str, default='100N31')
-args = parser.parse_args()
 if torch.cuda.is_available():  
   dev = "cuda:0" 
 else:  
   dev = "cpu"
 device = torch.device(dev)
+
+parser = argparse.ArgumentParser("SEM")
+parser.add_argument("--file", type=str, default='100N63')
+parser.add_argument("--ks", type=int, default=7)
+args = parser.parse_args()
+
+KERNEL_SIZE = args.ks
+PADDING = (args.ks - 1)//2
 SHAPE = int(args.file.split('N')[1]) + 1
 BATCH = int(args.file.split('N')[0])
 N, D_in, Filters, D_out = BATCH, 1, 32, SHAPE
@@ -46,19 +47,46 @@ except:
 	subprocess.call(f'python create_train_data.py --size {BATCH} --N {SHAPE - 1}', shell=True)
 	test_data = LGDataset(pickle_file=FILE, shape=SHAPE, subsample=D_out)
 testloader = torch.utils.data.DataLoader(test_data, batch_size=N, shuffle=True)
-for batch_idx, sample_batch in enumerate(testloader):
-	f = Variable(sample_batch['f']).to(device)
-	# print("Got a sample.")	
-	break 
 
-# # LOAD MODEL
-model = network.Net(D_in, Filters, D_out).to(device)
+# LOAD MODEL
+model = network.Net(D_in, Filters, D_out, kernel_size=KERNEL_SIZE, padding=PADDING).to(device)
 model.load_state_dict(torch.load('./model.pt'))
 model.eval()
-a_pred = model(f)
-u_pred = reconstruct(SHAPE, a_pred, lepolys)
+
+running_MAE_a, running_MAE_u, running_MSE_a, running_MSE_u = 0, 0, 0, 0
+for batch_idx, sample_batch in enumerate(testloader):
+	f = Variable(sample_batch['f']).to(device)
+	u = Variable(sample_batch['u']).to(device)
+	a = Variable(sample_batch['a']).to(device)
+	a_pred = model(f)
+	a = a.reshape(N, D_out-2)
+	assert a_pred.shape == a.shape
+	u_pred = reconstruct(N, a_pred, lepolys)
+	u = u.reshape(N, D_out)
+	assert u_pred.shape == u.shape
+	DE = ODE(D_out-1, 1E-1, u_pred)
+	f = f.reshape(N, D_out)
+	assert DE.shape == f.shape
+	a_pred = a_pred.to('cpu').detach().numpy()
+	u_pred = u_pred.to('cpu').detach().numpy()
+	a = a.to('cpu').detach().numpy()
+	u = u.to('cpu').detach().numpy()
+	for i in range(N):
+		running_MAE_a += mae(a_pred[i,:], a[i,:])
+		running_MAE_u += mae(u_pred[i,:], u[i,:])
+		running_MSE_a += relative_l2(a_pred[i,:], a[i,:])
+		running_MSE_u += relative_l2(u_pred[i,:], u[i,:])
+
+print("***************************************************"
+	  f"\n\t\t\tAvg. alpha MAE: {np.round(running_MAE_a/N, 6)}\n"\
+	  f"\n\t\t\tAvg. alpha MSE: {np.round(running_MSE_a/N, 6)}\n"\
+	  f"\n\t\t\tAvg.   u   MAE: {np.round(running_MAE_u/N, 6)}\n"\
+	  f"\n\t\t\tAvg.   u   MSE: {np.round(running_MSE_u/N, 6)}\n"\
+	  "***************************************************")
+
+
 xx = legslbndm(SHAPE-2)
-ahat = a_pred[0,:].to('cpu').detach().numpy()
+ahat = a_pred[0,:]
 ff = sample_batch['f'][0,0,:].to('cpu').detach().numpy()
 aa = sample_batch['a'][0,0,:].to('cpu').detach().numpy()
 mae_error_a = mae(ahat, aa)
@@ -78,7 +106,7 @@ plt.savefig('./pics/alpha_out_of_sample.png')
 # plt.show()
 plt.close()
 
-uhat = u_pred[0,:].to('cpu').detach().numpy()
+uhat = u_pred[0,:]
 uu = sample_batch['u'][0,0,:].to('cpu').detach().numpy()
 mae_error_u = mae(uhat, uu)
 l2_error_u = relative_l2(uhat, uu)
@@ -87,13 +115,28 @@ plt.figure(2, figsize=(10,6))
 plt.title(f'Example\nMAE Error: {np.round(mae_error_u, 6)}\nRel. $L_2$ Error: {np.round(l2_error_u, 6)}')
 plt.plot(xx, uu, 'r-', label='$u$')
 plt.plot(xx, uhat, 'bo', mfc='none', label='$\\hat{u}$')
-xx_ = np.linspace(-1,1, len(xx), endpoint=True)
-plt.plot(xx_, ff, 'g', label='$f$')
 plt.xlim(-1,1)
 plt.grid(alpha=0.618)
 plt.xlabel('$x$')
 plt.ylabel('$y$')
 plt.legend(shadow=True)
 plt.savefig('./pics/reconstruction_out_of_sample.png')
+# plt.show()
+plt.close()
+
+plt.figure(3, figsize=(10,6))
+de = DE[0,:].to('cpu').detach().numpy()
+mae_error_de = mae(de, ff)
+l2_error_de = relative_l2(de, ff)
+plt.title(f'Example\nMAE Error: {np.round(mae_error_de, 6)}\nRel. $L_2$ Error: {np.round(l2_error_de, 6)}')
+xx_ = np.linspace(-1,1, len(xx), endpoint=True)
+plt.plot(xx_, ff, 'g', label='$f$')
+plt.plot(xx_, de, 'co', mfc='none', label='ODE')
+plt.xlim(-1,1)
+plt.grid(alpha=0.618)
+plt.xlabel('$x$')
+plt.ylabel('$y$')
+plt.legend(shadow=True)
+plt.savefig('./pics/DE_out_of_sample.png')
 # plt.show()
 plt.close()

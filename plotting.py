@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from sem.sem import legslbndm
 
 
-def plotter(xx, sample, a_pred, u_pred, epoch):
+def plotter(xx, sample, a_pred, u_pred, epoch, DE=None):
 	def relative_l2(measured, theoretical):
 		return np.linalg.norm(measured-theoretical, ord=2)/np.linalg.norm(theoretical, ord=2)
 	def mae(measured, theoretical):
@@ -42,7 +42,6 @@ def plotter(xx, sample, a_pred, u_pred, epoch):
 		      f'Reconstruction Rel. $L_2$ Error: {np.round(float(l2_error_u), 6)}')
 	plt.plot(xx, uu, 'r-', mfc='none', label='$u$')
 	plt.plot(xx, uhat.T, 'bo', mfc='none', label='$\\hat{u}$')
-	plt.plot(xxx, ff, 'g-', label='$f$')
 	plt.xlim(-1,1)
 	plt.grid(alpha=0.618)
 	plt.xlabel('$x$')
@@ -51,3 +50,22 @@ def plotter(xx, sample, a_pred, u_pred, epoch):
 	plt.savefig(f'./pics/reconstruction_epoch{epoch}.png')
 	# plt.show()
 	plt.close(2)
+
+	if DE is not None:
+		de = DE[0,:].to('cpu').detach().numpy()
+		plt.figure(3, figsize=(10,6))
+		mae_error_de = mae(de, ff)
+		l2_error_de = relative_l2(de, ff)
+		plt.title(f'DE Example Epoch {epoch}\n'\
+			      f'DE MAE Error: {np.round(mae_error_de, 6)}\n'\
+			      f'DE Rel. $L_2$ Error: {np.round(float(l2_error_de), 6)}')
+		plt.plot(xxx, ff, 'g-', label='$f$')
+		plt.plot(xx, de, 'co', mfc='none', label='ODE')
+		plt.xlim(-1,1)
+		plt.grid(alpha=0.618)
+		plt.xlabel('$x$')
+		plt.ylabel('$y$')
+		plt.legend(shadow=True)
+		plt.savefig(f'./pics/DE_epoch{epoch}.png')
+		# plt.show()
+		plt.close(3)
