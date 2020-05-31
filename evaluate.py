@@ -14,10 +14,11 @@ import argparse
 import scipy as sp
 from scipy.sparse import diags
 from sem.sem import legslbndm, lepoly
-
+from reconstruct import reconstruct, gen_lepolys
+import subprocess 
 
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--file", type=str, default='100N31')
+parser.add_argument("--file", type=str, default='100N63')
 args = parser.parse_args()
 if torch.cuda.is_available():  
   dev = "cuda:0" 
@@ -28,41 +29,25 @@ SHAPE = int(args.file.split('N')[1]) + 1
 BATCH = int(args.file.split('N')[0])
 N, D_in, Filters, D_out = BATCH, 1, 32, SHAPE
 xx = legslbndm(D_out)
-def gen_lepolys(N, x):
-	lepolys = {}
-	for i in range(N+5):
-		lepolys[i] = lepoly(i, x)
-	return lepolys
 lepolys = gen_lepolys(SHAPE, xx)
-def reconstruct(N, alphas, lepolys):
-	i, j = alphas.shape
-	j += 2
-	T = torch.zeros((i, j))
-	T = T.detach().numpy()
-	temp = alphas.clone().to('cpu').detach().numpy()
-	for ii in range(i):
-		a = temp[ii,:].reshape(j-2, 1)
-		sol = np.zeros((j,1))
-		for jj in range(1,j-2):
-			i_ind = jj - 1
-			sol += a[i_ind]*(lepolys[i_ind]-lepolys[i_ind+2])
-		T[ii,:] = sol.T[0]
-	return T
+
 def relative_l2(measured, theoretical):
 	return np.linalg.norm(measured-theoretical, ord=2)/np.linalg.norm(theoretical, ord=2)
 
 def mae(measured, theoretical):
 	return np.linalg.norm(measured-theoretical, ord=1)/len(theoretical)
 
-
-
 # #Get out of sample data
 FILE = args.file
-test_data = LGDataset(pickle_file=FILE, shape=SHAPE)
+try:
+	test_data = LGDataset(pickle_file=FILE, shape=SHAPE, subsample=D_out)
+except:
+	subprocess.call(f'python create_train_data.py --size {BATCH} --N {SHAPE - 1}', shell=True)
+	test_data = LGDataset(pickle_file=FILE, shape=SHAPE, subsample=D_out)
 testloader = torch.utils.data.DataLoader(test_data, batch_size=N, shuffle=True)
 for batch_idx, sample_batch in enumerate(testloader):
 	f = Variable(sample_batch['f'])
-	print("Got a sample.")	
+	# print("Got a sample.")	
 	break 
 
 # # LOAD MODEL
@@ -82,7 +67,7 @@ plt.title(f'Example\nMAE Error: {np.round(mae_error_a, 6)}\nRel. $L_2$ Error: {n
 plt.plot(xx, aa, 'r-', label='$u$')
 plt.plot(xx, ahat, 'bo', mfc='none', label='$\\hat{u}$')
 xx_ = np.linspace(-1,1, len(xx)+2, endpoint=True)
-plt.plot(xx_, ff, 'g', label='$f$')
+# plt.plot(xx_, ff, 'g', label='$f$')
 plt.xlim(-1,1)
 plt.grid(alpha=0.618)
 plt.xlabel('$x$')
