@@ -21,9 +21,9 @@ from reconstruct import *
 gc.collect()
 torch.cuda.empty_cache()
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--file", type=str, default='1000N15')
+parser.add_argument("--file", type=str, default='1000N31')
 parser.add_argument("--batch", type=int, default=1000)
-parser.add_argument("--epochs", type=int, default=101)
+parser.add_argument("--epochs", type=int, default=100)
 args = parser.parse_args()
 FILE = args.file
 SHAPE = int(args.file.split('N')[1]) + 1
@@ -92,8 +92,8 @@ for epoch in tqdm(range(EPOCHS)):
 			"""
 			COMPUTE LOSS
 			"""
-			if epoch < 20:
-				loss1 = criterion2(a_pred, a) + criterion2(DE, f)
+			if epoch < EPOCHS//2:
+				loss1 = criterion2(a_pred, a)
 			else:
 				loss1 = criterion2(a_pred, a) + criterion2(DE, f)			
 			if loss1.requires_grad:
@@ -108,4 +108,4 @@ for epoch in tqdm(range(EPOCHS)):
 	# torch.save(model1.state_dict(), f'model_{epoch}.pt')
 # SAVE MODEL
 torch.save(model1.state_dict(), f'model.pt')
-subprocess.call(f'python evaluate.py --file {BATCH//100}N{SHAPE-1}', shell=True)
+subprocess.call(f'python evaluate.py --file {BATCH//10}N{SHAPE-1}', shell=True)

@@ -19,7 +19,7 @@ import subprocess
 
 
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--file", type=str, default='100N63')
+parser.add_argument("--file", type=str, default='100N31')
 args = parser.parse_args()
 if torch.cuda.is_available():  
   dev = "cuda:0" 
