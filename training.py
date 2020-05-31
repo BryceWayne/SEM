@@ -33,7 +33,8 @@ SHAPE = int(args.file.split('N')[1]) + 1
 BATCH = int(args.file.split('N')[0])
 N, D_in, Filters, D_out = BATCH, 1, 32, SHAPE
 xx = legslbndm(D_out)
-lepolys = gen_lepolys(SHAPE, xx)
+lepolys = gen_lepolys(D_out, xx)
+derivative_matrix = torch.from_numpy(legslbdiff(D_out, xx)).to(device).float()
 
 # Check if CUDA is available and then use it.
 if torch.cuda.is_available():  
@@ -90,6 +91,7 @@ for epoch in tqdm(range(EPOCHS)):
 			RECONSTRUCT ODE
 			"""
 			DE = ODE(D_out-1, 1E-1, u_pred)
+			# DE = ODE2(D_out-1, 1E-1, u_pred, a_pred, lepolys, derivative_matrix)
 			f = f.reshape(N, D_out)
 			assert DE.shape == f.shape
 			"""

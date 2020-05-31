@@ -51,4 +51,23 @@ def reconstruct(N, alphas, lepolys):
 def ODE(N, eps, u):
 	ux = diff(N, u)
 	uxx = diff(N, ux)
-	return eps*uxx+ux
+	return eps*uxx + ux
+
+
+def ODE2(N, eps, u, alphas, lepolys, D):
+	i, j = alphas.shape
+	j += 2
+	M = torch.zeros((j-2,j), requires_grad=False).to(device)
+	T = torch.zeros((i, j), requires_grad=False).to(device)
+	for jj in range(1, j-1):
+		i_ind = jj - 1
+		element = torch.from_numpy(lepolys[i_ind] - lepolys[i_ind+2]).to(device).float()#.reshape(j,)
+		d1 = torch.mm(D,element)
+		d2 = torch.mm(D,d1)
+		M[i_ind,:] = torch.transpose(eps*d2 + d1, 0, 1)
+
+	for ii in range(i):
+		a = alphas[ii,:].reshape(1, j-2)
+		sol = torch.mm(a,M).reshape(j,)
+		T[ii,:] = sol
+	return T

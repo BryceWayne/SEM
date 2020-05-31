@@ -78,10 +78,10 @@ for batch_idx, sample_batch in enumerate(testloader):
 		running_MSE_u += relative_l2(u_pred[i,:], u[i,:])
 
 print("***************************************************"
-	  f"\n\t\t\tAvg. alpha MAE: {np.round(running_MAE_a/N, 6)}\n"\
-	  f"\n\t\t\tAvg. alpha MSE: {np.round(running_MSE_a/N, 6)}\n"\
-	  f"\n\t\t\tAvg.   u   MAE: {np.round(running_MAE_u/N, 6)}\n"\
-	  f"\n\t\t\tAvg.   u   MSE: {np.round(running_MSE_u/N, 6)}\n"\
+	  f"\nAvg. alpha MAE: {np.round(running_MAE_a/N, 6)}\n"\
+	  f"\nAvg. alpha MSE: {np.round(running_MSE_a/N, 6)}\n"\
+	  f"\nAvg.   u   MAE: {np.round(running_MAE_u/N, 6)}\n"\
+	  f"\nAvg.   u   MSE: {np.round(running_MSE_u/N, 6)}\n"\
 	  "***************************************************")
 
 
