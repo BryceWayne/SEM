@@ -21,7 +21,7 @@ def plotter(xx, sample, a_pred, u_pred, epoch):
 	plt.figure(1, figsize=(10,6))
 	plt.title(f'Alphas Example Epoch {epoch}\n'\
 		      f'Alphas MAE Error: {np.round(mae_error_a, 6)}\n'\
-		      f'Alphas Rel. $L_2$ Error: {np.round(l2_error_a, 6)}')
+		      f'Alphas Rel. $L_2$ Error: {np.round(float(l2_error_a), 6)}')
 	plt.plot(x_, aa, 'r-', mfc='none', label='$\\alpha$')
 	plt.plot(x_, ahat, 'bo', mfc='none', label='$\\hat{\\alpha}$')
 	# plt.plot(xxx, ff, 'g-', label='$f$')
@@ -39,7 +39,7 @@ def plotter(xx, sample, a_pred, u_pred, epoch):
 	plt.figure(2, figsize=(10,6))
 	plt.title(f'Reconstruction Example Epoch {epoch}\n'\
 		      f'Reconstruction MAE Error: {np.round(mae_error_u, 6)}\n'\
-		      f'Reconstruction Rel. $L_2$ Error: {np.round(l2_error_u, 6)}')
+		      f'Reconstruction Rel. $L_2$ Error: {np.round(float(l2_error_u), 6)}')
 	plt.plot(xx, uu, 'r-', mfc='none', label='$u$')
 	plt.plot(xx, uhat.T, 'bo', mfc='none', label='$\\hat{u}$')
 	plt.plot(xxx, ff, 'g-', label='$f$')

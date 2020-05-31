@@ -5,7 +5,7 @@ import torch.nn as nn
 from torch.autograd import Variable
 from torchvision import transforms
 import net.network as network
-from net.data_loader import LGDataset, show_solution, normalize
+from net.data_loader import *
 import numpy as np
 from tqdm import tqdm
 import LG_1d
@@ -13,15 +13,15 @@ import argparse
 import scipy as sp
 from scipy.sparse import diags
 import gc
-from sem.sem import legslbndm, lepoly
+from sem.sem import *
 import subprocess, os
 from plotting import plotter
-from reconstruct import gen_lepolys, reconstruct
+from reconstruct import *
 
 gc.collect()
 torch.cuda.empty_cache()
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--file", type=str, default='1000N63')
+parser.add_argument("--file", type=str, default='1000N15')
 parser.add_argument("--batch", type=int, default=1000)
 parser.add_argument("--epochs", type=int, default=101)
 args = parser.parse_args()
@@ -80,17 +80,22 @@ for epoch in tqdm(range(EPOCHS)):
 			"""
 			RECONSTRUCT SOLUTIONS
 			"""
-			u_pred = reconstruct(N, a_pred.clone(), lepolys)
-			u_pred = torch.from_numpy(u_pred).to(device)
+			u_pred = reconstruct(N, a_pred, lepolys)
 			u = u.reshape(N, D_out)
 			assert u_pred.shape == u.shape
 			"""
+			RECONSTRUCT ODE
+			"""
+			DE = ODE(D_out-1, 1E-1, u_pred)
+			f = f.reshape(N, D_out)
+			assert DE.shape == f.shape
+			"""
 			COMPUTE LOSS
 			"""
-			if epoch < 10000:
-				loss1 = criterion2(a_pred, a)
-			else:	
-				loss1 = criterion2(a_pred, a) + criterion2(u_pred, u)
+			if epoch < 20:
+				loss1 = criterion2(a_pred, a) + criterion2(DE, f)
+			else:
+				loss1 = criterion2(a_pred, a) + criterion2(DE, f)			
 			if loss1.requires_grad:
 				loss1.backward()
 			return a_pred, u_pred, loss1
@@ -103,4 +108,4 @@ for epoch in tqdm(range(EPOCHS)):
 	# torch.save(model1.state_dict(), f'model_{epoch}.pt')
 # SAVE MODEL
 torch.save(model1.state_dict(), f'model.pt')
-subprocess.call(f'python evaluate.py --file {BATCH//10}N{SHAPE-1}', shell=True)
+subprocess.call(f'python evaluate.py --file {BATCH//100}N{SHAPE-1}', shell=True)

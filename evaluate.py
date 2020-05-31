@@ -15,7 +15,8 @@ import scipy as sp
 from scipy.sparse import diags
 from sem.sem import legslbndm, lepoly
 from reconstruct import reconstruct, gen_lepolys
-import subprocess 
+import subprocess
+
 
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--file", type=str, default='100N63')
@@ -46,20 +47,20 @@ except:
 	test_data = LGDataset(pickle_file=FILE, shape=SHAPE, subsample=D_out)
 testloader = torch.utils.data.DataLoader(test_data, batch_size=N, shuffle=True)
 for batch_idx, sample_batch in enumerate(testloader):
-	f = Variable(sample_batch['f'])
+	f = Variable(sample_batch['f']).to(device)
 	# print("Got a sample.")	
 	break 
 
 # # LOAD MODEL
-model = network.Net(D_in, Filters, D_out)
+model = network.Net(D_in, Filters, D_out).to(device)
 model.load_state_dict(torch.load('./model.pt'))
 model.eval()
 a_pred = model(f)
 u_pred = reconstruct(SHAPE, a_pred, lepolys)
 xx = legslbndm(SHAPE-2)
-ahat = a_pred[0,:].detach().numpy()
-ff = sample_batch['f'][0,0,:].detach().numpy()
-aa = sample_batch['a'][0,0,:].detach().numpy()
+ahat = a_pred[0,:].to('cpu').detach().numpy()
+ff = sample_batch['f'][0,0,:].to('cpu').detach().numpy()
+aa = sample_batch['a'][0,0,:].to('cpu').detach().numpy()
 mae_error_a = mae(ahat, aa)
 l2_error_a = relative_l2(ahat, aa)
 plt.figure(1, figsize=(10,6))
@@ -77,8 +78,8 @@ plt.savefig('./pics/alpha_out_of_sample.png')
 # plt.show()
 plt.close()
 
-uhat = u_pred[0,:]
-uu = sample_batch['u'][0,0,:].detach().numpy()
+uhat = u_pred[0,:].to('cpu').detach().numpy()
+uu = sample_batch['u'][0,0,:].to('cpu').detach().numpy()
 mae_error_u = mae(uhat, uu)
 l2_error_u = relative_l2(uhat, uu)
 xx = legslbndm(SHAPE)

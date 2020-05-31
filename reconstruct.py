@@ -5,8 +5,15 @@ from torch.autograd import Variable
 from torchvision import transforms
 import numpy as np
 import matplotlib.pyplot as plt
-from sem.sem import legslbndm, lepoly
+from sem.sem import legslbndm, lepoly, legslbdiff
 
+
+# Check if CUDA is available and then use it.
+if torch.cuda.is_available():  
+  dev = "cuda:0" 
+else:  
+  dev = "cpu"
+device = torch.device(dev)  
 
 def gen_lepolys(N, x):
 	lepolys = {}
@@ -14,17 +21,34 @@ def gen_lepolys(N, x):
 		lepolys[i] = lepoly(i, x)
 	return lepolys
 
+def diff(N, T):
+	x = legslbndm(N+1)
+	D = torch.from_numpy(legslbdiff(N+1, x)).to(device).float()
+	T_ = T.clone()
+	for i in range(T.shape[0]):
+		element = torch.mm(D,T[i,:].reshape(T.shape[1], 1)).reshape(T.shape[1],)
+		T_[i,:] = element
+	T = T_.clone()
+	del T_
+	return T
+
+
 def reconstruct(N, alphas, lepolys):
 	i, j = alphas.shape
 	j += 2
-	T = torch.zeros((i, j))
-	T = T.numpy()
-	temp = alphas.clone().to('cpu').detach().numpy()
+	M = torch.zeros((j-2,j), requires_grad=False).to(device)
+	T = torch.zeros((i, j), requires_grad=False).to(device)
+	for jj in range(1, j-1):
+		i_ind = jj - 1
+		element = torch.from_numpy(lepolys[i_ind] - lepolys[i_ind+2]).reshape(j,)
+		M[i_ind,:] = element
 	for ii in range(i):
-		a = temp[ii,:].reshape(j-2, 1)
-		sol = np.zeros((j,1))
-		for jj in range(1,j-1):
-			i_ind = jj - 1
-			sol += a[i_ind]*(lepolys[i_ind]-lepolys[i_ind+2])
-		T[ii,:] = sol.T[0]
+		a = alphas[ii,:].reshape(1, j-2)
+		sol = torch.mm(a,M).reshape(j,)
+		T[ii,:] = sol
 	return T
+
+def ODE(N, eps, u):
+	ux = diff(N, u)
+	uxx = diff(N, ux)
+	return -eps*uxx-ux
