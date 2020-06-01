@@ -13,7 +13,7 @@ def plotter(xx, sample, a_pred, u_pred, epoch, DE=None):
 	ahat = a_pred[0,:].to('cpu').detach().numpy()
 	aa = sample['a'][0,0,:].to('cpu').detach().numpy()
 	uu = sample['u'][0,0,:].to('cpu').detach().numpy()
-	ff = sample['f'][0,0,:].to('cpu').detach().numpy()[1:31]
+	ff = sample['f'][0,0,:].to('cpu').detach().numpy()
 	x_ = legslbndm(len(xx)-2)
 	xxx = np.linspace(-1,1, len(ff), endpoint=True)
 	mae_error_a = mae(ahat, aa)

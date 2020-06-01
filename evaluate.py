@@ -23,12 +23,14 @@ device = torch.device(dev)
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--file", type=str, default='100N63')
 parser.add_argument("--ks", type=int, default=7)
+# parser.add_argument("--deriv", type=np.ndarray, default=np.zeros((1,1)))
 args = parser.parse_args()
 
 KERNEL_SIZE = args.ks
 PADDING = (args.ks - 1)//2
 SHAPE = int(args.file.split('N')[1]) + 1
 BATCH = int(args.file.split('N')[0])
+# M = args.deriv
 N, D_in, Filters, D_out = BATCH, 1, 32, SHAPE
 xx = legslbndm(D_out)
 lepolys = gen_lepolys(SHAPE, xx)
@@ -52,6 +54,8 @@ testloader = torch.utils.data.DataLoader(test_data, batch_size=N, shuffle=True)
 model = network.Net(D_in, Filters, D_out, kernel_size=KERNEL_SIZE, padding=PADDING).to(device)
 model.load_state_dict(torch.load('./model.pt'))
 model.eval()
+M = torch.load('derivative_matrix.pt')
+M = M.to(device)
 
 running_MAE_a, running_MAE_u, running_MSE_a, running_MSE_u = 0, 0, 0, 0
 for batch_idx, sample_batch in enumerate(testloader):
@@ -64,9 +68,9 @@ for batch_idx, sample_batch in enumerate(testloader):
 	u_pred = reconstruct(N, a_pred, lepolys)
 	u = u.reshape(N, D_out)
 	assert u_pred.shape == u.shape
-	DE = ODE(D_out-1, 1E-1, u_pred)
+	DE = ODE(D_out-1, 1E-1, u_pred, M)
 	f = f.reshape(N, D_out)
-	f = f[:,1:31]
+	# f = f[:,1:31]
 	assert DE.shape == f.shape
 	a_pred = a_pred.to('cpu').detach().numpy()
 	u_pred = u_pred.to('cpu').detach().numpy()
@@ -88,7 +92,7 @@ print("***************************************************"
 
 xx = legslbndm(SHAPE-2)
 ahat = a_pred[0,:]
-ff = sample_batch['f'][0,0,:].to('cpu').detach().numpy()[1:31]
+ff = sample_batch['f'][0,0,:].to('cpu').detach().numpy()
 aa = sample_batch['a'][0,0,:].to('cpu').detach().numpy()
 mae_error_a = mae(ahat, aa)
 l2_error_a = relative_l2(ahat, aa)

@@ -18,12 +18,13 @@ import subprocess, os
 from plotting import plotter
 from reconstruct import *
 
+
 gc.collect()
 torch.cuda.empty_cache()
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--file", type=str, default='1000N31')
 parser.add_argument("--batch", type=int, default=1000)
-parser.add_argument("--epochs", type=int, default=201)
+parser.add_argument("--epochs", type=int, default=51)
 parser.add_argument("--ks", type=int, default=7)
 args = parser.parse_args()
 KERNEL_SIZE = args.ks
@@ -42,7 +43,10 @@ if torch.cuda.is_available():
 else:  
   dev = "cpu"
 device = torch.device(dev)  
-
+def weights_init(m):
+    if isinstance(m, nn.Conv1d) or isinstance(m, nn.Linear):
+        torch.nn.init.xavier_uniform_(m.weight)
+        torch.nn.init.zeros_(m.bias)
 # Load the dataset
 try:
 	lg_dataset = LGDataset(pickle_file=FILE, shape=SHAPE, subsample=D_out)
@@ -53,10 +57,7 @@ except:
 trainloader = torch.utils.data.DataLoader(lg_dataset, batch_size=N, shuffle=True)
 # Construct our model by instantiating the class
 model1 = network.Net(D_in, Filters, D_out, kernel_size=KERNEL_SIZE, padding=PADDING)
-def weights_init(m):
-    if isinstance(m, nn.Conv1d) or isinstance(m, nn.Linear):
-        torch.nn.init.xavier_uniform_(m.weight)
-        torch.nn.init.zeros_(m.bias)
+
 # XAVIER INITIALIZATION
 model1.apply(weights_init)
 # SEND TO GPU
@@ -66,6 +67,7 @@ criterion1 = torch.nn.L1Loss()
 criterion2 = torch.nn.MSELoss(reduction="sum")
 optimizer1 = torch.optim.LBFGS(model1.parameters(), history_size=args.batch, tolerance_grad=1e-14, tolerance_change=1e-14, max_eval=50)
 
+M = torch.eye(D_out, requires_grad=True).to(device)
 EPOCHS = args.epochs
 for epoch in tqdm(range(EPOCHS)):
 	for batch_idx, sample_batch in enumerate(trainloader):
@@ -90,15 +92,15 @@ for epoch in tqdm(range(EPOCHS)):
 			"""
 			RECONSTRUCT ODE
 			"""
-			DE = ODE(D_out-1, 1E-1, u_pred)
+			DE = ODE(D_out-1, 1E-1, u_pred, M)
 			# DE = ODE2(D_out-1, 1E-1, u_pred, a_pred, lepolys, derivative_matrix)
 			f = f.reshape(N, D_out)
-			f = f[:,1:31]
+			# f = f[:,1:31]
 			assert DE.shape == f.shape
 			"""
 			COMPUTE LOSS
 			"""
-			loss1 = criterion2(a_pred, a) + criterion1(u_pred, u) + criterion1(DE, f)			
+			loss1 = criterion2(a_pred, a) + criterion1(u_pred, u) + criterion2(DE, f)			
 			if loss1.requires_grad:
 				loss1.backward()
 			return a_pred, u_pred, DE, loss1
@@ -113,4 +115,6 @@ for epoch in tqdm(range(EPOCHS)):
 	# torch.save(model1.state_dict(), f'model_{epoch}.pt')
 # SAVE MODEL
 torch.save(model1.state_dict(), f'model.pt')
+M = M.to('cpu').detach()
+torch.save(M, 'derivative_matrix.pt')
 subprocess.call(f'python evaluate.py --file 100N{SHAPE-1} --ks {KERNEL_SIZE}', shell=True)
