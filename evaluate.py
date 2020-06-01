@@ -66,6 +66,7 @@ for batch_idx, sample_batch in enumerate(testloader):
 	assert u_pred.shape == u.shape
 	DE = ODE(D_out-1, 1E-1, u_pred)
 	f = f.reshape(N, D_out)
+	f = f[:,1:31]
 	assert DE.shape == f.shape
 	a_pred = a_pred.to('cpu').detach().numpy()
 	u_pred = u_pred.to('cpu').detach().numpy()
@@ -87,7 +88,7 @@ print("***************************************************"
 
 xx = legslbndm(SHAPE-2)
 ahat = a_pred[0,:]
-ff = sample_batch['f'][0,0,:].to('cpu').detach().numpy()
+ff = sample_batch['f'][0,0,:].to('cpu').detach().numpy()[1:31]
 aa = sample_batch['a'][0,0,:].to('cpu').detach().numpy()
 mae_error_a = mae(ahat, aa)
 l2_error_a = relative_l2(ahat, aa)
@@ -129,7 +130,7 @@ de = DE[0,:].to('cpu').detach().numpy()
 mae_error_de = mae(de, ff)
 l2_error_de = relative_l2(de, ff)
 plt.title(f'Example\nMAE Error: {np.round(mae_error_de, 6)}\nRel. $L_2$ Error: {np.round(l2_error_de, 6)}')
-xx_ = np.linspace(-1,1, len(xx), endpoint=True)
+xx_ = np.linspace(-1,1, len(ff), endpoint=True)
 plt.plot(xx_, ff, 'g', label='$f$')
 plt.plot(xx_, de, 'co', mfc='none', label='ODE')
 plt.xlim(-1,1)

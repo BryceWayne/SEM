@@ -52,7 +52,7 @@ def reconstruct(N, alphas, lepolys):
 def ODE(N, eps, u):
 	ux = diff(N, u)
 	uxx = diff(N, ux)
-	return -eps*uxx - ux
+	return (-eps*uxx - ux)[:,1:31]
 
 
 def ODE2(N, eps, u, alphas, lepolys, D):

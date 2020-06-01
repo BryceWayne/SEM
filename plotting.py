@@ -13,9 +13,9 @@ def plotter(xx, sample, a_pred, u_pred, epoch, DE=None):
 	ahat = a_pred[0,:].to('cpu').detach().numpy()
 	aa = sample['a'][0,0,:].to('cpu').detach().numpy()
 	uu = sample['u'][0,0,:].to('cpu').detach().numpy()
-	ff = sample['f'][0,0,:].to('cpu').detach().numpy()
+	ff = sample['f'][0,0,:].to('cpu').detach().numpy()[1:31]
 	x_ = legslbndm(len(xx)-2)
-	xxx = np.linspace(-1,1, len(xx), endpoint=True)
+	xxx = np.linspace(-1,1, len(ff), endpoint=True)
 	mae_error_a = mae(ahat, aa)
 	l2_error_a = relative_l2(ahat, aa)
 	plt.figure(1, figsize=(10,6))
@@ -60,7 +60,7 @@ def plotter(xx, sample, a_pred, u_pred, epoch, DE=None):
 			      f'DE MAE Error: {np.round(mae_error_de, 6)}\n'\
 			      f'DE Rel. $L_2$ Error: {np.round(float(l2_error_de), 6)}')
 		plt.plot(xxx, ff, 'g-', label='$f$')
-		plt.plot(xx, de, 'co', mfc='none', label='ODE')
+		plt.plot(xxx, de, 'co', mfc='none', label='ODE')
 		plt.xlim(-1,1)
 		plt.grid(alpha=0.618)
 		plt.xlabel('$x$')

@@ -21,9 +21,9 @@ from reconstruct import *
 gc.collect()
 torch.cuda.empty_cache()
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--file", type=str, default='1000N15')
+parser.add_argument("--file", type=str, default='1000N31')
 parser.add_argument("--batch", type=int, default=1000)
-parser.add_argument("--epochs", type=int, default=50)
+parser.add_argument("--epochs", type=int, default=201)
 parser.add_argument("--ks", type=int, default=7)
 args = parser.parse_args()
 KERNEL_SIZE = args.ks
@@ -93,6 +93,7 @@ for epoch in tqdm(range(EPOCHS)):
 			DE = ODE(D_out-1, 1E-1, u_pred)
 			# DE = ODE2(D_out-1, 1E-1, u_pred, a_pred, lepolys, derivative_matrix)
 			f = f.reshape(N, D_out)
+			f = f[:,1:31]
 			assert DE.shape == f.shape
 			"""
 			COMPUTE LOSS
