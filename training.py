@@ -115,12 +115,14 @@ for epoch in tqdm(range(EPOCHS)):
 	print(f"\nLoss1: {np.round(float(loss1.to('cpu').detach()), 6)}")
 	if epoch % 10 == 0 and 0 <= epoch < EPOCHS:
 		plotter(xx, sample_batch, a_pred, u_pred, epoch, DE=DE)
+		torch.save(M.to('cpu').detach(), 'derivative_matrix.pt')
+		torch.save(model1.state_dict(), f'model.pt')
 	# elif epoch % 10 == 0 and EPOCHS//2 <= epoch:
 	# 	plotter(xx, sample_batch, a_pred, u_pred, epoch, DE=DE)
 	# SAVE MODEL
 	# torch.save(model1.state_dict(), f'model_{epoch}.pt')
 # SAVE MODEL
-torch.save(model1.state_dict(), f'model.pt')
 M = M.to('cpu').detach()
 torch.save(M, 'derivative_matrix.pt')
+torch.save(model1.state_dict(), f'model.pt')
 subprocess.call(f'python evaluate.py --file 100N{SHAPE-1} --ks {KERNEL_SIZE}', shell=True)
