@@ -21,6 +21,21 @@ def gen_lepolys(N, x):
 		lepolys[i] = lepoly(i, x)
 	return lepolys
 
+def gen_diff_lepoly(N, n, x,lepolys):
+	lepoly_x = np.zeros((N,1))
+	for i in range(n):
+		if ((i+n) % 2) != 0:
+			lepoly_x += (2*i+1)*lepolys[i]
+	return lepoly_x
+
+def gen_diff2_lepoly(N, n, x,lepolys):
+	lepoly_xx = np.zeros((N,1))
+	for i in range(n-1):
+		if ((i+n) % 2) == 0:
+			lepoly_xx += (i+1/2)*(n*(n+1)-i*(i+1))*lepolys[i]
+	return lepoly_xx
+
+
 def diff(N, T, D):
 	x = legslbndm(N+1)
 	# D = torch.from_numpy(legslbdiff(N+1, x)).to(device).float()

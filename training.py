@@ -67,7 +67,9 @@ criterion1 = torch.nn.L1Loss()
 criterion2 = torch.nn.MSELoss(reduction="sum")
 optimizer1 = torch.optim.LBFGS(model1.parameters(), history_size=args.batch, tolerance_grad=1e-14, tolerance_change=1e-14, max_eval=50)
 
-M = torch.eye(D_out, requires_grad=True).to(device)
+# M = torch.eye(D_out, requires_grad=True).to(device)
+M = torch.from_numpy(legslbdiff(D_out, xx)).to(device).float()
+M.requires_grad = True
 EPOCHS = args.epochs
 for epoch in tqdm(range(EPOCHS)):
 	for batch_idx, sample_batch in enumerate(trainloader):
