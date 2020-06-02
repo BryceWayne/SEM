@@ -34,6 +34,8 @@ BATCH = int(args.file.split('N')[0])
 N, D_in, Filters, D_out = BATCH, 1, 32, SHAPE
 xx = legslbndm(D_out)
 lepolys = gen_lepolys(SHAPE, xx)
+lepoly_x = dx(D_out, xx, lepolys)
+lepoly_xx = dxx(D_out, xx, lepolys)
 
 def relative_l2(measured, theoretical):
 	return np.linalg.norm(measured-theoretical, ord=2)/np.linalg.norm(theoretical, ord=2)
@@ -54,8 +56,7 @@ testloader = torch.utils.data.DataLoader(test_data, batch_size=N, shuffle=False)
 model = network.Net(D_in, Filters, D_out, kernel_size=KERNEL_SIZE, padding=PADDING).to(device)
 model.load_state_dict(torch.load('./model.pt'))
 model.eval()
-M = torch.load('derivative_matrix.pt')
-M = M.to(device)
+
 
 running_MAE_a, running_MAE_u, running_MSE_a, running_MSE_u = 0, 0, 0, 0
 for batch_idx, sample_batch in enumerate(testloader):
@@ -68,7 +69,7 @@ for batch_idx, sample_batch in enumerate(testloader):
 	u_pred = reconstruct(N, a_pred, lepolys)
 	u = u.reshape(N, D_out)
 	assert u_pred.shape == u.shape
-	DE = ODE(D_out-1, 1E-1, u_pred, M)
+	DE = ODE(1E-1, u_pred, lepoly_x, lepoly_xx)
 	f = f.reshape(N, D_out)
 	# f = f[:,1:31]
 	assert DE.shape == f.shape

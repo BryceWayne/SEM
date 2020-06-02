@@ -21,20 +21,29 @@ def gen_lepolys(N, x):
 		lepolys[i] = lepoly(i, x)
 	return lepolys
 
-def gen_diff_lepoly(N, n, x,lepolys):
-	lepoly_x = np.zeros((N,1))
-	for i in range(n):
-		if ((i+n) % 2) != 0:
-			lepoly_x += (2*i+1)*lepolys[i]
-	return lepoly_x
+def dx(N, x, lepolys):
+	def gen_diff_lepoly(N, n, x,lepolys):
+		lepoly_x = np.zeros((N,1))
+		for i in range(n):
+			if ((i+n) % 2) != 0:
+				lepoly_x += (2*i+1)*lepolys[i]
+		return lepoly_x
+	Dx = np.zeros((N, N))
+	for i in range(N):
+		Dx[i, :] = gen_diff_lepoly(N, i, x, lepolys).reshape(1, N)
+	return torch.from_numpy(Dx).to(device).float()
 
-def gen_diff2_lepoly(N, n, x,lepolys):
-	lepoly_xx = np.zeros((N,1))
-	for i in range(n-1):
-		if ((i+n) % 2) == 0:
-			lepoly_xx += (i+1/2)*(n*(n+1)-i*(i+1))*lepolys[i]
-	return lepoly_xx
-
+def dxx(N, x, lepolys):
+	def gen_diff2_lepoly(N, n, x,lepolys):
+		lepoly_xx = np.zeros((N,1))
+		for i in range(n-1):
+			if ((i+n) % 2) == 0:
+				lepoly_xx += (i+1/2)*(n*(n+1)-i*(i+1))*lepolys[i]
+		return lepoly_xx
+	Dxx = np.zeros((N, N))
+	for i in range(N):
+		Dxx[i, :] = gen_diff2_lepoly(N, i, x, lepolys).reshape(1, N)
+	return torch.from_numpy(Dxx).to(device).float()
 
 def diff(N, T, D):
 	x = legslbndm(N+1)
@@ -61,13 +70,22 @@ def reconstruct(N, alphas, lepolys):
 		a = alphas[ii,:].detach().reshape(1, j-2)
 		sol = torch.mm(a,M).reshape(j,)
 		T[ii,:] = sol
+	del M, element, sol
 	return T
 
 
-def ODE(N, eps, u, M):
-	ux = diff(N, u, M)
-	uxx = diff(N, ux, M)
-	return -eps*uxx - ux
+def ODE(eps, u, Dx, Dxx):
+	u = u.reshape(u.shape[0], u.shape[1], 1)
+	ux = torch.zeros_like(u)
+	uxx = torch.zeros_like(u)
+	# print("\n", u.shape, ux.shape, Dx.shape)
+	for i in range(u.shape[0]):
+		ux[i,:] = torch.mm(Dx,u[i,:, :])
+	del Dx
+	for i in range(u.shape[0]):
+		uxx[i,:] = torch.mm(Dxx,u[i,:, :])
+	del Dxx
+	return (-eps*uxx - ux).reshape(u.shape[0], u.shape[1])
 
 
 def ODE2(N, eps, u, alphas, lepolys, D):

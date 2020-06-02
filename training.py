@@ -24,7 +24,7 @@ torch.cuda.empty_cache()
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--file", type=str, default='1000N31')
 parser.add_argument("--batch", type=int, default=1000)
-parser.add_argument("--epochs", type=int, default=25)
+parser.add_argument("--epochs", type=int, default=50)
 parser.add_argument("--ks", type=int, default=7)
 args = parser.parse_args()
 KERNEL_SIZE = args.ks
@@ -35,6 +35,9 @@ BATCH = int(args.file.split('N')[0])
 N, D_in, Filters, D_out = BATCH, 1, 32, SHAPE
 xx = legslbndm(D_out)
 lepolys = gen_lepolys(D_out, xx)
+lepoly_x = dx(D_out, xx, lepolys)
+lepoly_xx = dxx(D_out, xx, lepolys)
+
 derivative_matrix = torch.from_numpy(legslbdiff(D_out, xx)).to(device).float()
 
 # Check if CUDA is available and then use it.
@@ -67,13 +70,6 @@ criterion1 = torch.nn.L1Loss()
 criterion2 = torch.nn.MSELoss(reduction="sum")
 optimizer1 = torch.optim.LBFGS(model1.parameters(), history_size=args.batch, tolerance_grad=1e-14, tolerance_change=1e-14, max_eval=50)
 
-# M = torch.eye(D_out, requires_grad=True).to(device)
-try:
-	M = torch.load('derivative_matrix.pt').to(device)
-except:
-	diff = legslbdiff(D_out, xx)
-	M = torch.from_numpy(diff).to(device).float()
-M.requires_grad = True
 
 EPOCHS = args.epochs + 1
 for epoch in tqdm(range(1, EPOCHS)):
@@ -99,7 +95,7 @@ for epoch in tqdm(range(1, EPOCHS)):
 			"""
 			RECONSTRUCT ODE
 			"""
-			DE = ODE(D_out-1, 1E-1, u_pred, M)
+			DE = ODE(1E-1, u_pred, lepoly_x, lepoly_xx)
 			# DE = ODE2(D_out-1, 1E-1, u_pred, a_pred, lepolys, derivative_matrix)
 			f = f.reshape(N, D_out)
 			# f = f[:,1:31]
@@ -116,14 +112,14 @@ for epoch in tqdm(range(1, EPOCHS)):
 	print(f"\nLoss1: {np.round(float(loss1.to('cpu').detach()), 6)}")
 	if epoch % 5 == 0 and 0 <= epoch < EPOCHS:
 		plotter(xx, sample_batch, a_pred, u_pred, epoch, DE=DE)
-		torch.save(M.to('cpu').detach(), 'derivative_matrix.pt')
+		# torch.save(M.to('cpu').detach(), 'derivative_matrix.pt')
 		torch.save(model1.state_dict(), f'model.pt')
 	# elif epoch % 10 == 0 and EPOCHS//2 <= epoch:
 	# 	plotter(xx, sample_batch, a_pred, u_pred, epoch, DE=DE)
 	# SAVE MODEL
 	# torch.save(model1.state_dict(), f'model_{epoch}.pt')
 # SAVE MODEL
-M = M.to('cpu').detach()
-torch.save(M, 'derivative_matrix.pt')
+# M = M.to('cpu').detach()
+# torch.save(M, 'derivative_matrix.pt')
 torch.save(model1.state_dict(), f'model.pt')
 subprocess.call(f'python evaluate.py --file 100N{SHAPE-1} --ks {KERNEL_SIZE}', shell=True)
