@@ -24,7 +24,7 @@ torch.cuda.empty_cache()
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--file", type=str, default='1000N31')
 parser.add_argument("--batch", type=int, default=1000)
-parser.add_argument("--epochs", type=int, default=250)
+parser.add_argument("--epochs", type=int, default=25)
 parser.add_argument("--ks", type=int, default=5)
 args = parser.parse_args()
 KERNEL_SIZE = args.ks
@@ -103,14 +103,14 @@ for epoch in tqdm(range(1, EPOCHS)):
 			"""
 			COMPUTE LOSS
 			"""
-			loss1 = criterion2(a_pred, a) + criterion2(u_pred, u) + criterion2(DE, f)			
+			loss1 = criterion2(a_pred, a) + criterion1(u_pred, u) + criterion1(DE, f)			
 			if loss1.requires_grad:
 				loss1.backward()
 			return a_pred, u_pred, DE, loss1
 		a_pred, u_pred, DE, loss1 = closure(f, a, u)
 		optimizer1.step(loss1.item)
 	print(f"\nLoss1: {np.round(float(loss1.to('cpu').detach()), 6)}")
-	if epoch % 25 == 0 and 0 <= epoch < EPOCHS:
+	if epoch % 100 == 0 and 0 <= epoch < EPOCHS:
 		plotter(xx, sample_batch, a_pred, u_pred, epoch, DE=DE)
 		torch.save(model1.state_dict(), f'model.pt')
 # SAVE MODEL
