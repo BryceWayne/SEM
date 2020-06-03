@@ -59,7 +59,7 @@ model.load_state_dict(torch.load('./model.pt'))
 model.eval()
 
 
-running_MAE_a, running_MAE_u, running_MSE_a, running_MSE_u = 0, 0, 0, 0
+running_MAE_a, running_MAE_u, running_MSE_a, running_MSE_u, running_MinfE_a, running_MinfE_u = 0, 0, 0, 0, 0, 0
 for batch_idx, sample_batch in enumerate(testloader):
 	f = Variable(sample_batch['f']).to(device)
 	u = Variable(sample_batch['u']).to(device)
@@ -70,7 +70,7 @@ for batch_idx, sample_batch in enumerate(testloader):
 	u_pred = reconstruct(N, a_pred, lepolys)
 	u = u.reshape(N, D_out)
 	assert u_pred.shape == u.shape
-	DE = ODE2(D_out-1, 1E-1, u_pred, a_pred, lepolys, lepoly_x, lepoly_xx)
+	DE = ODE2(1E-1, u_pred, a_pred, lepolys, lepoly_x, lepoly_xx)
 	f = f.reshape(N, D_out)
 	# f = f[:,1:31]
 	assert DE.shape == f.shape
@@ -80,16 +80,20 @@ for batch_idx, sample_batch in enumerate(testloader):
 	u = u.to('cpu').detach().numpy()
 	for i in range(N):
 		running_MAE_a += mae(a_pred[i,:], a[i,:])
-		running_MAE_u += mae(u_pred[i,:], u[i,:])
 		running_MSE_a += relative_l2(a_pred[i,:], a[i,:])
+		running_MinfE_a += relative_linf(a_pred[i,:], a[i,:])
+		running_MAE_u += mae(u_pred[i,:], u[i,:])
 		running_MSE_u += relative_l2(u_pred[i,:], u[i,:])
+		running_MinfE_u += relative_linf(u_pred[i,:], u[i,:])
 
 
 print("***************************************************"\
 	  f"\nAvg. alpha MAE: {np.round(running_MAE_a/N, 6)}\n"\
 	  f"\nAvg. alpha MSE: {np.round(running_MSE_a/N, 6)}\n"\
+	  f"\nAvg. alpha MinfE: {np.round(running_MinfE_a/N, 6)}\n"\
 	  f"\nAvg. u MAE: {np.round(running_MAE_u/N, 6)}\n"\
 	  f"\nAvg. u MSE: {np.round(running_MSE_u/N, 6)}\n"\
+	  f"\nAvg. u MinfE: {np.round(running_MinfE_u/N, 6)}\n"\
 	  "***************************************************")
 
 

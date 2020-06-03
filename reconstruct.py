@@ -91,7 +91,7 @@ def ODE(eps, u, Dx, Dxx):
 	return (-eps*uxx - ux).reshape(u.shape[0], u.shape[1])
 
 
-def ODE2(N, eps, u, alphas, lepolys, DX, DXX):
+def ODE2(eps, u, alphas, lepolys, DX, DXX):
 	i, j = alphas.shape
 	j += 2
 	M = torch.zeros((j-2,j), requires_grad=False).to(device)
@@ -101,7 +101,6 @@ def ODE2(N, eps, u, alphas, lepolys, DX, DXX):
 		d1 = torch.from_numpy(DX[i_ind] - DX[i_ind+2]).to(device).float()
 		d2 = torch.from_numpy(DXX[i_ind] - DXX[i_ind+2]).to(device).float()
 		de = -eps*d2 - d1
-		# print(de.shape)
 		M[i_ind,:] = de
 
 	for ii in range(i):
