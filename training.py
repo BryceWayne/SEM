@@ -116,3 +116,5 @@ for epoch in tqdm(range(1, EPOCHS)):
 # SAVE MODEL
 torch.save(model1.state_dict(), f'model.pt')
 subprocess.call(f'python evaluate.py --file 100N{SHAPE-1} --ks {KERNEL_SIZE}', shell=True)
+gc.collect()
+torch.cuda.empty_cache()
