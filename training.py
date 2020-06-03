@@ -110,7 +110,7 @@ for epoch in tqdm(range(1, EPOCHS)):
 		a_pred, u_pred, DE, loss1 = closure(f, a, u)
 		optimizer1.step(loss1.item)
 	print(f"\nLoss1: {np.round(float(loss1.to('cpu').detach()), 6)}")
-	if epoch % 5 == 0 and 0 <= epoch < EPOCHS:
+	if epoch % 25 == 0 and 0 <= epoch < EPOCHS:
 		plotter(xx, sample_batch, a_pred, u_pred, epoch, DE=DE)
 		torch.save(model1.state_dict(), f'model.pt')
 # SAVE MODEL
