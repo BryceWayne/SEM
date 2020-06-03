@@ -4,8 +4,6 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 from torchvision import transforms
-import net.network as network
-from net.data_loader import *
 import numpy as np
 from tqdm import tqdm
 import LG_1d
@@ -13,8 +11,10 @@ import argparse
 import scipy as sp
 from scipy.sparse import diags
 import gc
-from sem.sem import *
 import subprocess, os
+import net.network as network
+from net.data_loader import *
+from sem.sem import *
 from plotting import plotter
 from reconstruct import *
 
@@ -24,7 +24,7 @@ torch.cuda.empty_cache()
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--file", type=str, default='1000N31')
 parser.add_argument("--batch", type=int, default=1000)
-parser.add_argument("--epochs", type=int, default=25)
+parser.add_argument("--epochs", type=int, default=250)
 parser.add_argument("--ks", type=int, default=5)
 args = parser.parse_args()
 KERNEL_SIZE = args.ks
@@ -110,7 +110,7 @@ for epoch in tqdm(range(1, EPOCHS)):
 		a_pred, u_pred, DE, loss1 = closure(f, a, u)
 		optimizer1.step(loss1.item)
 	print(f"\nLoss1: {np.round(float(loss1.to('cpu').detach()), 6)}")
-	if epoch % 100 == 0 and 0 <= epoch < EPOCHS:
+	if epoch % 25 == 0 and 0 <= epoch < EPOCHS:
 		plotter(xx, sample_batch, a_pred, u_pred, epoch, DE=DE)
 		torch.save(model1.state_dict(), f'model.pt')
 # SAVE MODEL

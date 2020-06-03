@@ -9,7 +9,7 @@ def plotter(xx, sample, a_pred, u_pred, epoch, DE=None):
 	def relative_l2(measured, theoretical):
 		return np.linalg.norm(measured-theoretical, ord=2)/np.linalg.norm(theoretical, ord=2)
 	def relative_linf(measured, theoretical):
-		return np.linalg.norm(measured-theoretical, ord=inf)/np.linalg.norm(theoretical, ord=inf)
+		return np.linalg.norm(measured-theoretical, ord=np.inf)/np.linalg.norm(theoretical, ord=np.inf)
 	def mae(measured, theoretical):
 		return np.linalg.norm(measured-theoretical, ord=1)/len(theoretical)
 	ahat = a_pred[0,:].to('cpu').detach().numpy()
@@ -24,7 +24,7 @@ def plotter(xx, sample, a_pred, u_pred, epoch, DE=None):
 	plt.figure(1, figsize=(10,6))
 	plt.title(f'Alphas Example Epoch {epoch}\n'\
 		      f'Alphas MAE Error: {np.round(mae_error_a, 6)}\n'\
-		      f'Alphas Rel. $L_2$ Error: {np.round(float(l2_error_a), 6)}'\
+		      f'Alphas Rel. $L_2$ Error: {np.round(float(l2_error_a), 6)}\n'\
 		      f'Alphas Rel. $L_\\infty$ Error: {np.round(float(linf_error_a), 6)}')
 	plt.plot(x_, aa, 'r-', mfc='none', label='$\\alpha$')
 	plt.plot(x_, ahat, 'bo', mfc='none', label='$\\hat{\\alpha}$')
@@ -34,7 +34,7 @@ def plotter(xx, sample, a_pred, u_pred, epoch, DE=None):
 	plt.xlabel('$x$')
 	plt.ylabel('$y$')
 	plt.legend(shadow=True)
-	plt.savefig(f'./pics/epoch{str(epoch).zfill(4)}_alphas.png')
+	plt.savefig(f'./pics/epoch{str(epoch).zfill(4)}_alphas.png', bbox_inches='tight')
 	plt.close(1)
 	uhat = u_pred[0,:].to('cpu').detach().numpy()
 	mae_error_u = mae(uhat, uu)
@@ -43,7 +43,7 @@ def plotter(xx, sample, a_pred, u_pred, epoch, DE=None):
 	plt.figure(2, figsize=(10,6))
 	plt.title(f'Reconstruction Example Epoch {epoch}\n'\
 		      f'Reconstruction MAE Error: {np.round(mae_error_u, 6)}\n'\
-		      f'Reconstruction Rel. $L_2$ Error: {np.round(float(l2_error_u), 6)}'\
+		      f'Reconstruction Rel. $L_2$ Error: {np.round(float(l2_error_u), 6)}\n'\
 		      f'Reconstruction Rel. $L_\\infty$ Error: {np.round(float(linf_error_u), 6)}')
 	plt.plot(xx, uu, 'r-', mfc='none', label='$u$')
 	plt.plot(xx, uhat.T, 'bo', mfc='none', label='$\\hat{u}$')
@@ -52,7 +52,7 @@ def plotter(xx, sample, a_pred, u_pred, epoch, DE=None):
 	plt.xlabel('$x$')
 	plt.ylabel('$y$')
 	plt.legend(shadow=True)
-	plt.savefig(f'./pics/epoch{str(epoch).zfill(4)}_reconstruction.png')
+	plt.savefig(f'./pics/epoch{str(epoch).zfill(4)}_reconstruction.png', bbox_inches='tight')
 	# plt.show()
 	plt.close(2)
 
@@ -64,7 +64,7 @@ def plotter(xx, sample, a_pred, u_pred, epoch, DE=None):
 		linf_error_de = relative_linf(de, ff)
 		plt.title(f'DE Example Epoch {epoch}\n'\
 			      f'DE MAE Error: {np.round(mae_error_de, 6)}\n'\
-			      f'DE Rel. $L_2$ Error: {np.round(float(l2_error_de), 6)}'\
+			      f'DE Rel. $L_2$ Error: {np.round(float(l2_error_de), 6)}\n'\
 			      f'DE Rel. $L_\\infty$ Error: {np.round(float(linf_error_de), 6)}')
 		plt.plot(xxx, ff, 'g-', label='$f$')
 		plt.plot(xxx, de, 'co', mfc='none', label='ODE')
@@ -73,6 +73,6 @@ def plotter(xx, sample, a_pred, u_pred, epoch, DE=None):
 		plt.xlabel('$x$')
 		plt.ylabel('$y$')
 		plt.legend(shadow=True)
-		plt.savefig(f'./pics/epoch{str(epoch).zfill(4)}DE.png')
+		plt.savefig(f'./pics/epoch{str(epoch).zfill(4)}DE.png', bbox_inches='tight')
 		# plt.show()
 		plt.close(3)
