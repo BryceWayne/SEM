@@ -69,7 +69,7 @@ for batch_idx, sample_batch in enumerate(testloader):
 	u_pred = reconstruct(N, a_pred, lepolys)
 	u = u.reshape(N, D_out)
 	assert u_pred.shape == u.shape
-	DE = ODE(1E-1, u_pred, lepoly_x, lepoly_xx)
+	DE = ODE2(D_out-1, 1E-1, u_pred, a_pred, lepolys, lepoly_x, lepoly_xx)
 	f = f.reshape(N, D_out)
 	# f = f[:,1:31]
 	assert DE.shape == f.shape

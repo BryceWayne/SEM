@@ -15,11 +15,13 @@ else:
   dev = "cpu"
 device = torch.device(dev)  
 
+
 def gen_lepolys(N, x):
 	lepolys = {}
 	for i in range(N):
 		lepolys[i] = lepoly(i, x)
 	return lepolys
+
 
 def dx(N, x, lepolys):
 	def gen_diff_lepoly(N, n, x,lepolys):
@@ -28,10 +30,11 @@ def dx(N, x, lepolys):
 			if ((i+n) % 2) != 0:
 				lepoly_x += (2*i+1)*lepolys[i]
 		return lepoly_x
-	Dx = np.zeros((N, N))
+	Dx = {}
 	for i in range(N):
-		Dx[i, :] = gen_diff_lepoly(N, i, x, lepolys).reshape(1, N)
-	return torch.from_numpy(Dx).to(device).float()
+		Dx[i] = gen_diff_lepoly(N, i, x, lepolys).reshape(1, N)
+	return Dx
+
 
 def dxx(N, x, lepolys):
 	def gen_diff2_lepoly(N, n, x,lepolys):
@@ -40,10 +43,11 @@ def dxx(N, x, lepolys):
 			if ((i+n) % 2) == 0:
 				lepoly_xx += (i+1/2)*(n*(n+1)-i*(i+1))*lepolys[i]
 		return lepoly_xx
-	Dxx = np.zeros((N, N))
+	Dxx = {}
 	for i in range(N):
-		Dxx[i, :] = gen_diff2_lepoly(N, i, x, lepolys).reshape(1, N)
-	return torch.from_numpy(Dxx).to(device).float()
+		Dxx[i] = gen_diff2_lepoly(N, i, x, lepolys).reshape(1, N)
+	return Dxx
+
 
 def diff(N, T, D):
 	x = legslbndm(N+1)
@@ -78,7 +82,6 @@ def ODE(eps, u, Dx, Dxx):
 	u = u.reshape(u.shape[0], u.shape[1], 1)
 	ux = torch.zeros_like(u)
 	uxx = torch.zeros_like(u)
-	# print("\n", u.shape, ux.shape, Dx.shape)
 	for i in range(u.shape[0]):
 		ux[i,:] = torch.mm(Dx,u[i,:, :])
 	del Dx
@@ -88,17 +91,18 @@ def ODE(eps, u, Dx, Dxx):
 	return (-eps*uxx - ux).reshape(u.shape[0], u.shape[1])
 
 
-def ODE2(N, eps, u, alphas, lepolys, D):
+def ODE2(N, eps, u, alphas, lepolys, DX, DXX):
 	i, j = alphas.shape
 	j += 2
 	M = torch.zeros((j-2,j), requires_grad=False).to(device)
 	T = torch.zeros((i, j), requires_grad=False).to(device)
 	for jj in range(1, j-1):
 		i_ind = jj - 1
-		element = torch.from_numpy(lepolys[i_ind] - lepolys[i_ind+2]).to(device).float()#.reshape(j,)
-		d1 = torch.mm(D,element)
-		d2 = torch.mm(D,d1)
-		M[i_ind,:] = torch.transpose(eps*d2 + d1, 0, 1)
+		d1 = torch.from_numpy(DX[i_ind] - DX[i_ind+2]).to(device).float()
+		d2 = torch.from_numpy(DXX[i_ind] - DXX[i_ind+2]).to(device).float()
+		de = -eps*d2 - d1
+		# print(de.shape)
+		M[i_ind,:] = de
 
 	for ii in range(i):
 		a = alphas[ii,:].detach().reshape(1, j-2)

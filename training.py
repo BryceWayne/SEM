@@ -24,8 +24,8 @@ torch.cuda.empty_cache()
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--file", type=str, default='1000N31')
 parser.add_argument("--batch", type=int, default=1000)
-parser.add_argument("--epochs", type=int, default=50)
-parser.add_argument("--ks", type=int, default=7)
+parser.add_argument("--epochs", type=int, default=250)
+parser.add_argument("--ks", type=int, default=5)
 args = parser.parse_args()
 KERNEL_SIZE = args.ks
 PADDING = (args.ks - 1)//2
@@ -50,6 +50,7 @@ def weights_init(m):
     if isinstance(m, nn.Conv1d) or isinstance(m, nn.Linear):
         torch.nn.init.xavier_uniform_(m.weight)
         torch.nn.init.zeros_(m.bias)
+
 # Load the dataset
 try:
 	lg_dataset = LGDataset(pickle_file=FILE, shape=SHAPE, subsample=D_out)
@@ -68,7 +69,7 @@ model1.to(device)
 # Construct our loss function and an Optimizer.
 criterion1 = torch.nn.L1Loss()
 criterion2 = torch.nn.MSELoss(reduction="sum")
-optimizer1 = torch.optim.LBFGS(model1.parameters(), history_size=args.batch, tolerance_grad=1e-14, tolerance_change=1e-14, max_eval=50)
+optimizer1 = torch.optim.LBFGS(model1.parameters(), history_size=args.batch, tolerance_grad=1e-14, tolerance_change=1e-14, max_eval=5)
 
 
 EPOCHS = args.epochs + 1
@@ -95,15 +96,14 @@ for epoch in tqdm(range(1, EPOCHS)):
 			"""
 			RECONSTRUCT ODE
 			"""
-			DE = ODE(1E-1, u_pred, lepoly_x, lepoly_xx)
-			# DE = ODE2(D_out-1, 1E-1, u_pred, a_pred, lepolys, derivative_matrix)
+			# DE = ODE(1E-1, u_pred, lepoly_x, lepoly_xx)
+			DE = ODE2(D_out-1, 1E-1, u_pred, a_pred, lepolys, lepoly_x, lepoly_xx)
 			f = f.reshape(N, D_out)
-			# f = f[:,1:31]
 			assert DE.shape == f.shape
 			"""
 			COMPUTE LOSS
 			"""
-			loss1 = criterion2(a_pred, a) + criterion1(u_pred, u) + criterion1(DE, f)			
+			loss1 = criterion2(a_pred, a) + criterion2(u_pred, u) + criterion2(DE, f)			
 			if loss1.requires_grad:
 				loss1.backward()
 			return a_pred, u_pred, DE, loss1
@@ -112,14 +112,7 @@ for epoch in tqdm(range(1, EPOCHS)):
 	print(f"\nLoss1: {np.round(float(loss1.to('cpu').detach()), 6)}")
 	if epoch % 5 == 0 and 0 <= epoch < EPOCHS:
 		plotter(xx, sample_batch, a_pred, u_pred, epoch, DE=DE)
-		# torch.save(M.to('cpu').detach(), 'derivative_matrix.pt')
 		torch.save(model1.state_dict(), f'model.pt')
-	# elif epoch % 10 == 0 and EPOCHS//2 <= epoch:
-	# 	plotter(xx, sample_batch, a_pred, u_pred, epoch, DE=DE)
-	# SAVE MODEL
-	# torch.save(model1.state_dict(), f'model_{epoch}.pt')
 # SAVE MODEL
-# M = M.to('cpu').detach()
-# torch.save(M, 'derivative_matrix.pt')
 torch.save(model1.state_dict(), f'model.pt')
 subprocess.call(f'python evaluate.py --file 100N{SHAPE-1} --ks {KERNEL_SIZE}', shell=True)
