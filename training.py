@@ -24,8 +24,8 @@ torch.cuda.empty_cache()
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--file", type=str, default='1000N31')
 parser.add_argument("--batch", type=int, default=1000)
-parser.add_argument("--epochs", type=int, default=100)
-parser.add_argument("--ks", type=int, default=5)
+parser.add_argument("--epochs", type=int, default=10000)
+parser.add_argument("--ks", type=int, default=7)
 args = parser.parse_args()
 
 KERNEL_SIZE = args.ks
@@ -69,7 +69,7 @@ model1.to(device)
 # Construct our loss function and an Optimizer.
 criterion1 = torch.nn.L1Loss()
 criterion2 = torch.nn.MSELoss(reduction="sum")
-optimizer1 = torch.optim.LBFGS(model1.parameters(), history_size=10, tolerance_grad=1e-6, tolerance_change=1e-6, max_eval=5)
+optimizer1 = torch.optim.LBFGS(model1.parameters(), history_size=10, tolerance_grad=1e-16, tolerance_change=1e-16, max_eval=20)
 
 
 EPOCHS = args.epochs + 1
@@ -97,7 +97,6 @@ for epoch in tqdm(range(1, EPOCHS)):
 			"""
 			RECONSTRUCT ODE
 			"""
-			# DE = ODE(1E-1, u_pred, lepoly_x, lepoly_xx)
 			DE = ODE2(1E-1, u_pred, a_pred, lepolys, lepoly_x, lepoly_xx)
 			f = f.reshape(N, D_out)
 			assert DE.shape == f.shape
@@ -111,8 +110,8 @@ for epoch in tqdm(range(1, EPOCHS)):
 		a_pred, u_pred, DE, loss1 = closure(f, a, u)
 		optimizer1.step(loss1.item)
 		current_loss = np.round(float(loss1.to('cpu').detach()), 6) 
-	print(f"\nLoss1: {current_loss}")
-	if epoch % 25 == 0 and 0 <= epoch < EPOCHS:
+	print(f"\tLoss1: {current_loss}")
+	if epoch % 50 == 0 and 0 <= epoch < EPOCHS:
 		plotter(xx, sample_batch, a_pred, u_pred, epoch, DE=DE)
 	if current_loss < BEST_LOSS:
 		torch.save(model1.state_dict(), f'model.pt')
