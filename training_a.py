@@ -105,8 +105,8 @@ for epoch in tqdm(range(1, EPOCHS)):
 			COMPUTE LOSS
 			"""
 			loss = criterion2(a_pred, a) + criterion1(u_pred, u) + criterion1(DE, f)			
-			if loss1.requires_grad:
-				loss1.backward()
+			if loss.requires_grad:
+				loss.backward()
 			return a_pred, u_pred, DE, loss
 		a_pred, u_pred, DE, loss = closure(f, a, u)
 		optimizer1.step(loss.item)
