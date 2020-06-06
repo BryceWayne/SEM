@@ -23,8 +23,8 @@ gc.collect()
 torch.cuda.empty_cache()
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--file", type=str, default='20000N31')
-parser.add_argument("--batch", type=int, default=1000)
-parser.add_argument("--epochs", type=int, default=10)
+parser.add_argument("--batch", type=int, default=10000)
+parser.add_argument("--epochs", type=int, default=100)
 parser.add_argument("--ks", type=int, default=7)
 args = parser.parse_args()
 
@@ -104,7 +104,7 @@ for epoch in tqdm(range(1, EPOCHS)):
 			"""
 			COMPUTE LOSS
 			"""
-			loss = criterion2(a_pred, a) + criterion1(u_pred, u) + criterion1(DE, f)			
+			loss = criterion2(a_pred, a) + criterion1(u_pred, u) + criterion1(DE, f)		
 			if loss.requires_grad:
 				loss.backward()
 			return a_pred, u_pred, DE, loss
