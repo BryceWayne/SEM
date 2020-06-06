@@ -81,7 +81,7 @@ for epoch in tqdm(range(1, EPOCHS)):
 		a = Variable(sample_batch['a']).to(device)
 		u = Variable(sample_batch['u']).to(device)
 		"""
-		f -> alphas -> ?u
+		f -> alphas >> ?u
 		"""
 		def closure(f, a, u):
 			if torch.is_grad_enabled():

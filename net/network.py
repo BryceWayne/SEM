@@ -10,21 +10,25 @@ def conv1d(in_planes, out_planes, stride=1, bias=True, kernel_size=7, padding=3,
 class NetU(nn.Module) :
     def __init__(self, d_in, filters, d_out, kernel_size=7, padding=3) :
         super(NetU,self).__init__()
-        self.d_in = d_in
-        self.filters = filters
-        self.d_out = d_out
+        self.d_in = d_in # (batch, 1, 32)
+        self.filters = filters # (batch, 32, 32)
+        self.d_out = d_out # (batch, 32)
         self.kern = kernel_size
         self.pad = padding
         self.conv1 = conv1d(d_in, filters, kernel_size=self.kern, padding=self.pad)
         self.conv2 = conv1d(filters, filters, kernel_size=self.kern, padding=self.pad)
         self.fc1 = nn.Linear(filters*(self.d_out), self.d_out, bias=True)
     def forward(self, x):
+        # CHECK FULLY CONVOLUTIONAL NETWORK
+        # SPATIAL TRANSFORM NETWORK (DeepMind 2015/16)
+        # DEFORMABLE CONVOLUTION NETWORK ()
         out = F.relu(self.conv1(x))
         out = F.relu(self.conv2(out))
         out = F.relu(self.conv2(out))
         out = F.relu(self.conv2(out))
         out = self.conv2(out)
         out = out.flatten(start_dim=1)
+        # global pooling to avg feature maps
         out = self.fc1(out)
         out = out.view(out.shape[0], self.d_out)
         return out
