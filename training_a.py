@@ -15,24 +15,24 @@ import subprocess, os
 import net.network as network
 from net.data_loader import *
 from sem.sem import *
-from plotting import plotter
+from plotting import *
 from reconstruct import *
 
 
 gc.collect()
 torch.cuda.empty_cache()
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--file", type=str, default='1000N31')
+parser.add_argument("--file", type=str, default='20000N31')
 parser.add_argument("--batch", type=int, default=1000)
-parser.add_argument("--epochs", type=int, default=10000)
+parser.add_argument("--epochs", type=int, default=10)
 parser.add_argument("--ks", type=int, default=7)
 args = parser.parse_args()
 
 KERNEL_SIZE = args.ks
 PADDING = (args.ks - 1)//2
 FILE = args.file
-SHAPE = int(args.file.split('N')[1]) + 1
 BATCH = int(args.file.split('N')[0])
+SHAPE = int(args.file.split('N')[1]) + 1
 N, D_in, Filters, D_out = BATCH, 1, 32, SHAPE
 
 xx = legslbndm(D_out)
@@ -45,7 +45,8 @@ if torch.cuda.is_available():
   dev = "cuda:0" 
 else:  
   dev = "cpu"
-device = torch.device(dev)  
+device = torch.device(dev)
+
 def weights_init(m):
     if isinstance(m, nn.Conv1d) or isinstance(m, nn.Linear):
         torch.nn.init.xavier_uniform_(m.weight)
@@ -60,7 +61,7 @@ except:
 #Batch DataLoader with shuffle
 trainloader = torch.utils.data.DataLoader(lg_dataset, batch_size=N, shuffle=True)
 # Construct our model by instantiating the class
-model1 = network.Net(D_in, Filters, D_out, kernel_size=KERNEL_SIZE, padding=PADDING)
+model1 = network.NetA(D_in, Filters, D_out, kernel_size=KERNEL_SIZE, padding=PADDING)
 
 # XAVIER INITIALIZATION
 model1.apply(weights_init)
@@ -70,10 +71,10 @@ model1.to(device)
 criterion1 = torch.nn.L1Loss()
 criterion2 = torch.nn.MSELoss(reduction="sum")
 optimizer1 = torch.optim.LBFGS(model1.parameters(), history_size=10, tolerance_grad=1e-16, tolerance_change=1e-16, max_eval=20)
-
-
+	
 EPOCHS = args.epochs + 1
 BEST_LOSS = 9E32
+losses = []
 for epoch in tqdm(range(1, EPOCHS)):
 	for batch_idx, sample_batch in enumerate(trainloader):
 		f = Variable(sample_batch['f']).to(device)
@@ -103,20 +104,22 @@ for epoch in tqdm(range(1, EPOCHS)):
 			"""
 			COMPUTE LOSS
 			"""
-			loss1 = criterion2(a_pred, a) + criterion1(u_pred, u) + criterion1(DE, f)			
+			loss = criterion2(a_pred, a) + criterion1(u_pred, u) + criterion1(DE, f)			
 			if loss1.requires_grad:
 				loss1.backward()
-			return a_pred, u_pred, DE, loss1
-		a_pred, u_pred, DE, loss1 = closure(f, a, u)
-		optimizer1.step(loss1.item)
-		current_loss = np.round(float(loss1.to('cpu').detach()), 6) 
-	print(f"\tLoss1: {current_loss}")
+			return a_pred, u_pred, DE, loss
+		a_pred, u_pred, DE, loss = closure(f, a, u)
+		optimizer1.step(loss.item)
+		current_loss = np.round(float(loss.to('cpu').detach()), 6)
+		losses.append(current_loss) 
+	print(f"\tLoss: {current_loss}")
 	if epoch % 100 == 0 and 0 <= epoch < EPOCHS:
-		plotter(xx, sample_batch, epoch, a=a_pred, u=u_pred, DE=DE)
+		plotter(xx, sample_batch, epoch, a=a_pred, u=u_pred, DE=DE, title='a', ks=KERNEL_SIZE)
 	if current_loss < BEST_LOSS:
-		torch.save(model1.state_dict(), f'model.pt')
+		torch.save(model1.state_dict(), f'./{FILE}_ks{KERNEL_SIZE}_model_a.pt')
 		BEST_LOSS = current_loss
 
-subprocess.call(f'python evaluate.py --file 100N{SHAPE-1} --ks {KERNEL_SIZE}', shell=True)
+subprocess.call(f'python evaluate_a.py --ks {KERNEL_SIZE} --input {FILE}', shell=True)
+loss_plot(losses, FILE, EPOCHS, SHAPE, KERNEL_SIZE, BEST_LOSS, title='a')
 gc.collect()
 torch.cuda.empty_cache()
