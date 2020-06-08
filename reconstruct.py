@@ -71,7 +71,7 @@ def reconstruct(N, alphas, lepolys):
 		element = torch.from_numpy(lepolys[i_ind] - lepolys[i_ind+2]).reshape(j,)
 		M[i_ind,:] = element
 	for ii in range(i):
-		a = alphas[ii,:].reshape(1, j-2)
+		a = alphas[ii,:].detach().reshape(1, j-2)
 		sol = torch.mm(a,M).reshape(j,)
 		T[ii,:] = sol
 	del M, element, sol
@@ -104,7 +104,7 @@ def ODE2(eps, u, alphas, lepolys, DX, DXX):
 		M[i_ind,:] = de
 
 	for ii in range(i):
-		a = alphas[ii,:].reshape(1, j-2)
+		a = alphas[ii,:].detach().reshape(1, j-2)
 		sol = torch.mm(a,M).reshape(j,)
 		T[ii,:] = sol
 	return T
