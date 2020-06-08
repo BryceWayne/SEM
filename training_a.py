@@ -22,10 +22,10 @@ from reconstruct import *
 gc.collect()
 torch.cuda.empty_cache()
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--file", type=str, default='20000N31')
-parser.add_argument("--batch", type=int, default=20000)
-parser.add_argument("--epochs", type=int, default=1)
-parser.add_argument("--ks", type=int, default=7)
+parser.add_argument("--file", type=str, default='10000N31')
+parser.add_argument("--batch", type=int, default=10000)
+parser.add_argument("--epochs", type=int, default=10)
+parser.add_argument("--ks", type=int, default=5)
 args = parser.parse_args()
 
 KERNEL_SIZE = args.ks
