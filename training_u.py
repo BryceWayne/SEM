@@ -24,8 +24,8 @@ torch.cuda.empty_cache()
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--file", type=str, default='20000N31')
 parser.add_argument("--batch", type=int, default=10000)
-parser.add_argument("--epochs", type=int, default=1000)
-parser.add_argument("--ks", type=int, default=7)
+parser.add_argument("--epochs", type=int, default=10)
+parser.add_argument("--ks", type=int, default=5)
 args = parser.parse_args()
 
 KERNEL_SIZE = args.ks
@@ -70,7 +70,7 @@ model1.to(device)
 # Construct our loss function and an Optimizer.
 criterion1 = torch.nn.L1Loss()
 criterion2 = torch.nn.MSELoss(reduction="sum")
-optimizer1 = torch.optim.LBFGS(model1.parameters(), history_size=10, tolerance_grad=1e-16, tolerance_change=1e-16, max_eval=20)
+optimizer1 = torch.optim.LBFGS(model1.parameters(), history_size=10, tolerance_grad=1e-18, tolerance_change=1e-18, max_eval=50)
 
 EPOCHS = args.epochs
 BEST_LOSS = 9E32
@@ -86,7 +86,7 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			u_pred = model1(f)
 			u = u.reshape(N, D_out)
 			assert u_pred.shape == u.shape
-			loss = criterion2(u_pred, u)
+			loss = criterion1(u_pred, u)
 			if loss.requires_grad:
 				loss.backward()
 			return a, u_pred, f, loss

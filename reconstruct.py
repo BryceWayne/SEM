@@ -108,3 +108,29 @@ def ODE2(eps, u, alphas, lepolys, DX, DXX):
 		sol = torch.mm(a,M).reshape(j,)
 		T[ii,:] = sol
 	return T
+
+
+def weak_form1(eps, N, f, u, alphas, lepolys, DX):
+	u_x = np.zeros((N,1))
+	for i in range(N-1):
+		diff1 = DX[i].reshape(DX.shape[1],)
+		u_x += alphas[i]*diff1
+
+	LHS = epsilon*np.sum(u_x*u_x*2/(N*(N+1))/(np.square(lepolys[N-1])))
+	RHS = np.sum(f*u*2/(N*(N+1)))
+	return LHS, RHS
+
+
+def weak_form2(eps, N, f, u, alphas, lepolys, DX):
+	cumulative_error = 0
+	for l in range(5):
+		temp_sum = 0
+		difussion = -eps*(4*l+6)*(-1)*u[l]
+		for k in range(N-1):
+			phi_k_M = u[k]*DX[k].reshape(DX.shape[1],)
+			temp_sum = temp_sum + phi_k_M*(lepolys[l] - lepolys[l+2])
+		convection = np.sum(temp_sum*2/(N*(N+1))/(np.square(lepolys[N-1])))
+		rhs = np.sum(f*(lepolys[l] - lepolys[l+2])*2/(N*(N+1))/(np.square(lepolys[N-1])))
+
+		cumulative_error = cumulative_error + diffusion - convection - rhs
+	return LHS, RHS

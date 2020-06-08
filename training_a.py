@@ -70,7 +70,7 @@ model1.to(device)
 # Construct our loss function and an Optimizer.
 criterion1 = torch.nn.L1Loss()
 criterion2 = torch.nn.MSELoss(reduction="sum")
-optimizer1 = torch.optim.LBFGS(model1.parameters(), history_size=20, tolerance_grad=1e-16, tolerance_change=1e-16, max_eval=50)
+optimizer1 = torch.optim.LBFGS(model1.parameters(), history_size=20, tolerance_grad=1e-18, tolerance_change=1e-18, max_eval=50)
 	
 EPOCHS = args.epochs + 1
 BEST_LOSS = 9E32

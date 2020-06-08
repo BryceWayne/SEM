@@ -3,26 +3,23 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 
-def conv1d(in_planes, out_planes, stride=1, bias=True, kernel_size=7, padding=3, dialation=1) :
+def conv1d(in_planes, out_planes, stride=1, bias=True, kernel_size=5, padding=2, dialation=1) :
     return nn.Conv1d(in_planes, out_planes, kernel_size=kernel_size, stride=stride, padding=padding, bias=bias)
 
 
 class ResNet(nn.Module):
-    def __init__(self, d_in, filters, d_out, kernel_size=7, padding=3):
+    def __init__(self, d_in, filters, d_out, kernel_size=5, padding=2):
         super(ResNet, self).__init__()
         self.d_in = d_in
         self.d_out = d_out
-        self.conv = conv1d(d_in, filters)
+        self.conv = conv1d(d_in, filters, kernel_size=kernel_size, padding=padding)
         # self.n1 = nn.BatchNorm1d(filters)
         self.relu = nn.ReLU(inplace=True)
-        self.conv1 = conv1d(filters, filters)
+        self.conv1 = conv1d(filters, filters, kernel_size=kernel_size, padding=padding)
         # self.n2 = nn.BatchNorm1d(filters)
-        self.conv2 = conv1d(filters, filters)
+        self.conv2 = conv1d(filters, filters, kernel_size=kernel_size, padding=padding)
         self.residual = nn.Sequential(
-            # self.n1,
-            # self.relu,
             self.conv1,
-            # self.n2,
             self.relu,
             self.conv2)
         self.fc1 = nn.Linear(filters*(self.d_out + 2), self.d_out, bias=True)
@@ -38,13 +35,27 @@ class ResNet(nn.Module):
         x = F.relu(x + out)
         out = self.residual(x)
         x = F.relu(x + out)
+        out = self.residual(x)
+        x = F.relu(x + out)
+        out = self.residual(x)
+        x = F.relu(x + out)
+        out = self.residual(x)
+        x = F.relu(x + out)
+        out = self.residual(x)
+        x = F.relu(x + out)
+        out = self.residual(x)
+        x = F.relu(x + out)
+        out = self.residual(x)
+        x = F.relu(x + out)
+        out = self.residual(x)
+        x = F.relu(x + out)
         x = x.flatten(start_dim=1)
         x = self.fc1(x)
         x = x.view(x.shape[0], self.d_out)
         return x
 
-    def initialize(self):
-        nn.init.zeros_(self.n1.weight)
+    # def initialize(self):
+    #     nn.init.zeros_(self.n1.weight)
 
 
 class NetU(nn.Module) :

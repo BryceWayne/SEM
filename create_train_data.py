@@ -32,8 +32,12 @@ def create(N:int, epsilon:float):
 def create_fast(N:int, epsilon:float, size:int, eps_flag=False):
 	def func(t: float) -> float:
 		# Random force
-		m = np.random.rand(4)
-		return m[0]*np.sin(m[1]*np.pi*t) + m[2]*np.cos(m[3]*np.pi*t), m
+		m = 2*np.random.rand(2) - 1
+		n = 20*np.random.rand(2) - 10
+		f = m[0]*np.sin(n[0]*np.pi*t) + m[1]*np.cos(n[1]*np.pi*t)
+		m = np.append(m, n)
+		del n
+		return f, m
 
 	def gen_lepolys(N, x):
 		lepolys = {}
