@@ -35,7 +35,7 @@ SHAPE = int(args.file.split('N')[1]) + 1
 BATCH = int(args.file.split('N')[0])
 N, D_in, Filters, D_out = BATCH, 1, 32, SHAPE
 # LOAD MODEL
-model = network.NetA(D_in, Filters, D_out, kernel_size=KERNEL_SIZE, padding=PADDING).to(device)
+model = network.ResNet(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING).to(device)
 model.load_state_dict(torch.load(f'./{INPUT}_ks{KERNEL_SIZE}_model_a.pt'))
 model.eval()
 

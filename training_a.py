@@ -23,8 +23,8 @@ gc.collect()
 torch.cuda.empty_cache()
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--file", type=str, default='20000N31')
-parser.add_argument("--batch", type=int, default=10000)
-parser.add_argument("--epochs", type=int, default=100)
+parser.add_argument("--batch", type=int, default=20000)
+parser.add_argument("--epochs", type=int, default=1)
 parser.add_argument("--ks", type=int, default=7)
 args = parser.parse_args()
 
@@ -61,7 +61,7 @@ except:
 #Batch DataLoader with shuffle
 trainloader = torch.utils.data.DataLoader(lg_dataset, batch_size=N, shuffle=True)
 # Construct our model by instantiating the class
-model1 = network.NetA(D_in, Filters, D_out, kernel_size=KERNEL_SIZE, padding=PADDING)
+model1 = network.ResNet(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING)
 
 # XAVIER INITIALIZATION
 model1.apply(weights_init)
@@ -70,7 +70,7 @@ model1.to(device)
 # Construct our loss function and an Optimizer.
 criterion1 = torch.nn.L1Loss()
 criterion2 = torch.nn.MSELoss(reduction="sum")
-optimizer1 = torch.optim.LBFGS(model1.parameters(), history_size=10, tolerance_grad=1e-16, tolerance_change=1e-16, max_eval=20)
+optimizer1 = torch.optim.LBFGS(model1.parameters(), history_size=10, tolerance_grad=1e-6, tolerance_change=1e-6, max_eval=20)
 	
 EPOCHS = args.epochs + 1
 BEST_LOSS = 9E32

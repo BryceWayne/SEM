@@ -7,6 +7,46 @@ def conv1d(in_planes, out_planes, stride=1, bias=True, kernel_size=7, padding=3,
     return nn.Conv1d(in_planes, out_planes, kernel_size=kernel_size, stride=stride, padding=padding, bias=bias)
 
 
+class ResNet(nn.Module):
+    def __init__(self, d_in, filters, d_out, kernel_size=7, padding=3):
+        super(ResNet, self).__init__()
+        self.d_in = d_in
+        self.d_out = d_out
+        self.conv = conv1d(d_in, filters)
+        self.n1 = nn.BatchNorm1d(filters)
+        self.relu = nn.ReLU(inplace=True)
+        self.conv1 = conv1d(filters, filters)
+        self.n2 = nn.BatchNorm1d(filters)
+        self.conv2 = conv1d(filters, filters)
+        self.residual = nn.Sequential(
+            self.n1,
+            self.relu,
+            self.conv1,
+            self.n2,
+            self.relu,
+            self.conv2)
+        self.fc1 = nn.Linear(filters*(self.d_out + 2), self.d_out, bias=True)
+    def forward(self, x):
+        x = self.conv(x)
+        out = self.residual(x)
+        x = F.relu(x + out)
+        out = self.residual(x)
+        x = F.relu(x + out)
+        out = self.residual(x)
+        x = F.relu(x + out)
+        out = self.residual(x)
+        x = F.relu(x + out)
+        out = self.residual(x)
+        x = F.relu(x + out)
+        x = x.flatten(start_dim=1)
+        x = self.fc1(x)
+        x = x.view(x.shape[0], self.d_out)
+        return x
+
+    def initialize(self):
+        nn.init.zeros_(self.n1.weight)
+
+
 class NetU(nn.Module) :
     def __init__(self, d_in, filters, d_out, kernel_size=7, padding=3) :
         super(NetU,self).__init__()
