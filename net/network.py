@@ -13,21 +13,21 @@ class ResNet(nn.Module):
         self.d_in = d_in
         self.d_out = d_out
         self.conv = conv1d(d_in, filters)
-        self.n1 = nn.BatchNorm1d(filters)
+        # self.n1 = nn.BatchNorm1d(filters)
         self.relu = nn.ReLU(inplace=True)
         self.conv1 = conv1d(filters, filters)
-        self.n2 = nn.BatchNorm1d(filters)
+        # self.n2 = nn.BatchNorm1d(filters)
         self.conv2 = conv1d(filters, filters)
         self.residual = nn.Sequential(
-            self.n1,
-            self.relu,
+            # self.n1,
+            # self.relu,
             self.conv1,
-            self.n2,
+            # self.n2,
             self.relu,
             self.conv2)
         self.fc1 = nn.Linear(filters*(self.d_out + 2), self.d_out, bias=True)
     def forward(self, x):
-        x = self.conv(x)
+        x = F.relu(self.conv(x))
         out = self.residual(x)
         x = F.relu(x + out)
         out = self.residual(x)
