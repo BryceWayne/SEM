@@ -22,9 +22,9 @@ from reconstruct import *
 gc.collect()
 torch.cuda.empty_cache()
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--file", type=str, default='10000N31')
-parser.add_argument("--batch", type=int, default=10000)
-parser.add_argument("--epochs", type=int, default=10)
+parser.add_argument("--file", type=str, default='1000N31')
+parser.add_argument("--batch", type=int, default=100)
+parser.add_argument("--epochs", type=int, default=100)
 parser.add_argument("--ks", type=int, default=5)
 args = parser.parse_args()
 
@@ -70,7 +70,7 @@ model1.to(device)
 # Construct our loss function and an Optimizer.
 criterion1 = torch.nn.L1Loss()
 criterion2 = torch.nn.MSELoss(reduction="sum")
-optimizer1 = torch.optim.LBFGS(model1.parameters(), history_size=20, tolerance_grad=1e-10, tolerance_change=1e-10, max_eval=20)
+optimizer1 = torch.optim.LBFGS(model1.parameters(), history_size=20, tolerance_grad=1e-10, tolerance_change=1e-10, max_eval=10)
 
 EPOCHS = args.epochs + 1
 BEST_LOSS = 9E32
@@ -98,13 +98,19 @@ for epoch in tqdm(range(1, EPOCHS)):
 			"""
 			RECONSTRUCT ODE
 			"""
-			DE = ODE2(1E-1, u_pred, a_pred, lepolys, lepoly_x, lepoly_xx)
-			f = f.reshape(N, D_out)
-			assert DE.shape == f.shape
+			# DE = ODE2(1E-1, u_pred, a_pred, lepolys, lepoly_x, lepoly_xx)
+			# f = f.reshape(N, D_out)
+			# assert DE.shape == f.shape
+			DE = None
+			"""
+			WEAK FORM
+			"""
+			LHS, RHS = weak_form1(1E-1, SHAPE, f, u_pred, a_pred, lepolys, lepoly_x)
+			weak_form_loss = criterion1(LHS, RHS)
 			"""
 			COMPUTE LOSS
 			"""
-			loss = criterion2(a_pred, a) + criterion1(u_pred, u) + criterion1(DE, f)		
+			loss = criterion2(a_pred, a) + criterion1(u_pred, u) + weak_form_loss #+ criterion1(DE, f)		
 			if loss.requires_grad:
 				loss.backward()
 			return a_pred, u_pred, DE, loss

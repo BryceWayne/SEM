@@ -111,26 +111,31 @@ def ODE2(eps, u, alphas, lepolys, DX, DXX):
 
 
 def weak_form1(eps, N, f, u, alphas, lepolys, DX):
-	u_x = np.zeros((N,1))
-	for i in range(N-1):
-		diff1 = DX[i].reshape(DX.shape[1],)
-		u_x += alphas[i]*diff1
-
-	LHS = epsilon*np.sum(u_x*u_x*2/(N*(N+1))/(np.square(lepolys[N-1])))
-	RHS = np.sum(f*u*2/(N*(N+1)))
+	LHS = torch.zeros((u.shape[0],), requires_grad=False).to(device).float()
+	RHS = torch.zeros((u.shape[0],), requires_grad=False).to(device).float()
+	for index in range(u.shape[0]):
+		u_x = torch.zeros((N,1), requires_grad=False).to(device).float()
+		a = alphas[index,:]
+		for i in range(N-2):
+			diff1 = torch.from_numpy(DX[i].reshape(DX[i].shape[1],1)).to(device).float()
+			u_x += a[i]*diff1
+		LHS[index] = eps*torch.sum(u_x*u_x*2/(N*(N+1))/(torch.square(torch.from_numpy(lepolys[N-1]).to(device).float())))
+		RHS[index] = torch.sum(f*u*2/(N*(N+1)))
 	return LHS, RHS
 
 
 def weak_form2(eps, N, f, u, alphas, lepolys, DX):
-	cumulative_error = 0
-	for l in range(5):
-		temp_sum = 0
-		difussion = -eps*(4*l+6)*(-1)*u[l]
-		for k in range(N-1):
-			phi_k_M = u[k]*DX[k].reshape(DX.shape[1],)
-			temp_sum = temp_sum + phi_k_M*(lepolys[l] - lepolys[l+2])
-		convection = np.sum(temp_sum*2/(N*(N+1))/(np.square(lepolys[N-1])))
-		rhs = np.sum(f*(lepolys[l] - lepolys[l+2])*2/(N*(N+1))/(np.square(lepolys[N-1])))
+	def wf2(eps, N, f, u, alphas, lepolys, DX):
+		cumulative_error = 0
+		for l in range(5):
+			temp_sum = 0
+			difussion = -eps*(4*l+6)*(-1)*u[l]
+			for k in range(N-1):
+				phi_k_M = u[k]*DX[k].reshape(DX.shape[1],)
+				temp_sum = temp_sum + phi_k_M*(lepolys[l] - lepolys[l+2])
+			convection = np.sum(temp_sum*2/(N*(N+1))/(np.square(lepolys[N-1])))
+			rhs = np.sum(f*(lepolys[l] - lepolys[l+2])*2/(N*(N+1))/(np.square(lepolys[N-1])))
+			cumulative_error = cumulative_error + diffusion - convection - rhs
+		return cumulative_error
 
-		cumulative_error = cumulative_error + diffusion - convection - rhs
 	return LHS, RHS
