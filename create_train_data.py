@@ -33,7 +33,7 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False):
 	def func(t: float) -> float:
 		# Random force
 		m = 2*np.random.rand(4) - 1
-		f = m[0]*np.sin(m[1]*np.pi*t) + m[2]*np.cos(m[4]*np.pi*t)
+		f = m[0]*np.sin(m[1]*np.pi*t) + m[2]*np.cos(m[3]*np.pi*t)
 		return f, m
 
 	def gen_lepolys(N, x):
