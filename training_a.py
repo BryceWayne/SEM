@@ -113,7 +113,7 @@ for epoch in tqdm(range(1, EPOCHS)):
 		current_loss = np.round(float(loss.to('cpu').detach()), 6)
 		losses.append(current_loss) 
 	print(f"\tLoss: {current_loss}")
-	if epoch % 100 == 0 and 0 <= epoch < EPOCHS:
+	if epoch % 10 == 0 and 0 <= epoch < EPOCHS:
 		plotter(xx, sample_batch, epoch, a=a_pred, u=u_pred, DE=DE, title='a', ks=KERNEL_SIZE)
 	if current_loss < BEST_LOSS:
 		torch.save(model1.state_dict(), f'./{FILE}_ks{KERNEL_SIZE}_model_a.pt')
