@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from sem.sem import legslbndm
 
 
-def plotter(xx, sample, epoch, a=None, u=None, DE=None, title='alpha', ks=7):
+def plotter(xx, sample, epoch, a=None, u=None, DE=None, title='alpha', ks=7, path=None):
 	def relative_l2(measured, theoretical):
 		return np.linalg.norm(measured-theoretical, ord=2)/np.linalg.norm(theoretical, ord=2)
 	def relative_linf(measured, theoretical):
@@ -79,7 +79,7 @@ def plotter(xx, sample, epoch, a=None, u=None, DE=None, title='alpha', ks=7):
 		plt.close(3)
 
 
-def loss_plot(losses, file, epoch, shape, ks, best_loss, title='alpha'):
+def loss_plot(losses, file, epoch, shape, ks, best_loss, title='alpha', path=None):
 	plt.figure(1, figsize=(10,6))
 	x = list(range(1, len(losses)+1))
 	plt.semilogy(x, losses, 'r-', label='Training')
