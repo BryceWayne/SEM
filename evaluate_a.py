@@ -21,7 +21,7 @@ else:
 device = torch.device(dev)
 
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--file", type=str, default='1000N31')
+parser.add_argument("--file", type=str, default='1000N127')
 parser.add_argument("--ks", type=int, default=7)
 parser.add_argument("--input", type=str, default='20000N31')
 parser.add_argument("--path", type=str, default='.')
@@ -38,7 +38,7 @@ BATCH = int(args.file.split('N')[0])
 N, D_in, Filters, D_out = BATCH, 1, 32, SHAPE
 # LOAD MODEL
 model = network.NetA(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING).to(device)
-model.load_state_dict(torch.load(f'{PATH}.pt'))
+model.load_state_dict(torch.load(f'./{PATH}/{PATH}.pt'))
 model.eval()
 
 xx = legslbndm(D_out)
@@ -57,6 +57,8 @@ def mae(measured, theoretical):
 	return np.linalg.norm(measured-theoretical, ord=1)/len(theoretical)
 
 # #Get out of sample data
+if FILE.split('N')[1] != INPUT.split('N')[1]:
+	FILE = '1000N' + INPUT.split('N')[1]
 try:
 	test_data = LGDataset(pickle_file=FILE, shape=SHAPE, subsample=D_out)
 except:

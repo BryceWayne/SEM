@@ -1,10 +1,6 @@
-#training.py
+#reconstruct.py
 import torch
-import torch.nn as nn
-from torch.autograd import Variable
-from torchvision import transforms
 import numpy as np
-import matplotlib.pyplot as plt
 from sem.sem import legslbndm, lepoly, legslbdiff
 
 
@@ -23,6 +19,14 @@ def gen_lepolys(N, x):
 	return lepolys
 
 
+def basis(lepolys):
+	L = max(list(lepolys.keys()))
+	phi = torch.zeros((L+1,L+1))
+	for i in range(L-1):
+		phi[i] = torch.from_numpy(lepolys[i] - lepolys[i+2]).reshape(1,L+1)
+	return phi.to(device)
+
+
 def dx(N, x, lepolys):
 	def gen_diff_lepoly(N, n, x,lepolys):
 		lepoly_x = np.zeros((N,1))
@@ -36,26 +40,13 @@ def dx(N, x, lepolys):
 	return Dx
 
 
-def basis(lepolys):
-	L = max(list(lepolys.keys()))
-	phi = torch.zeros((L+1,L+1))
-	for i in range(L-1):
-		phi[i] = torch.from_numpy(lepolys[i] - lepolys[i+2]).reshape(1,L+1)
-	return phi.to(device)
-
-
 def basis_x(phi, Dx):
 	phi_x = phi.clone()
+	print(phi.shape[0])
 	for i in range(phi.shape[0]-2):
-		phi_x[i] = torch.from_numpy(Dx[i] - Dx[i+2])
+		phi_x[i, :] = torch.from_numpy(Dx[i] - Dx[i+2])
+	print(phi_x.shape[0])
 	return phi_x.to(device)
-
-
-def basis_xx(phi, Dxx):
-	phi_xx = phi.clone()
-	for i in range(phi.shape[0]-2):
-		phi_xx[i] = torch.from_numpy(Dxx[i] - Dxx[i+2])
-	return phi_xx.to(device)
 
 
 def dxx(N, x, lepolys):
@@ -71,15 +62,11 @@ def dxx(N, x, lepolys):
 	return Dxx
 
 
-def diff(N, T, D):
-	x = legslbndm(N+1)
-	T_ = T.clone()
-	for i in range(T.shape[0]):
-		element = torch.mm(D,T[i,:].reshape(T.shape[1], 1)).reshape(T.shape[1],)
-		T_[i,:] = element
-	T = T_.clone()
-	del T_
-	return T
+def basis_xx(phi, Dxx):
+	phi_xx = phi.clone()
+	for i in range(phi.shape[0]-2):
+		phi_xx[i,:] = torch.from_numpy(Dxx[i] - Dxx[i+2])
+	return phi_xx.to(device)
 
 
 def reconstruct(N, alphas, phi):
@@ -89,7 +76,7 @@ def reconstruct(N, alphas, phi):
 	T = torch.zeros((i, j), requires_grad=False).to(device)
 	for jj in range(1, j-1):
 		i_ind = jj - 1
-		M[i_ind,:] = phi[i_ind].reshape(j,)
+		M[i_ind,:] = phi[i_ind,:].reshape(j,)
 	for ii in range(i):
 		a = alphas[ii,:].detach().reshape(1, j-2)
 		T[ii,:] = torch.mm(a,M).reshape(j,)
@@ -104,7 +91,7 @@ def ODE2(eps, u, alphas, phi_x, phi_xx):
 	T = torch.zeros((i, j), requires_grad=False).to(device)
 	for jj in range(1, j-1):
 		i_ind = jj - 1
-		M[i_ind,:] = -eps*phi_xx[i_ind] - phi_x[i_ind]
+		M[i_ind,:] = -eps*phi_xx[i_ind,:] - phi_x[i_ind,:]
 
 	for ii in range(i):
 		a = alphas[ii,:].detach().reshape(1, j-2)

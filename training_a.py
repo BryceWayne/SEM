@@ -23,9 +23,9 @@ import datetime
 gc.collect()
 torch.cuda.empty_cache()
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--file", type=str, default='5000N31')
+parser.add_argument("--file", type=str, default='5000N127')
 parser.add_argument("--batch", type=int, default=5000)
-parser.add_argument("--epochs", type=int, default=10)
+parser.add_argument("--epochs", type=int, default=10000)
 parser.add_argument("--ks", type=int, default=21)
 args = parser.parse_args()
 
@@ -86,7 +86,7 @@ model1.to(device)
 # Construct our loss function and an Optimizer.
 criterion1 = torch.nn.L1Loss()
 criterion2 = torch.nn.MSELoss(reduction="sum")
-optimizer1 = torch.optim.LBFGS(model1.parameters(), history_size=10, tolerance_grad=1e-6, tolerance_change=1e-6, max_eval=10)
+optimizer1 = torch.optim.LBFGS(model1.parameters(), history_size=10, tolerance_grad=1e-16, tolerance_change=1e-16, max_eval=10)
 # optimizer1 = torch.optim.SGD(model1.parameters(), lr=1E-4)
 
 EPOCHS = args.epochs + 1
@@ -137,12 +137,12 @@ for epoch in tqdm(range(1, EPOCHS)):
 		current_loss = np.round(float(loss.to('cpu').detach()), 8)
 		losses.append(current_loss) 
 	print(f"\tLoss: {current_loss}")
-	if epoch % 10 == 0 and 0 <= epoch < EPOCHS:
+	if epoch % 1000 == 0 and 0 <= epoch < EPOCHS:
 		u_pred = reconstruct(N, a_pred, phi)
 		DE = ODE2(1E-1, u_pred, a_pred, phi_x, phi_xx)
 		plotter(xx, sample_batch, epoch, a=a_pred, u=u_pred, DE=DE, title='a', ks=KERNEL_SIZE, path=PATH)
 	if current_loss < BEST_LOSS:
-		torch.save(model1.state_dict(), f'./{PATH}.pt')
+		torch.save(model1.state_dict(), f'./{PATH}/{PATH}.pt')
 		BEST_LOSS = current_loss
 
 
