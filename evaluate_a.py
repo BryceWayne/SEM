@@ -24,11 +24,13 @@ parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--file", type=str, default='1000N31')
 parser.add_argument("--ks", type=int, default=7)
 parser.add_argument("--input", type=str, default='20000N31')
+parser.add_argument("--path", type=str, default='.')
 # parser.add_argument("--deriv", type=np.ndarray, default=np.zeros((1,1)))
 args = parser.parse_args()
 
 FILE = args.file
 INPUT = args.input
+PATH = args.path
 KERNEL_SIZE = args.ks
 PADDING = (args.ks - 1)//2
 SHAPE = int(args.file.split('N')[1]) + 1
@@ -36,13 +38,16 @@ BATCH = int(args.file.split('N')[0])
 N, D_in, Filters, D_out = BATCH, 1, 32, SHAPE
 # LOAD MODEL
 model = network.NetA(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING).to(device)
-model.load_state_dict(torch.load(f'./{INPUT}_ks{KERNEL_SIZE}_model_a.pt'))
+model.load_state_dict(torch.load(f'{PATH}.pt'))
 model.eval()
 
 xx = legslbndm(D_out)
 lepolys = gen_lepolys(SHAPE, xx)
 lepoly_x = dx(D_out, xx, lepolys)
 lepoly_xx = dxx(D_out, xx, lepolys)
+phi = basis(lepolys)
+phi_x = basis_x(phi, lepoly_x)
+phi_xx = basis_xx(phi, lepoly_x)
 
 def relative_l2(measured, theoretical):
 	return np.linalg.norm(measured-theoretical, ord=2)/np.linalg.norm(theoretical, ord=2)
@@ -67,10 +72,10 @@ for batch_idx, sample_batch in enumerate(testloader):
 	a_pred = model(f)
 	a = a.reshape(N, D_out-2)
 	assert a_pred.shape == a.shape
-	u_pred = reconstruct(N, a_pred, lepolys)
+	u_pred = reconstruct(N, a_pred, phi)
 	u = u.reshape(N, D_out)
 	assert u_pred.shape == u.shape
-	DE = ODE2(1E-1, u_pred, a_pred, lepolys, lepoly_x, lepoly_xx)
+	DE = ODE2(1E-1, u_pred, a_pred, phi_x, phi_xx)
 	f = f.reshape(N, D_out)
 	assert DE.shape == f.shape
 	a_pred = a_pred.to('cpu').detach().numpy()
@@ -114,7 +119,7 @@ plt.grid(alpha=0.618)
 plt.xlabel('$x$')
 plt.ylabel('$y$')
 plt.legend(shadow=True)
-plt.savefig(f'./pics/a_ks{KERNEL_SIZE}_out_of_sample_alpha.png', bbox_inches='tight')
+plt.savefig(f'{PATH}/pics/a_ks{KERNEL_SIZE}_out_of_sample_alpha.png', bbox_inches='tight')
 # plt.show()
 plt.close()
 
@@ -133,7 +138,7 @@ plt.grid(alpha=0.618)
 plt.xlabel('$x$')
 plt.ylabel('$y$')
 plt.legend(shadow=True)
-plt.savefig(f'./pics/a_ks{KERNEL_SIZE}_out_of_sample_reconstruction.png', bbox_inches='tight')
+plt.savefig(f'{PATH}/pics/a_ks{KERNEL_SIZE}_out_of_sample_reconstruction.png', bbox_inches='tight')
 # plt.show()
 plt.close()
 
@@ -151,6 +156,6 @@ plt.grid(alpha=0.618)
 plt.xlabel('$x$')
 plt.ylabel('$y$')
 plt.legend(shadow=True)
-plt.savefig(f'./pics/a_ks{KERNEL_SIZE}_out_of_sample_DE.png', bbox_inches='tight')
+plt.savefig(f'{PATH}/pics/a_ks{KERNEL_SIZE}_out_of_sample_DE.png', bbox_inches='tight')
 # plt.show()
 plt.close()

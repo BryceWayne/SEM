@@ -36,6 +36,28 @@ def dx(N, x, lepolys):
 	return Dx
 
 
+def basis(lepolys):
+	L = max(list(lepolys.keys()))
+	phi = torch.zeros((L+1,L+1))
+	for i in range(L-1):
+		phi[i] = torch.from_numpy(lepolys[i] - lepolys[i+2]).reshape(1,L+1)
+	return phi.to(device)
+
+
+def basis_x(phi, Dx):
+	phi_x = phi.clone()
+	for i in range(phi.shape[0]-2):
+		phi_x[i] = torch.from_numpy(Dx[i] - Dx[i+2])
+	return phi_x.to(device)
+
+
+def basis_xx(phi, Dxx):
+	phi_xx = phi.clone()
+	for i in range(phi.shape[0]-2):
+		phi_xx[i] = torch.from_numpy(Dxx[i] - Dxx[i+2])
+	return phi_xx.to(device)
+
+
 def dxx(N, x, lepolys):
 	def gen_diff2_lepoly(N, n, x,lepolys):
 		lepoly_xx = np.zeros((N,1))
@@ -60,66 +82,49 @@ def diff(N, T, D):
 	return T
 
 
-def reconstruct(N, alphas, lepolys):
+def reconstruct(N, alphas, phi):
 	i, j = alphas.shape
 	j += 2
 	M = torch.zeros((j-2,j), requires_grad=False).to(device)
 	T = torch.zeros((i, j), requires_grad=False).to(device)
 	for jj in range(1, j-1):
 		i_ind = jj - 1
-		element = torch.from_numpy(lepolys[i_ind] - lepolys[i_ind+2]).reshape(j,)
-		M[i_ind,:] = element
+		M[i_ind,:] = phi[i_ind].reshape(j,)
 	for ii in range(i):
 		a = alphas[ii,:].detach().reshape(1, j-2)
-		sol = torch.mm(a,M).reshape(j,)
-		T[ii,:] = sol
-	del M, element, sol
+		T[ii,:] = torch.mm(a,M).reshape(j,)
+	del M
 	return T
 
 
-def ODE(eps, u, Dx, Dxx):
-	u = u.reshape(u.shape[0], u.shape[1], 1)
-	ux = torch.zeros_like(u)
-	uxx = torch.zeros_like(u)
-	for i in range(u.shape[0]):
-		ux[i,:] = torch.mm(Dx,u[i,:, :])
-	del Dx
-	for i in range(u.shape[0]):
-		uxx[i,:] = torch.mm(Dxx,u[i,:, :])
-	del Dxx
-	return (-eps*uxx - ux).reshape(u.shape[0], u.shape[1])
-
-
-def ODE2(eps, u, alphas, lepolys, DX, DXX):
+def ODE2(eps, u, alphas, phi_x, phi_xx):
 	i, j = alphas.shape
 	j += 2
 	M = torch.zeros((j-2,j), requires_grad=False).to(device)
 	T = torch.zeros((i, j), requires_grad=False).to(device)
 	for jj in range(1, j-1):
 		i_ind = jj - 1
-		d1 = torch.from_numpy(DX[i_ind] - DX[i_ind+2]).to(device).float()
-		d2 = torch.from_numpy(DXX[i_ind] - DXX[i_ind+2]).to(device).float()
-		de = -eps*d2 - d1
-		M[i_ind,:] = de
+		M[i_ind,:] = -eps*phi_xx[i_ind] - phi_x[i_ind]
 
 	for ii in range(i):
 		a = alphas[ii,:].detach().reshape(1, j-2)
 		sol = torch.mm(a,M).reshape(j,)
 		T[ii,:] = sol
+	del M
 	return T
 
 
-def weak_form1(eps, N, f, u, alphas, lepolys, DX):
+def weak_form1(eps, N, f, u, alphas, lepolys, Dx):
 	LHS = torch.zeros((u.shape[0],), requires_grad=False).to(device).float()
 	RHS = torch.zeros((u.shape[0],), requires_grad=False).to(device).float()
 	for index in range(u.shape[0]):
 		u_x = torch.zeros((N,1), requires_grad=False).to(device).float()
 		a = alphas[index,:]
 		for i in range(N-2):
-			diff1 = torch.from_numpy(DX[i].reshape(DX[i].shape[1],1)).to(device).float()
+			diff1 = torch.from_numpy(Dx[i].reshape(Dx[i].shape[1],1)).to(device).float()
 			u_x += a[i]*diff1
 		LHS[index] = eps*torch.sum(u_x*u_x*2/(N*(N+1))/(torch.square(torch.from_numpy(lepolys[N-1]).to(device).float())))
-		RHS[index] = torch.sum(f*u*2/(N*(N+1)))
+		RHS[index] = torch.sum(f*u*2/(N*(N+1))/(torch.square(torch.from_numpy(lepolys[N-1]).to(device).float())))
 	return LHS, RHS
 
 

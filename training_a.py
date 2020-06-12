@@ -23,10 +23,10 @@ import datetime
 gc.collect()
 torch.cuda.empty_cache()
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--file", type=str, default='50000N31')
-parser.add_argument("--batch", type=int, default=10000)
-parser.add_argument("--epochs", type=int, default=1000)
-parser.add_argument("--ks", type=int, default=5)
+parser.add_argument("--file", type=str, default='5000N31')
+parser.add_argument("--batch", type=int, default=5000)
+parser.add_argument("--epochs", type=int, default=10)
+parser.add_argument("--ks", type=int, default=21)
 args = parser.parse_args()
 
 KERNEL_SIZE = args.ks
@@ -35,22 +35,24 @@ FILE = args.file
 BATCH = int(args.file.split('N')[0])
 SHAPE = int(args.file.split('N')[1]) + 1
 N, D_in, Filters, D_out = BATCH, 1, 32, SHAPE
-cur_time = str(datetime.datetime.now()).replace(' ', 'T').split(':')[0].replace('-','_')
-PATH = f'{FILE}_ks{KERNEL_SIZE}_a_{cur_time}'
-# try:
-# 	os.mkdir(PATH)
-# 	exists = False
-# except:
-# 	exists = True
-# 	print('Dir already exists')
-# os.chdir(PATH)
-# if exists == False:
-# 	os.mkdir('pics')
+cur_time = str(datetime.datetime.now()).replace(' ', 'T').replace(':','').split('.')[0].replace('-','_')
+PATH = f'{FILE}_a_{cur_time}'
+try:
+	os.mkdir(PATH)
+	exists = False
+except:
+	exists = True
+	print('Dir already exists')
+if exists == False:
+	os.mkdir(os.path.join(PATH,'pics'))
 
 xx = legslbndm(D_out)
 lepolys = gen_lepolys(D_out, xx)
 lepoly_x = dx(D_out, xx, lepolys)
 lepoly_xx = dxx(D_out, xx, lepolys)
+phi = basis(lepolys)
+phi_x = basis_x(phi, lepoly_x)
+phi_xx = basis_xx(phi, lepoly_x)
 
 # Check if CUDA is available and then use it.
 if torch.cuda.is_available():  
@@ -132,19 +134,19 @@ for epoch in tqdm(range(1, EPOCHS)):
 			return a_pred, u_pred, DE, loss
 		a_pred, u_pred, DE, loss = closure(f, a, u)
 		optimizer1.step(loss.item)
-		current_loss = np.round(float(loss.to('cpu').detach()), 6)
+		current_loss = np.round(float(loss.to('cpu').detach()), 8)
 		losses.append(current_loss) 
 	print(f"\tLoss: {current_loss}")
-	if epoch % 100 == 0 and 0 <= epoch < EPOCHS:
-		u_pred = reconstruct(N, a_pred, lepolys)
-		DE = ODE2(1E-1, u_pred, a_pred, lepolys, lepoly_x, lepoly_xx)
+	if epoch % 10 == 0 and 0 <= epoch < EPOCHS:
+		u_pred = reconstruct(N, a_pred, phi)
+		DE = ODE2(1E-1, u_pred, a_pred, phi_x, phi_xx)
 		plotter(xx, sample_batch, epoch, a=a_pred, u=u_pred, DE=DE, title='a', ks=KERNEL_SIZE, path=PATH)
 	if current_loss < BEST_LOSS:
-		torch.save(model1.state_dict(), f'./{FILE}_ks{KERNEL_SIZE}_model_a.pt')
+		torch.save(model1.state_dict(), f'./{PATH}.pt')
 		BEST_LOSS = current_loss
 
 
-subprocess.call(f'python evaluate_a.py --ks {KERNEL_SIZE} --input {FILE}', shell=True)
+subprocess.call(f'python evaluate_a.py --ks {KERNEL_SIZE} --input {FILE} --path {PATH}', shell=True)
 loss_plot(losses, FILE, EPOCHS, SHAPE, KERNEL_SIZE, BEST_LOSS, title='a', path=PATH)
 gc.collect()
 torch.cuda.empty_cache()

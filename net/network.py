@@ -89,6 +89,7 @@ class NetA(nn.Module) :
         # self.conv5 = conv1d(4*filters, 5*filters, kernel_size=self.kern, padding=self.pad)
         # self.fc1 = nn.Linear(5*filters*(self.d_out + 2), self.d_out, bias=True)
         self.fcH = nn.Linear(filters*(self.d_out + 2), self.d_out, bias=True)
+        # filters*(self.d_out + 2)
     def forward(self, x):
         out = F.relu(self.conv1(x))
         for _ in range(9):
