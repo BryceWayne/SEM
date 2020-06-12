@@ -17,14 +17,15 @@ from net.data_loader import *
 from sem.sem import *
 from plotting import *
 from reconstruct import *
+import datetime
 
 
 gc.collect()
 torch.cuda.empty_cache()
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--file", type=str, default='1000N31')
-parser.add_argument("--batch", type=int, default=100)
-parser.add_argument("--epochs", type=int, default=100)
+parser.add_argument("--file", type=str, default='50000N31')
+parser.add_argument("--batch", type=int, default=10000)
+parser.add_argument("--epochs", type=int, default=1000)
 parser.add_argument("--ks", type=int, default=5)
 args = parser.parse_args()
 
@@ -34,6 +35,17 @@ FILE = args.file
 BATCH = int(args.file.split('N')[0])
 SHAPE = int(args.file.split('N')[1]) + 1
 N, D_in, Filters, D_out = BATCH, 1, 32, SHAPE
+cur_time = str(datetime.datetime.now()).replace(' ', 'T').split(':')[0].replace('-','_')
+PATH = f'{FILE}_ks{KERNEL_SIZE}_a_{cur_time}'
+# try:
+# 	os.mkdir(PATH)
+# 	exists = False
+# except:
+# 	exists = True
+# 	print('Dir already exists')
+# os.chdir(PATH)
+# if exists == False:
+# 	os.mkdir('pics')
 
 xx = legslbndm(D_out)
 lepolys = gen_lepolys(D_out, xx)
@@ -47,10 +59,6 @@ else:
   dev = "cpu"
 device = torch.device(dev)
 
-def weights_init(m):
-    if isinstance(m, nn.Conv1d) or isinstance(m, nn.Linear):
-        torch.nn.init.xavier_uniform_(m.weight)
-        torch.nn.init.zeros_(m.bias)
 
 # Load the dataset
 try:
@@ -64,13 +72,20 @@ trainloader = torch.utils.data.DataLoader(lg_dataset, batch_size=N, shuffle=True
 model1 = network.NetA(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING)
 
 # XAVIER INITIALIZATION
+def weights_init(m):
+    if isinstance(m, nn.Conv1d):
+        # torch.nn.init.xavier_uniform_(m.weight)
+        torch.nn.init.kaiming_normal_(m.weight.data)
+        torch.nn.init.zeros_(m.bias)
+
 model1.apply(weights_init)
 # SEND TO GPU
 model1.to(device)
 # Construct our loss function and an Optimizer.
 criterion1 = torch.nn.L1Loss()
 criterion2 = torch.nn.MSELoss(reduction="sum")
-optimizer1 = torch.optim.LBFGS(model1.parameters(), history_size=5, tolerance_grad=1e-10, tolerance_change=1e-10, max_eval=10)
+optimizer1 = torch.optim.LBFGS(model1.parameters(), history_size=10, tolerance_grad=1e-6, tolerance_change=1e-6, max_eval=10)
+# optimizer1 = torch.optim.SGD(model1.parameters(), lr=1E-4)
 
 EPOCHS = args.epochs + 1
 BEST_LOSS = 9E32
@@ -92,9 +107,10 @@ for epoch in tqdm(range(1, EPOCHS)):
 			"""
 			RECONSTRUCT SOLUTIONS
 			"""
-			u_pred = reconstruct(N, a_pred, lepolys)
+			# u_pred = reconstruct(N, a_pred, lepolys)
 			u = u.reshape(N, D_out)
-			assert u_pred.shape == u.shape
+			# assert u_pred.shape == u.shape
+			u_pred = None
 			"""
 			RECONSTRUCT ODE
 			"""
@@ -105,12 +121,12 @@ for epoch in tqdm(range(1, EPOCHS)):
 			"""
 			WEAK FORM
 			"""
-			LHS, RHS = weak_form1(1E-1, SHAPE, f, u_pred, a_pred, lepolys, lepoly_x)
-			weak_form_loss = criterion1(LHS, RHS)
+			# LHS, RHS = weak_form1(1E-1, SHAPE, f, u_pred, a_pred, lepolys, lepoly_x)
+			# weak_form_loss = criterion1(LHS, RHS)
 			"""
 			COMPUTE LOSS
 			"""
-			loss = criterion1(a_pred, a) + criterion1(u_pred, u) + weak_form_loss #+ criterion1(DE, f)		
+			loss = criterion2(a_pred, a)# + criterion1(u_pred, u) + weak_form_loss #+ criterion1(DE, f)		
 			if loss.requires_grad:
 				loss.backward()
 			return a_pred, u_pred, DE, loss
@@ -119,13 +135,16 @@ for epoch in tqdm(range(1, EPOCHS)):
 		current_loss = np.round(float(loss.to('cpu').detach()), 6)
 		losses.append(current_loss) 
 	print(f"\tLoss: {current_loss}")
-	if epoch % 10 == 0 and 0 <= epoch < EPOCHS:
-		plotter(xx, sample_batch, epoch, a=a_pred, u=u_pred, DE=DE, title='a', ks=KERNEL_SIZE)
+	if epoch % 100 == 0 and 0 <= epoch < EPOCHS:
+		u_pred = reconstruct(N, a_pred, lepolys)
+		DE = ODE2(1E-1, u_pred, a_pred, lepolys, lepoly_x, lepoly_xx)
+		plotter(xx, sample_batch, epoch, a=a_pred, u=u_pred, DE=DE, title='a', ks=KERNEL_SIZE, path=PATH)
 	if current_loss < BEST_LOSS:
 		torch.save(model1.state_dict(), f'./{FILE}_ks{KERNEL_SIZE}_model_a.pt')
 		BEST_LOSS = current_loss
 
+
 subprocess.call(f'python evaluate_a.py --ks {KERNEL_SIZE} --input {FILE}', shell=True)
-loss_plot(losses, FILE, EPOCHS, SHAPE, KERNEL_SIZE, BEST_LOSS, title='a')
+loss_plot(losses, FILE, EPOCHS, SHAPE, KERNEL_SIZE, BEST_LOSS, title='a', path=PATH)
 gc.collect()
 torch.cuda.empty_cache()

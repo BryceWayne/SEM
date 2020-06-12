@@ -47,11 +47,6 @@ else:
   dev = "cpu"
 device = torch.device(dev)
 
-def weights_init(m):
-    if isinstance(m, nn.Conv1d) or isinstance(m, nn.Linear):
-        torch.nn.init.xavier_uniform_(m.weight)
-        torch.nn.init.zeros_(m.bias)
-
 # Load the dataset
 try:
 	lg_dataset = LGDataset(pickle_file=FILE, shape=SHAPE, subsample=D_out)
@@ -64,6 +59,10 @@ trainloader = torch.utils.data.DataLoader(lg_dataset, batch_size=N, shuffle=True
 model1 = network.NetU(D_in, Filters, D_out, kernel_size=KERNEL_SIZE, padding=PADDING)
 
 # XAVIER INITIALIZATION
+def weights_init(m):
+    if isinstance(m, nn.Conv1d) or isinstance(m, nn.Linear):
+        torch.nn.init.xavier_uniform_(m.weight)
+        torch.nn.init.zeros_(m.bias)
 model1.apply(weights_init)
 # SEND TO GPU
 model1.to(device)

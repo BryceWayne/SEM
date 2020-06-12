@@ -51,7 +51,6 @@ def dxx(N, x, lepolys):
 
 def diff(N, T, D):
 	x = legslbndm(N+1)
-	# D = torch.from_numpy(legslbdiff(N+1, x)).to(device).float()
 	T_ = T.clone()
 	for i in range(T.shape[0]):
 		element = torch.mm(D,T[i,:].reshape(T.shape[1], 1)).reshape(T.shape[1],)
