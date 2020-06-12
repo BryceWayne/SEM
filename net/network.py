@@ -91,9 +91,8 @@ class NetA(nn.Module) :
         self.fcH = nn.Linear(filters*(self.d_out + 2), self.d_out, bias=True)
     def forward(self, x):
         out = F.relu(self.conv1(x))
-        for _ in range(3):
+        for _ in range(9):
             out = F.relu(self.convH(out))
-        out = self.convH(out)
         # out = F.relu(self.conv2(out))
         # out = F.relu(self.conv3(out))
         # out = F.relu(self.conv4(out))
