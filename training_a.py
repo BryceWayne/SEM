@@ -98,7 +98,7 @@ optimizer1 = torch.optim.LBFGS(model1.parameters(), history_size=10, tolerance_g
 
 BEST_LOSS = 9E32
 losses = []
-time0 = time.time.now()
+time0 = time.time()
 for epoch in tqdm(range(1, EPOCHS+1)):
 	for batch_idx, sample_batch in enumerate(trainloader):
 		f = Variable(sample_batch['f']).to(device)
@@ -151,7 +151,7 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 	if current_loss < BEST_LOSS:
 		torch.save(model1.state_dict(), f'./{PATH}/{PATH}.pt')
 		BEST_LOSS = current_loss
-time1 = time.time.now()
+time1 = time.time()
 dt = time1 - time0
 avg_iter_time = np.round(dt/EPOCHS, 1)
 
