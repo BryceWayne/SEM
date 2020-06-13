@@ -54,11 +54,11 @@ phi_x = basis_x(SHAPE, phi, lepoly_x)
 phi_xx = basis_xx(SHAPE, phi_x, lepoly_xx)
 
 def relative_l2(measured, theoretical):
-	return np.linalg.norm(measured-theoretical, ord=2)/np.linalg.norm(theoretical, ord=2)
+	return float(np.linalg.norm(measured-theoretical, ord=2)/np.linalg.norm(theoretical, ord=2))
 def relative_linf(measured, theoretical):
-	return np.linalg.norm(measured-theoretical, ord=np.inf)/np.linalg.norm(theoretical, ord=np.inf)
+	return float(np.linalg.norm(measured-theoretical, ord=np.inf)/np.linalg.norm(theoretical, ord=np.inf))
 def mae(measured, theoretical):
-	return np.linalg.norm(measured-theoretical, ord=1)/len(theoretical)
+	return float(np.linalg.norm(measured-theoretical, ord=1)/len(theoretical))
 
 # #Get out of sample data
 if FILE.split('N')[1] != INPUT.split('N')[1]:
@@ -169,10 +169,10 @@ plt.close()
 if args.data == True:
 	COLS = ['TIMESTAMP', 'DATASET', 'FOLDER', 'N', 'K.SIZE', 'BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']
 	try:
-		df = pd.read_excel('temp.xlsx', dtype='object')
+		df = pd.read_excel('temp.xlsx')
 
 	except:
-		df = pd.DataFrame([], columns=COLS, dtype='object')
+		df = pd.DataFrame([], columns=COLS)
 	d = {k:[i] for i, k in enumerate(COLS)}
 	tempDF = pd.DataFrame.from_dict(d)
 	df = pd.concat([df,tempDF])
