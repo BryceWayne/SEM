@@ -97,14 +97,14 @@ for batch_idx, sample_batch in enumerate(testloader):
 		running_MinfE_u += relative_linf(u_pred[i,:], u[i,:])
 
 
-print("***************************************************"\
-	  f"\nAvg. alpha MAE: {np.round(running_MAE_a/N, 6)}\n"\
-	  f"\nAvg. alpha MSE: {np.round(running_MSE_a/N, 6)}\n"\
-	  f"\nAvg. alpha MinfE: {np.round(running_MinfE_a/N, 6)}\n"\
-	  f"\nAvg. u MAE: {np.round(running_MAE_u/N, 6)}\n"\
-	  f"\nAvg. u MSE: {np.round(running_MSE_u/N, 6)}\n"\
-	  f"\nAvg. u MinfE: {np.round(running_MinfE_u/N, 6)}\n"\
-	  "***************************************************")
+# print("***************************************************"\
+# 	  f"\nAvg. alpha MAE: {np.round(running_MAE_a/N, 6)}\n"\
+# 	  f"\nAvg. alpha MSE: {np.round(running_MSE_a/N, 6)}\n"\
+# 	  f"\nAvg. alpha MinfE: {np.round(running_MinfE_a/N, 6)}\n"\
+# 	  f"\nAvg. u MAE: {np.round(running_MAE_u/N, 6)}\n"\
+# 	  f"\nAvg. u MSE: {np.round(running_MSE_u/N, 6)}\n"\
+# 	  f"\nAvg. u MinfE: {np.round(running_MinfE_u/N, 6)}\n"\
+# 	  "***************************************************")
 
 
 xx = legslbndm(SHAPE-2)
@@ -191,10 +191,13 @@ if args.data == True:
 	entry['MSEu'] = running_MSE_u
 	entry['MIEu'] = running_MinfE_u
 	entries.append(entry)
-	from pprint import pprint
-	pprint(entry)
+	# from pprint import pprint
+	# pprint(entry)
 	df = pd.DataFrame(entries)
 	df = df[COLS]
+	_ = ['AVG IT/S', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']
+	for obj in _:
+		df[obj] = df[obj].astype(float)
 	df = df.infer_objects()
 	df.to_excel('temp.xlsx')
-	print('Done')
+	# print('Done')
