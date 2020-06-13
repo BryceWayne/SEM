@@ -21,9 +21,9 @@ def gen_lepolys(N, x):
 
 def basis(N, lepolys):
 	L = max(list(lepolys.keys()))
-	phi = torch.zeros((L+1,L+1))
+	phi = torch.zeros((N,N))
 	for i in range(N-2):
-		phi[i] = torch.from_numpy(lepolys[i] - lepolys[i+2]).reshape(1,L+1)
+		phi[i,:] = torch.from_numpy(lepolys[i] - lepolys[i+2]).reshape(1,L+1)
 	return phi.to(device)
 
 ###
@@ -43,7 +43,7 @@ def dx(N, x, lepolys):
 def basis_x(N, phi, Dx):
 	phi_x = phi.clone()
 	for i in range(N-2):
-		phi_x[i, :] = torch.from_numpy(Dx[i] - Dx[i+2])
+		phi_x[i,:] = torch.from_numpy(Dx[i] - Dx[i+2])
 	return phi_x.to(device)
 
 ###

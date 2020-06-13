@@ -25,9 +25,9 @@ import time
 gc.collect()
 torch.cuda.empty_cache()
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--file", type=str, default='5000N15')
-parser.add_argument("--batch", type=int, default=5000)
-parser.add_argument("--epochs", type=int, default=2000)
+parser.add_argument("--file", type=str, default='500N31')
+parser.add_argument("--batch", type=int, default=500)
+parser.add_argument("--epochs", type=int, default=200)
 parser.add_argument("--ks", type=int, default=3)
 parser.add_argument("--data", type=bool, default=True)
 args = parser.parse_args()
@@ -144,8 +144,7 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 		current_loss = np.round(float(loss.to('cpu').detach()), 8)
 		losses.append(current_loss) 
 	print(f"\tLoss: {current_loss}")
-	if epoch % EPOCHS//10 == 0 and 0 <= epoch < EPOCHS:
-		# u_pred = reconstruct(N, a_pred, phi)
+	if epoch % EPOCH == 0:
 		DE = ODE2(1E-1, u_pred, a_pred, phi_x, phi_xx)
 		plotter(xx, sample_batch, epoch, a=a_pred, u=u_pred, DE=DE, title='a', ks=KERNEL_SIZE, path=PATH)
 	if current_loss < BEST_LOSS:
@@ -163,12 +162,12 @@ loss_plot(losses, FILE, EPOCHS, SHAPE, KERNEL_SIZE, BEST_LOSS, title='a', path=P
 gc.collect()
 torch.cuda.empty_cache()
 if args.data == True:
-	temp = pd.read_excel('temp.xlsx')
 	COLS = ['TIMESTAMP', 'FOLDER', 'FILE', 'N', 'K.SIZE', 'BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']
-	temp = temp[COLS]
+	temp = pd.read_excel('temp.xlsx')
 	temp.at[temp.index[-1],'TIMESTAMP'] = datetime.datetime.now().timestamp()
 	temp.at[temp.index[-1],'AVG IT/S'] = avg_iter_time
 	temp.at[temp.index[-1],'LOSS'] = BEST_LOSS
 	temp.at[temp.index[-1],'EPOCHS'] = EPOCHS
 	temp.at[temp.index[-1],'BATCH'] = BATCH
+	temp = temp[COLS]
 	temp.to_excel('temp.xlsx')

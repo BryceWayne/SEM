@@ -23,9 +23,9 @@ else:
 device = torch.device(dev)
 
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--file", type=str, default='1000N15')
+parser.add_argument("--file", type=str, default='1000N63')
 parser.add_argument("--ks", type=int, default=7)
-parser.add_argument("--input", type=str, default='20000N15')
+parser.add_argument("--input", type=str, default='20000N63')
 parser.add_argument("--path", type=str, default='.')
 parser.add_argument("--data", type=bool, default=False)
 # parser.add_argument("--deriv", type=np.ndarray, default=np.zeros((1,1)))
@@ -36,7 +36,7 @@ FILE = args.file[:-2] + INPUT[-2:]
 PATH = args.path
 KERNEL_SIZE = args.ks
 PADDING = (args.ks - 1)//2
-SHAPE = int(args.file.split('N')[1]) + 1
+SHAPE = int(FILE[-2:]) + 1
 BATCH = int(args.file.split('N')[0])
 N, D_in, Filters, D_out = BATCH, 1, 32, SHAPE
 # LOAD MODEL
@@ -165,13 +165,10 @@ plt.savefig(f'{PATH}/pics/a_ks{KERNEL_SIZE}_out_of_sample_DE.png', bbox_inches='
 # plt.show()
 plt.close()
 
-print(f"{PATH}")
-
 if args.data == True:
 	COLS = ['TIMESTAMP', 'FOLDER', 'FILE', 'N', 'K.SIZE', 'BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']
 	try:
 		temp = pd.read_excel('temp.xlsx', dtype='object')
-		temp = temp[COLS]
 	except:
 		temp = pd.DataFrame([], columns=COLS, dtype='object')
 	d = {k:[i] for i, k in enumerate(COLS)}
@@ -187,5 +184,6 @@ if args.data == True:
 	temp.at[temp.index[-1],'MAEu'] = running_MAE_u
 	temp.at[temp.index[-1],'MSEu'] = running_MSE_u
 	temp.at[temp.index[-1],'MIEu'] = running_MinfE_u
+	temp = temp[COLS]
 	temp.to_excel('temp.xlsx')
 	print('Done')
