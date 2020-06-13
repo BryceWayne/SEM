@@ -153,7 +153,7 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 time1 = time.time()
 dt = time1 - time0
 avg_iter_time = np.round(dt/EPOCHS, 1)
-
+print(PATH)
 if args.data == True:
 	subprocess.call(f'python evaluate_a.py --ks {KERNEL_SIZE} --input {FILE} --path {PATH} --data True', shell=True)
 else:
