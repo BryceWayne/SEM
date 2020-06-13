@@ -169,9 +169,9 @@ plt.close()
 if args.data == True:
 	COLS = ['TIMESTAMP', 'DATASET', 'FOLDER', 'N', 'K.SIZE', 'BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']
 	try:
-		temp = pd.read_excel('temp.xlsx')
+		temp = pd.read_excel('temp.xlsx', dtype='object')
 	except:
-		temp = pd.DataFrame([], columns=COLS)
+		temp = pd.DataFrame([], columns=COLS, dtype='object')
 	d = {k:[i] for i, k in enumerate(COLS)}
 	tempDF = pd.DataFrame.from_dict(d)
 	temp = pd.concat([temp,tempDF])
