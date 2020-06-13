@@ -178,7 +178,12 @@ if args.data == True:
 	df = pd.concat([df,tempDF])
 	entries = df.to_dict('records')
 	entry = {}
-	entry['FOLDER'] = PATH.split('\\')[1]
+	try:
+		PATH.split('\\')[1]
+	except:
+		PATH.split('/')[1]
+	PATH = PATH[len(INPUT)+2:]
+	entry['FOLDER'] = PATH
 	entry['DATASET'] = INPUT
 	entry['N'] = SHAPE
 	entry['K.SIZE'] = KERNEL_SIZE
