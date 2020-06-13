@@ -19,6 +19,7 @@ from plotting import *
 from reconstruct import *
 import datetime
 import pandas as pd
+import time
 
 
 gc.collect()
@@ -97,6 +98,7 @@ optimizer1 = torch.optim.LBFGS(model1.parameters(), history_size=10, tolerance_g
 
 BEST_LOSS = 9E32
 losses = []
+time0 = time.time.now()
 for epoch in tqdm(range(1, EPOCHS+1)):
 	for batch_idx, sample_batch in enumerate(trainloader):
 		f = Variable(sample_batch['f']).to(device)
@@ -149,7 +151,9 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 	if current_loss < BEST_LOSS:
 		torch.save(model1.state_dict(), f'./{PATH}/{PATH}.pt')
 		BEST_LOSS = current_loss
-
+time1 = time.time.now()
+dt = time1 - time0
+avg_iter_time = np.round(dt/EPOCHS, 1)
 
 if args.data == True:
 	subprocess.call(f'python evaluate_a.py --ks {KERNEL_SIZE} --input {FILE} --path {PATH} --data True', shell=True)
@@ -161,7 +165,8 @@ torch.cuda.empty_cache()
 if args.data == True:
 	temp = pd.read_excel('temp.xlsx')
 	temp.at[temp.index[-1],'TIMESTAMP'] = datetime.datetime.now().timestamp()
-	# temp.at[temp.index[-1],'HISTORY'] = losses
+	# temp.at[temp.index[-1],'AVG IT/S'] = losses
+	temp.at[temp.index[-1],'AVG IT/S'] = avg_iter_time
 	temp.at[temp.index[-1],'LOSS'] = BEST_LOSS
 	temp.at[temp.index[-1],'EPOCHS'] = EPOCHS
 	temp.to_excel('temp.xlsx')
