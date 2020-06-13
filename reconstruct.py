@@ -20,10 +20,9 @@ def gen_lepolys(N, x):
 
 
 def basis(N, lepolys):
-	L = max(list(lepolys.keys()))
-	phi = torch.zeros((N,N))
+	phi = torch.zeros((N-2,N))
 	for i in range(N-2):
-		phi[i,:] = torch.from_numpy(lepolys[i] - lepolys[i+2]).reshape(1,L+1)
+		phi[i,:] = torch.from_numpy(lepolys[i] - lepolys[i+2]).reshape(1,N)
 	return phi.to(device)
 
 ###
@@ -69,33 +68,20 @@ def basis_xx(N, phi, Dxx):
 
 def reconstruct(N, alphas, phi):
 	i, j = alphas.shape
-	j += 2
-	M = torch.zeros((j-2,j), requires_grad=False).to(device)
-	T = torch.zeros((i, j), requires_grad=False).to(device)
-	for jj in range(1, j-1):
-		i_ind = jj - 1
-		M[i_ind,:] = phi[i_ind,:].reshape(j,)
+	T = torch.zeros((i, j+2), requires_grad=False).to(device)
 	for ii in range(i):
-		a = alphas[ii,:].reshape(1, j-2)
-		T[ii,:] = torch.mm(a,M).reshape(j,)
-	del M
+		a = alphas[ii,:].reshape(1, j)
+		T[ii,:] = torch.mm(a,phi).reshape(j+2,)
 	return T
 
 
 def ODE2(eps, u, alphas, phi_x, phi_xx):
 	i, j = alphas.shape
-	j += 2
-	M = torch.zeros((j-2,j), requires_grad=False).to(device)
-	T = torch.zeros((i, j), requires_grad=False).to(device)
-	M[:j-2,:] = -eps*phi_xx[:j-2,:] - phi_x[:j-2,:]
-	# for jj in range(j-2):
-	# 	M[:j-2,:] = -eps*phi_xx[jj,:] - phi_x[jj,:]
+	T = torch.zeros((i, j+2), requires_grad=False).to(device)
 	for ii in range(i):
-		a = alphas[ii,:].detach().reshape(1, j-2)
-		sol = torch.mm(a,M).reshape(j,)
+		a = alphas[ii,:].detach().reshape(1, j)
+		sol = torch.mm(a,-eps*phi_xx - phi_x).reshape(j+2,)
 		T[ii,:] = sol
-	# pdb.set_trace()
-	del M
 	return T
 
 
@@ -126,5 +112,5 @@ def weak_form2(eps, N, f, u, alphas, lepolys, DX):
 			rhs = np.sum(f*(lepolys[l] - lepolys[l+2])*2/(N*(N+1))/(np.square(lepolys[N-1])))
 			cumulative_error = cumulative_error + diffusion - convection - rhs
 		return cumulative_error
-
 	return LHS, RHS
+	

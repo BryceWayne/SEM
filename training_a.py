@@ -57,7 +57,7 @@ lepoly_x = dx(D_out, xx, lepolys)
 lepoly_xx = dxx(D_out, xx, lepolys)
 phi = basis(SHAPE, lepolys)
 phi_x = basis_x(SHAPE, phi, lepoly_x)
-phi_xx = basis_xx(SHAPE, phi, lepoly_x)
+phi_xx = basis_xx(SHAPE, phi_x, lepoly_xx)
 
 
 # Check if CUDA is available and then use it.
@@ -152,7 +152,7 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 		BEST_LOSS = current_loss
 time1 = time.time()
 dt = time1 - time0
-avg_iter_time = np.round(dt/EPOCHS, 1)
+avg_iter_time = np.round(dt/EPOCHS, 4)
 print(PATH)
 if args.data == True:
 	subprocess.call(f'python evaluate_a.py --ks {KERNEL_SIZE} --input {FILE} --path {PATH} --data True', shell=True)

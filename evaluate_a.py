@@ -51,7 +51,7 @@ lepoly_x = dx(D_out, xx, lepolys)
 lepoly_xx = dxx(D_out, xx, lepolys)
 phi = basis(SHAPE, lepolys)
 phi_x = basis_x(SHAPE, phi, lepoly_x)
-phi_xx = basis_xx(SHAPE, phi, lepoly_x)
+phi_xx = basis_xx(SHAPE, phi_x, lepoly_xx)
 
 def relative_l2(measured, theoretical):
 	return np.linalg.norm(measured-theoretical, ord=2)/np.linalg.norm(theoretical, ord=2)
