@@ -24,9 +24,9 @@ import pandas as pd
 gc.collect()
 torch.cuda.empty_cache()
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--file", type=str, default='500N127')
-parser.add_argument("--batch", type=int, default=500)
-parser.add_argument("--epochs", type=int, default=2)
+parser.add_argument("--file", type=str, default='5000N15')
+parser.add_argument("--batch", type=int, default=5000)
+parser.add_argument("--epochs", type=int, default=2000)
 parser.add_argument("--ks", type=int, default=3)
 parser.add_argument("--data", type=bool, default=True)
 args = parser.parse_args()
@@ -54,9 +54,10 @@ xx = legslbndm(D_out)
 lepolys = gen_lepolys(D_out, xx)
 lepoly_x = dx(D_out, xx, lepolys)
 lepoly_xx = dxx(D_out, xx, lepolys)
-phi = basis(lepolys)
-phi_x = basis_x(phi, lepoly_x)
-phi_xx = basis_xx(phi, lepoly_x)
+phi = basis(SHAPE, lepolys)
+phi_x = basis_x(SHAPE, phi, lepoly_x)
+phi_xx = basis_xx(SHAPE, phi, lepoly_x)
+
 
 # Check if CUDA is available and then use it.
 if torch.cuda.is_available():  
@@ -77,7 +78,7 @@ trainloader = torch.utils.data.DataLoader(lg_dataset, batch_size=N, shuffle=True
 # Construct our model by instantiating the class
 model1 = network.NetA(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING)
 
-# XAVIER INITIALIZATION
+# KAIMING INITIALIZATION
 def weights_init(m):
     if isinstance(m, nn.Conv1d):
         # torch.nn.init.xavier_uniform_(m.weight)
@@ -141,7 +142,7 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 		current_loss = np.round(float(loss.to('cpu').detach()), 8)
 		losses.append(current_loss) 
 	print(f"\tLoss: {current_loss}")
-	if epoch % 1000 == 0 and 0 <= epoch < EPOCHS:
+	if epoch % EPOCHS//10 == 0 and 0 <= epoch < EPOCHS:
 		# u_pred = reconstruct(N, a_pred, phi)
 		DE = ODE2(1E-1, u_pred, a_pred, phi_x, phi_xx)
 		plotter(xx, sample_batch, epoch, a=a_pred, u=u_pred, DE=DE, title='a', ks=KERNEL_SIZE, path=PATH)

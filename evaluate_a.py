@@ -23,16 +23,16 @@ else:
 device = torch.device(dev)
 
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--file", type=str, default='1000N127')
+parser.add_argument("--file", type=str, default='1000N15')
 parser.add_argument("--ks", type=int, default=7)
-parser.add_argument("--input", type=str, default='20000N31')
+parser.add_argument("--input", type=str, default='20000N15')
 parser.add_argument("--path", type=str, default='.')
 parser.add_argument("--data", type=bool, default=False)
 # parser.add_argument("--deriv", type=np.ndarray, default=np.zeros((1,1)))
 args = parser.parse_args()
 
-FILE = args.file
 INPUT = args.input
+FILE = args.file[:-2] + INPUT[-2:]
 PATH = args.path
 KERNEL_SIZE = args.ks
 PADDING = (args.ks - 1)//2
@@ -45,12 +45,12 @@ model.load_state_dict(torch.load(f'./{PATH}/{PATH}.pt'))
 model.eval()
 
 xx = legslbndm(D_out)
-lepolys = gen_lepolys(SHAPE, xx)
+lepolys = gen_lepolys(D_out, xx)
 lepoly_x = dx(D_out, xx, lepolys)
 lepoly_xx = dxx(D_out, xx, lepolys)
-phi = basis(lepolys)
-phi_x = basis_x(phi, lepoly_x)
-phi_xx = basis_xx(phi, lepoly_x)
+phi = basis(SHAPE, lepolys)
+phi_x = basis_x(SHAPE, phi, lepoly_x)
+phi_xx = basis_xx(SHAPE, phi, lepoly_x)
 
 def relative_l2(measured, theoretical):
 	return np.linalg.norm(measured-theoretical, ord=2)/np.linalg.norm(theoretical, ord=2)

@@ -2,7 +2,7 @@
 import torch
 import numpy as np
 from sem.sem import legslbndm, lepoly, legslbdiff
-
+# import pdb
 
 # Check if CUDA is available and then use it.
 if torch.cuda.is_available():  
@@ -11,7 +11,7 @@ else:
   dev = "cpu"
 device = torch.device(dev)  
 
-
+###
 def gen_lepolys(N, x):
 	lepolys = {}
 	for i in range(N):
@@ -19,14 +19,14 @@ def gen_lepolys(N, x):
 	return lepolys
 
 
-def basis(lepolys):
+def basis(N, lepolys):
 	L = max(list(lepolys.keys()))
 	phi = torch.zeros((L+1,L+1))
-	for i in range(L-1):
+	for i in range(N-2):
 		phi[i] = torch.from_numpy(lepolys[i] - lepolys[i+2]).reshape(1,L+1)
 	return phi.to(device)
 
-
+###
 def dx(N, x, lepolys):
 	def gen_diff_lepoly(N, n, x,lepolys):
 		lepoly_x = np.zeros((N,1))
@@ -40,15 +40,13 @@ def dx(N, x, lepolys):
 	return Dx
 
 
-def basis_x(phi, Dx):
+def basis_x(N, phi, Dx):
 	phi_x = phi.clone()
-	print(phi.shape[0])
-	for i in range(phi.shape[0]-2):
+	for i in range(N-2):
 		phi_x[i, :] = torch.from_numpy(Dx[i] - Dx[i+2])
-	print(phi_x.shape[0])
 	return phi_x.to(device)
 
-
+###
 def dxx(N, x, lepolys):
 	def gen_diff2_lepoly(N, n, x,lepolys):
 		lepoly_xx = np.zeros((N,1))
@@ -62,9 +60,9 @@ def dxx(N, x, lepolys):
 	return Dxx
 
 
-def basis_xx(phi, Dxx):
+def basis_xx(N, phi, Dxx):
 	phi_xx = phi.clone()
-	for i in range(phi.shape[0]-2):
+	for i in range(N-2):
 		phi_xx[i,:] = torch.from_numpy(Dxx[i] - Dxx[i+2])
 	return phi_xx.to(device)
 
@@ -89,14 +87,14 @@ def ODE2(eps, u, alphas, phi_x, phi_xx):
 	j += 2
 	M = torch.zeros((j-2,j), requires_grad=False).to(device)
 	T = torch.zeros((i, j), requires_grad=False).to(device)
-	for jj in range(1, j-1):
-		i_ind = jj - 1
-		M[i_ind,:] = -eps*phi_xx[i_ind,:] - phi_x[i_ind,:]
-
+	M[:j-2,:] = -eps*phi_xx[:j-2,:] - phi_x[:j-2,:]
+	# for jj in range(j-2):
+	# 	M[:j-2,:] = -eps*phi_xx[jj,:] - phi_x[jj,:]
 	for ii in range(i):
 		a = alphas[ii,:].detach().reshape(1, j-2)
 		sol = torch.mm(a,M).reshape(j,)
 		T[ii,:] = sol
+	# pdb.set_trace()
 	del M
 	return T
 
