@@ -173,9 +173,6 @@ if args.data == True:
 
 	except:
 		df = pd.DataFrame([], columns=COLS)
-	d = {k:[i] for i, k in enumerate(COLS)}
-	tempDF = pd.DataFrame.from_dict(d)
-	df = pd.concat([df,tempDF])
 	entries = df.to_dict('records')
 	entry = {}
 	try:
