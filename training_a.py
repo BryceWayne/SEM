@@ -162,5 +162,5 @@ if args.data == True:
 	temp.at[temp.index[-1],'TIMESTAMP'] = datetime.datetime.now().timestamp()
 	# temp.at[temp.index[-1],'HISTORY'] = losses
 	temp.at[temp.index[-1],'LOSS'] = BEST_LOSS
-	temp.at[temp.index[-1],'EPOCH'] = EPOCHS
+	temp.at[temp.index[-1],'EPOCHS'] = EPOCHS
 	temp.to_excel('temp.xlsx')

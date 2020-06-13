@@ -176,7 +176,7 @@ if args.data == True:
 	d = {k:[i] for i, k in enumerate(COLS)}
 	tempDF = pd.DataFrame.from_dict(d)
 	temp = pd.concat([temp,tempDF])
-	temp.at[temp.index[-1],'FOLDER'] = PATH
+	temp.at[temp.index[-1],'FOLDER'] = PATH[:-2]
 	temp.at[temp.index[-1],'FILE'] = INPUT
 	temp.at[temp.index[-1],'N'] = SHAPE
 	temp.at[temp.index[-1],'MAEa'] = running_MAE_a
