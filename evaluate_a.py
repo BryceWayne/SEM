@@ -168,9 +168,10 @@ plt.close()
 print(f"{PATH}")
 
 if args.data == True:
-	COLS = ['TIMESTAMP', 'FOLDER', 'FILE', 'N', 'BATCH', 'EPOCHS', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']
+	COLS = ['TIMESTAMP', 'FOLDER', 'FILE', 'N', 'K.SIZE', 'BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']
 	try:
 		temp = pd.read_excel('temp.xlsx', dtype='object')
+		temp = temp[COLS]
 	except:
 		temp = pd.DataFrame([], columns=COLS, dtype='object')
 	d = {k:[i] for i, k in enumerate(COLS)}
@@ -179,6 +180,7 @@ if args.data == True:
 	temp.at[temp.index[-1],'FOLDER'] = PATH[:-2]
 	temp.at[temp.index[-1],'FILE'] = INPUT
 	temp.at[temp.index[-1],'N'] = SHAPE
+	temp.at[temp.index[-1],'K.SIZE'] = KERNEL_SIZE
 	temp.at[temp.index[-1],'MAEa'] = running_MAE_a
 	temp.at[temp.index[-1],'MSEa'] = running_MSE_a
 	temp.at[temp.index[-1],'MIEa'] = running_MinfE_a

@@ -164,9 +164,11 @@ gc.collect()
 torch.cuda.empty_cache()
 if args.data == True:
 	temp = pd.read_excel('temp.xlsx')
+	COLS = ['TIMESTAMP', 'FOLDER', 'FILE', 'N', 'K.SIZE', 'BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']
+	temp = temp[COLS]
 	temp.at[temp.index[-1],'TIMESTAMP'] = datetime.datetime.now().timestamp()
-	# temp.at[temp.index[-1],'AVG IT/S'] = losses
 	temp.at[temp.index[-1],'AVG IT/S'] = avg_iter_time
 	temp.at[temp.index[-1],'LOSS'] = BEST_LOSS
 	temp.at[temp.index[-1],'EPOCHS'] = EPOCHS
+	temp.at[temp.index[-1],'BATCH'] = BATCH
 	temp.to_excel('temp.xlsx')
