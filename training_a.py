@@ -164,11 +164,12 @@ torch.cuda.empty_cache()
 if args.data == True:
 	COLS = ['TIMESTAMP', 'DATASET', 'FOLDER', 'N', 'K.SIZE', 'BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']
 	df = pd.read_excel('temp.xlsx')
-	df.at[df.index[-1],'TIMESTAMP'] = datetime.datetime.now().timestamp()
+	df.at[df.index[-1],'TIMESTAMP'] = pd.to_datetime(datetime.datetime.now())
 	df.at[df.index[-1],'AVG IT/S'] = avg_iter_time
 	df.at[df.index[-1],'LOSS'] = BEST_LOSS
 	df.at[df.index[-1],'EPOCHS'] = EPOCHS
 	df.at[df.index[-1],'BATCH'] = BATCH
 	df = df[COLS]
 	df = df.infer_objects() 
+	print(df.head())
 	df.to_excel('temp.xlsx')

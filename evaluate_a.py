@@ -174,7 +174,7 @@ if args.data == True:
 	except:
 		df = pd.DataFrame([], columns=COLS)
 	entries = df.to_dict('records')
-	entry = {}
+	entry = {c:0 for c in COLS}
 	try:
 		PATH.split('\\')[1]
 	except:
@@ -191,8 +191,10 @@ if args.data == True:
 	entry['MSEu'] = running_MSE_u
 	entry['MIEu'] = running_MinfE_u
 	entries.append(entry)
+	from pprint import pprint
+	pprint(entry)
 	df = pd.DataFrame(entries)
 	df = df[COLS]
-	df = df.infer_objects() 
+	df = df.infer_objects()
 	df.to_excel('temp.xlsx')
 	print('Done')
