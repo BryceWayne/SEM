@@ -27,7 +27,7 @@ torch.cuda.empty_cache()
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--file", type=str, default='500N31')
 parser.add_argument("--batch", type=int, default=500)
-parser.add_argument("--epochs", type=int, default=200)
+parser.add_argument("--epochs", type=int, default=5)
 parser.add_argument("--ks", type=int, default=3)
 parser.add_argument("--data", type=bool, default=True)
 args = parser.parse_args()
@@ -41,15 +41,16 @@ SHAPE = int(args.file.split('N')[1]) + 1
 N, D_in, Filters, D_out = BATCH, 1, 32, SHAPE
 EPOCHS = args.epochs
 cur_time = str(datetime.datetime.now()).replace(' ', 'T')
-cur_time = cur_time.replace(':','').split('.')[0].replace('-','_')
-PATH = f'{FILE}_a_{cur_time}'
+cur_time = cur_time.replace(':','').split('.')[0].replace('-','')
+PATH = os.path.join(FILE, cur_time[:-2])
+
 try:
-	os.mkdir(PATH)
+	os.mkdir(FILE)
 	exists = False
 except:
 	exists = True
-if exists == False:
-	os.mkdir(os.path.join(PATH,'pics'))
+os.mkdir(PATH)
+os.mkdir(os.path.join(PATH,'pics'))
 
 xx = legslbndm(D_out)
 lepolys = gen_lepolys(D_out, xx)
@@ -123,10 +124,10 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			"""
 			RECONSTRUCT ODE
 			"""
-			# DE = ODE2(1E-1, u_pred, a_pred, lepolys, lepoly_x, lepoly_xx)
+			DE = ODE2(1E-1, u_pred, a_pred, phi_x, phi_xx)
 			f = f.reshape(N, D_out)
-			# assert DE.shape == f.shape
-			DE = None
+			assert DE.shape == f.shape
+			# DE = None
 			"""
 			WEAK FORM
 			"""
@@ -135,7 +136,7 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			"""
 			COMPUTE LOSS
 			"""
-			loss = criterion2(a_pred, a) + criterion1(u_pred, u)# + weak_form_loss #+ criterion1(DE, f)		
+			loss = criterion2(a_pred, a) + criterion1(u_pred, u) + criterion1(DE, f)# + weak_form_loss #+ criterion1(DE, f)		
 			if loss.requires_grad:
 				loss.backward()
 			return a_pred, u_pred, DE, loss
@@ -148,7 +149,7 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 		DE = ODE2(1E-1, u_pred, a_pred, phi_x, phi_xx)
 		plotter(xx, sample_batch, epoch, a=a_pred, u=u_pred, DE=DE, title='a', ks=KERNEL_SIZE, path=PATH)
 	if current_loss < BEST_LOSS:
-		torch.save(model1.state_dict(), f'./{PATH}/{PATH}.pt')
+		torch.save(model1.state_dict(), PATH + '/model.pt')
 		BEST_LOSS = current_loss
 time1 = time.time()
 dt = time1 - time0
@@ -162,7 +163,7 @@ loss_plot(losses, FILE, EPOCHS, SHAPE, KERNEL_SIZE, BEST_LOSS, title='a', path=P
 gc.collect()
 torch.cuda.empty_cache()
 if args.data == True:
-	COLS = ['TIMESTAMP', 'FOLDER', 'FILE', 'N', 'K.SIZE', 'BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']
+	COLS = ['TIMESTAMP', 'DATASET', 'FOLDER', 'N', 'K.SIZE', 'BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']
 	temp = pd.read_excel('temp.xlsx')
 	temp.at[temp.index[-1],'TIMESTAMP'] = datetime.datetime.now().timestamp()
 	temp.at[temp.index[-1],'AVG IT/S'] = avg_iter_time

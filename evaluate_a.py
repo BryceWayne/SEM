@@ -42,7 +42,7 @@ N, D_in, Filters, D_out = BATCH, 1, 32, SHAPE
 # LOAD MODEL
 model = network.NetA(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING).to(device)
 print(PATH)
-model.load_state_dict(torch.load(f'./{PATH}/{PATH}.pt'))
+model.load_state_dict(torch.load(PATH + '/model.pt'))
 model.eval()
 
 xx = legslbndm(D_out)
@@ -115,7 +115,7 @@ mae_error_a = mae(ahat, aa)
 l2_error_a = relative_l2(ahat, aa)
 linf_error_a = relative_linf(ahat, aa)
 plt.figure(1, figsize=(10,6))
-plt.title(f'Example\nMAE Error: {np.round(float(mae_error_a), 6)}\nRel. $L_2$ Error: {np.round(float(l2_error_a), 6)}\nRel. $L_\\infty$ Error: {np.round(float(linf_error_a), 6)}')
+plt.title(f'Out of Sample Example\nMAE Error: {np.round(float(mae_error_a), 6)}\nRel. $L_2$ Error: {np.round(float(l2_error_a), 6)}\nRel. $L_\\infty$ Error: {np.round(float(linf_error_a), 6)}')
 plt.plot(xx, aa, 'r-', label='$\\alpha$')
 plt.plot(xx, ahat, 'bo', mfc='none', label='$\\hat{\\alpha}$')
 xx_ = np.linspace(-1,1, len(xx)+2, endpoint=True)
@@ -136,7 +136,7 @@ l2_error_u = relative_l2(uhat, uu)
 linf_error_u = relative_linf(uhat, uu)
 xx = legslbndm(SHAPE)
 plt.figure(2, figsize=(10,6))
-plt.title(f'Example\nMAE Error: {np.round(float(mae_error_u), 6)}\nRel. $L_2$ Error: {np.round(float(l2_error_u), 6)}\nRel. $L_\\infty$ Error: {np.round(float(linf_error_u), 6)}')
+plt.title(f'Out of Sample Example\nMAE Error: {np.round(float(mae_error_u), 6)}\nRel. $L_2$ Error: {np.round(float(l2_error_u), 6)}\nRel. $L_\\infty$ Error: {np.round(float(linf_error_u), 6)}')
 plt.plot(xx, uu, 'r-', label='$u$')
 plt.plot(xx, uhat, 'bo', mfc='none', label='$\\hat{u}$')
 plt.xlim(-1,1)
@@ -153,7 +153,7 @@ de = DE[0,:].to('cpu').detach().numpy()
 mae_error_de = mae(de, ff)
 l2_error_de = relative_l2(de, ff)
 linf_error_de = relative_linf(de, ff)
-plt.title(f'Example\nMAE Error: {np.round(float(mae_error_de), 6)}\nRel. $L_2$ Error: {np.round(float(l2_error_de), 6)}\nRel. $L_\\infty$ Error: {np.round(float(linf_error_de), 6)}')
+plt.title(f'Out of Sample Example\nMAE Error: {np.round(float(mae_error_de), 6)}\nRel. $L_2$ Error: {np.round(float(l2_error_de), 6)}\nRel. $L_\\infty$ Error: {np.round(float(linf_error_de), 6)}')
 xx_ = np.linspace(-1,1, len(ff), endpoint=True)
 plt.plot(xx_, ff, 'g', label='$f$')
 plt.plot(xx_, de, 'co', mfc='none', label='ODE')
@@ -167,16 +167,16 @@ plt.savefig(f'{PATH}/pics/a_ks{KERNEL_SIZE}_out_of_sample_DE.png', bbox_inches='
 plt.close()
 
 if args.data == True:
-	COLS = ['TIMESTAMP', 'FOLDER', 'FILE', 'N', 'K.SIZE', 'BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']
+	COLS = ['TIMESTAMP', 'DATASET', 'FOLDER', 'N', 'K.SIZE', 'BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']
 	try:
-		temp = pd.read_excel('temp.xlsx', dtype='object')
+		temp = pd.read_excel('temp.xlsx')
 	except:
-		temp = pd.DataFrame([], columns=COLS, dtype='object')
+		temp = pd.DataFrame([], columns=COLS)
 	d = {k:[i] for i, k in enumerate(COLS)}
 	tempDF = pd.DataFrame.from_dict(d)
 	temp = pd.concat([temp,tempDF])
 	temp.at[temp.index[-1],'FOLDER'] = PATH[:-2]
-	temp.at[temp.index[-1],'FILE'] = INPUT
+	temp.at[temp.index[-1],'DATASET'] = INPUT
 	temp.at[temp.index[-1],'N'] = SHAPE
 	temp.at[temp.index[-1],'K.SIZE'] = KERNEL_SIZE
 	temp.at[temp.index[-1],'MAEa'] = running_MAE_a
