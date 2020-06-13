@@ -79,7 +79,7 @@ def ODE2(eps, u, alphas, phi_x, phi_xx):
 	i, j = alphas.shape
 	T = torch.zeros((i, j+2), requires_grad=False).to(device)
 	for ii in range(i):
-		a = alphas[ii,:].detach().reshape(1, j)
+		a = alphas[ii,:].reshape(1, j)
 		sol = torch.mm(a,-eps*phi_xx - phi_x).reshape(j+2,)
 		T[ii,:] = sol
 	return T
@@ -113,4 +113,3 @@ def weak_form2(eps, N, f, u, alphas, lepolys, DX):
 			cumulative_error = cumulative_error + diffusion - convection - rhs
 		return cumulative_error
 	return LHS, RHS
-	
