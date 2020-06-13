@@ -18,16 +18,19 @@ from sem.sem import *
 from plotting import *
 from reconstruct import *
 import datetime
+import pandas as pd
 
 
 gc.collect()
 torch.cuda.empty_cache()
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--file", type=str, default='5000N127')
-parser.add_argument("--batch", type=int, default=5000)
-parser.add_argument("--epochs", type=int, default=10000)
-parser.add_argument("--ks", type=int, default=21)
+parser.add_argument("--file", type=str, default='500N127')
+parser.add_argument("--batch", type=int, default=500)
+parser.add_argument("--epochs", type=int, default=2)
+parser.add_argument("--ks", type=int, default=3)
+parser.add_argument("--data", type=bool, default=True)
 args = parser.parse_args()
+
 
 KERNEL_SIZE = args.ks
 PADDING = (args.ks - 1)//2
@@ -35,14 +38,15 @@ FILE = args.file
 BATCH = int(args.file.split('N')[0])
 SHAPE = int(args.file.split('N')[1]) + 1
 N, D_in, Filters, D_out = BATCH, 1, 32, SHAPE
-cur_time = str(datetime.datetime.now()).replace(' ', 'T').replace(':','').split('.')[0].replace('-','_')
+EPOCHS = args.epochs
+cur_time = str(datetime.datetime.now()).replace(' ', 'T')
+cur_time = cur_time.replace(':','').split('.')[0].replace('-','_')
 PATH = f'{FILE}_a_{cur_time}'
 try:
 	os.mkdir(PATH)
 	exists = False
 except:
 	exists = True
-	print('Dir already exists')
 if exists == False:
 	os.mkdir(os.path.join(PATH,'pics'))
 
@@ -89,10 +93,10 @@ criterion2 = torch.nn.MSELoss(reduction="sum")
 optimizer1 = torch.optim.LBFGS(model1.parameters(), history_size=10, tolerance_grad=1e-16, tolerance_change=1e-16, max_eval=10)
 # optimizer1 = torch.optim.SGD(model1.parameters(), lr=1E-4)
 
-EPOCHS = args.epochs + 1
+
 BEST_LOSS = 9E32
 losses = []
-for epoch in tqdm(range(1, EPOCHS)):
+for epoch in tqdm(range(1, EPOCHS+1)):
 	for batch_idx, sample_batch in enumerate(trainloader):
 		f = Variable(sample_batch['f']).to(device)
 		a = Variable(sample_batch['a']).to(device)
@@ -109,10 +113,10 @@ for epoch in tqdm(range(1, EPOCHS)):
 			"""
 			RECONSTRUCT SOLUTIONS
 			"""
-			# u_pred = reconstruct(N, a_pred, lepolys)
+			u_pred = reconstruct(N, a_pred, phi)
 			u = u.reshape(N, D_out)
-			# assert u_pred.shape == u.shape
-			u_pred = None
+			assert u_pred.shape == u.shape
+			# u_pred = None
 			"""
 			RECONSTRUCT ODE
 			"""
@@ -128,7 +132,7 @@ for epoch in tqdm(range(1, EPOCHS)):
 			"""
 			COMPUTE LOSS
 			"""
-			loss = criterion2(a_pred, a)# + criterion1(u_pred, u) + weak_form_loss #+ criterion1(DE, f)		
+			loss = criterion2(a_pred, a) + criterion1(u_pred, u)# + weak_form_loss #+ criterion1(DE, f)		
 			if loss.requires_grad:
 				loss.backward()
 			return a_pred, u_pred, DE, loss
@@ -138,7 +142,7 @@ for epoch in tqdm(range(1, EPOCHS)):
 		losses.append(current_loss) 
 	print(f"\tLoss: {current_loss}")
 	if epoch % 1000 == 0 and 0 <= epoch < EPOCHS:
-		u_pred = reconstruct(N, a_pred, phi)
+		# u_pred = reconstruct(N, a_pred, phi)
 		DE = ODE2(1E-1, u_pred, a_pred, phi_x, phi_xx)
 		plotter(xx, sample_batch, epoch, a=a_pred, u=u_pred, DE=DE, title='a', ks=KERNEL_SIZE, path=PATH)
 	if current_loss < BEST_LOSS:
@@ -146,7 +150,17 @@ for epoch in tqdm(range(1, EPOCHS)):
 		BEST_LOSS = current_loss
 
 
-subprocess.call(f'python evaluate_a.py --ks {KERNEL_SIZE} --input {FILE} --path {PATH}', shell=True)
+if args.data == True:
+	subprocess.call(f'python evaluate_a.py --ks {KERNEL_SIZE} --input {FILE} --path {PATH} --data True', shell=True)
+else:
+	subprocess.call(f'python evaluate_a.py --ks {KERNEL_SIZE} --input {FILE} --path {PATH}', shell=True)
 loss_plot(losses, FILE, EPOCHS, SHAPE, KERNEL_SIZE, BEST_LOSS, title='a', path=PATH)
 gc.collect()
 torch.cuda.empty_cache()
+if args.data == True:
+	temp = pd.read_excel('temp.xlsx')
+	temp.at[temp.index[-1],'TIMESTAMP'] = datetime.datetime.now().timestamp()
+	# temp.at[temp.index[-1],'HISTORY'] = losses
+	temp.at[temp.index[-1],'LOSS'] = BEST_LOSS
+	temp.at[temp.index[-1],'EPOCH'] = EPOCHS
+	temp.to_excel('temp.xlsx')

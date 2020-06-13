@@ -78,7 +78,7 @@ def reconstruct(N, alphas, phi):
 		i_ind = jj - 1
 		M[i_ind,:] = phi[i_ind,:].reshape(j,)
 	for ii in range(i):
-		a = alphas[ii,:].detach().reshape(1, j-2)
+		a = alphas[ii,:].reshape(1, j-2)
 		T[ii,:] = torch.mm(a,M).reshape(j,)
 	del M
 	return T

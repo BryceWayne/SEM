@@ -12,6 +12,8 @@ from net.data_loader import *
 from sem.sem import *
 from reconstruct import *
 import subprocess
+import pandas as pd
+
 
 
 if torch.cuda.is_available():  
@@ -25,6 +27,7 @@ parser.add_argument("--file", type=str, default='1000N127')
 parser.add_argument("--ks", type=int, default=7)
 parser.add_argument("--input", type=str, default='20000N31')
 parser.add_argument("--path", type=str, default='.')
+parser.add_argument("--data", type=bool, default=False)
 # parser.add_argument("--deriv", type=np.ndarray, default=np.zeros((1,1)))
 args = parser.parse_args()
 
@@ -161,3 +164,26 @@ plt.legend(shadow=True)
 plt.savefig(f'{PATH}/pics/a_ks{KERNEL_SIZE}_out_of_sample_DE.png', bbox_inches='tight')
 # plt.show()
 plt.close()
+
+print(f"{PATH}")
+
+if args.data == True:
+	COLS = ['TIMESTAMP', 'FOLDER', 'FILE', 'N', 'BATCH', 'EPOCHS', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']
+	try:
+		temp = pd.read_excel('temp.xlsx', dtype='object')
+	except:
+		temp = pd.DataFrame([], columns=COLS, dtype='object')
+	d = {k:[i] for i, k in enumerate(COLS)}
+	tempDF = pd.DataFrame.from_dict(d)
+	temp = pd.concat([temp,tempDF])
+	temp.at[temp.index[-1],'FOLDER'] = PATH
+	temp.at[temp.index[-1],'FILE'] = INPUT
+	temp.at[temp.index[-1],'N'] = SHAPE
+	temp.at[temp.index[-1],'MAEa'] = running_MAE_a
+	temp.at[temp.index[-1],'MSEa'] = running_MSE_a
+	temp.at[temp.index[-1],'MIEa'] = running_MinfE_a
+	temp.at[temp.index[-1],'MAEu'] = running_MAE_u
+	temp.at[temp.index[-1],'MSEu'] = running_MSE_u
+	temp.at[temp.index[-1],'MIEu'] = running_MinfE_u
+	temp.to_excel('temp.xlsx')
+	print('Done')
