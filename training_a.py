@@ -131,12 +131,12 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			"""
 			WEAK FORM
 			"""
-			# LHS, RHS = weak_form1(1E-1, SHAPE, f, u_pred, a_pred, lepolys, lepoly_x)
-			# weak_form_loss = criterion1(LHS, RHS)
+			LHS, RHS = weak_form1(1E-1, SHAPE, f, u_pred, a_pred, lepolys, phi_x)
+			weak_form_loss = criterion1(LHS, RHS)
 			"""
 			COMPUTE LOSS
 			"""
-			loss = criterion2(a_pred, a) + criterion1(u_pred, u) + criterion1(DE, f)# + weak_form_loss #+ criterion1(DE, f)		
+			loss = criterion2(a_pred, a) + criterion1(u_pred, u) + criterion1(DE, f) + weak_form_loss # + criterion1(DE, f)		
 			if loss.requires_grad:
 				loss.backward()
 			return a_pred, u_pred, DE, loss
