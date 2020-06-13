@@ -182,7 +182,7 @@ if args.data == True:
 		PATH.split('\\')[1]
 	except:
 		PATH.split('/')[1]
-	PATH = PATH[len(INPUT)+2:]
+	PATH = PATH[len(INPUT)+1:]
 	entry['FOLDER'] = PATH
 	entry['DATASET'] = INPUT
 	entry['N'] = SHAPE
