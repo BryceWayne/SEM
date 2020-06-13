@@ -42,7 +42,7 @@ N, D_in, Filters, D_out = BATCH, 1, 32, SHAPE
 EPOCHS = args.epochs
 cur_time = str(datetime.datetime.now()).replace(' ', 'T')
 cur_time = cur_time.replace(':','').split('.')[0].replace('-','')
-PATH = os.path.join(FILE, cur_time[:-2])
+PATH = os.path.join(FILE, cur_time)
 
 try:
 	os.mkdir(FILE)
