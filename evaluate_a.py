@@ -175,7 +175,7 @@ if args.data == True:
 	d = {k:[i] for i, k in enumerate(COLS)}
 	tempDF = pd.DataFrame.from_dict(d)
 	temp = pd.concat([temp,tempDF])
-	temp.at[temp.index[-1],'FOLDER'] = PATH[:-2]
+	temp.at[temp.index[-1],'FOLDER'] = PATH.split('/')[1]
 	temp.at[temp.index[-1],'DATASET'] = INPUT
 	temp.at[temp.index[-1],'N'] = SHAPE
 	temp.at[temp.index[-1],'K.SIZE'] = KERNEL_SIZE
