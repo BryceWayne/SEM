@@ -131,7 +131,8 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			"""
 			WEAK FORM
 			"""
-			LHS, RHS = weak_form1(1E-1, SHAPE, f, u_pred, a_pred, lepolys, phi_x)
+			# LHS, RHS = weak_form1(1E-1, SHAPE, f, u_pred, a_pred, lepolys, phi_x)
+			LHS, RHS = weak_form2(1E-1, SHAPE, f, u, a_pred, lepolys, phi, phi_x)
 			weak_form_loss = criterion1(LHS, RHS)
 			"""
 			COMPUTE LOSS
@@ -164,12 +165,11 @@ torch.cuda.empty_cache()
 if args.data == True:
 	COLS = ['TIMESTAMP', 'DATASET', 'FOLDER', 'N', 'K.SIZE', 'BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']
 	df = pd.read_excel('temp.xlsx')
-	df.at[df.index[-1],'TIMESTAMP'] = pd.to_datetime(datetime.datetime.now())
+	df.at[df.index[-1],'TIMESTAMP'] = datetime.datetime.now()
 	df.at[df.index[-1],'AVG IT/S'] = avg_iter_time
 	df.at[df.index[-1],'LOSS'] = BEST_LOSS
 	df.at[df.index[-1],'EPOCHS'] = EPOCHS
 	df.at[df.index[-1],'BATCH'] = BATCH
 	df = df[COLS]
-	df = df.infer_objects() 
-	print(df.head())
+	df = df.infer_objects()
 	df.to_excel('temp.xlsx')
