@@ -169,22 +169,28 @@ plt.close()
 if args.data == True:
 	COLS = ['TIMESTAMP', 'DATASET', 'FOLDER', 'N', 'K.SIZE', 'BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']
 	try:
-		temp = pd.read_excel('temp.xlsx', dtype='object')
+		df = pd.read_excel('temp.xlsx', dtype='object')
+
 	except:
-		temp = pd.DataFrame([], columns=COLS, dtype='object')
+		df = pd.DataFrame([], columns=COLS, dtype='object')
 	d = {k:[i] for i, k in enumerate(COLS)}
 	tempDF = pd.DataFrame.from_dict(d)
-	temp = pd.concat([temp,tempDF])
-	temp.at[temp.index[-1],'FOLDER'] = PATH.split('/')[1]
-	temp.at[temp.index[-1],'DATASET'] = INPUT
-	temp.at[temp.index[-1],'N'] = SHAPE
-	temp.at[temp.index[-1],'K.SIZE'] = KERNEL_SIZE
-	temp.at[temp.index[-1],'MAEa'] = running_MAE_a
-	temp.at[temp.index[-1],'MSEa'] = running_MSE_a
-	temp.at[temp.index[-1],'MIEa'] = running_MinfE_a
-	temp.at[temp.index[-1],'MAEu'] = running_MAE_u
-	temp.at[temp.index[-1],'MSEu'] = running_MSE_u
-	temp.at[temp.index[-1],'MIEu'] = running_MinfE_u
-	temp = temp[COLS]
-	temp.to_excel('temp.xlsx')
+	df = pd.concat([df,tempDF])
+	entries = df.to_dict('records')
+	entry = {}
+	entry['FOLDER'] = PATH.split('\\')[1]
+	entry['DATASET'] = INPUT
+	entry['N'] = SHAPE
+	entry['K.SIZE'] = KERNEL_SIZE
+	entry['MAEa'] = running_MAE_a
+	entry['MSEa'] = running_MSE_a
+	entry['MIEa'] = running_MinfE_a
+	entry['MAEu'] = running_MAE_u
+	entry['MSEu'] = running_MSE_u
+	entry['MIEu'] = running_MinfE_u
+	entries.append(entry)
+	df = pd.DataFrame(entries)
+	df = df[COLS]
+	df = df.infer_objects() 
+	df.to_excel('temp.xlsx')
 	print('Done')

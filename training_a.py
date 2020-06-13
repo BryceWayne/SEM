@@ -146,7 +146,6 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 		losses.append(current_loss) 
 	print(f"\tLoss: {current_loss}")
 	if epoch % EPOCHS == 0:
-		DE = ODE2(1E-1, u_pred, a_pred, phi_x, phi_xx)
 		plotter(xx, sample_batch, epoch, a=a_pred, u=u_pred, DE=DE, title='a', ks=KERNEL_SIZE, path=PATH)
 	if current_loss < BEST_LOSS:
 		torch.save(model1.state_dict(), PATH + '/model.pt')
@@ -164,11 +163,12 @@ gc.collect()
 torch.cuda.empty_cache()
 if args.data == True:
 	COLS = ['TIMESTAMP', 'DATASET', 'FOLDER', 'N', 'K.SIZE', 'BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']
-	temp = pd.read_excel('temp.xlsx')
-	temp.at[temp.index[-1],'TIMESTAMP'] = datetime.datetime.now().timestamp()
-	temp.at[temp.index[-1],'AVG IT/S'] = avg_iter_time
-	temp.at[temp.index[-1],'LOSS'] = BEST_LOSS
-	temp.at[temp.index[-1],'EPOCHS'] = EPOCHS
-	temp.at[temp.index[-1],'BATCH'] = BATCH
-	temp = temp[COLS]
-	temp.to_excel('temp.xlsx')
+	df = pd.read_excel('temp.xlsx')
+	df.at[df.index[-1],'TIMESTAMP'] = datetime.datetime.now().timestamp()
+	df.at[df.index[-1],'AVG IT/S'] = avg_iter_time
+	df.at[df.index[-1],'LOSS'] = BEST_LOSS
+	df.at[df.index[-1],'EPOCHS'] = EPOCHS
+	df.at[df.index[-1],'BATCH'] = BATCH
+	df = df[COLS]
+	df = df.infer_objects() 
+	df.to_excel('temp.xlsx')
