@@ -59,6 +59,10 @@ lepoly_xx = dxx(D_out, xx, lepolys)
 phi = basis(SHAPE, lepolys)
 phi_x = basis_x(SHAPE, phi, lepoly_x)
 phi_xx = basis_xx(SHAPE, phi_x, lepoly_xx)
+# for _ in [phi, phi_x, phi_xx]:
+# 	print(_.shape)
+# end
+
 
 
 # Check if CUDA is available and then use it.
@@ -124,20 +128,20 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			"""
 			RECONSTRUCT ODE
 			"""
-			DE = ODE2(1E-1, u_pred, a_pred, phi_x, phi_xx)
+			# DE = ODE2(1E-1, u_pred, a_pred, phi_x, phi_xx)
 			f = f.reshape(N, D_out)
-			assert DE.shape == f.shape
-			# DE = None
+			# assert DE.shape == f.shape
+			DE = None
 			"""
 			WEAK FORM
 			"""
 			# LHS, RHS = weak_form1(1E-1, SHAPE, f, u_pred, a_pred, lepolys, phi_x)
-			LHS, RHS = weak_form2(1E-1, SHAPE, f, u, a_pred, lepolys, phi, phi_x)
-			weak_form_loss = criterion1(LHS, RHS)
+			# LHS, RHS = weak_form2(1E-1, SHAPE, f, u, a_pred, lepolys, phi, phi_x)
+			# weak_form_loss = criterion1(LHS, RHS)
 			"""
 			COMPUTE LOSS
 			"""
-			loss = criterion2(a_pred, a) + criterion1(u_pred, u) + criterion1(DE, f) + weak_form_loss # + criterion1(DE, f)		
+			loss = criterion2(a_pred, a) + criterion1(u_pred, u)# + criterion1(DE, f) + weak_form_loss # + criterion1(DE, f)		
 			if loss.requires_grad:
 				loss.backward()
 			return a_pred, u_pred, DE, loss
