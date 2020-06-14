@@ -27,7 +27,7 @@ torch.cuda.empty_cache()
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--file", type=str, default='500N31')
 parser.add_argument("--batch", type=int, default=500)
-parser.add_argument("--epochs", type=int, default=100)
+parser.add_argument("--epochs", type=int, default=10)
 parser.add_argument("--ks", type=int, default=3)
 parser.add_argument("--data", type=bool, default=True)
 args = parser.parse_args()
@@ -49,6 +49,7 @@ try:
 	exists = False
 except:
 	exists = True
+
 os.mkdir(PATH)
 os.mkdir(os.path.join(PATH,'pics'))
 
@@ -97,7 +98,7 @@ optimizer1 = torch.optim.LBFGS(model1.parameters(), history_size=10, tolerance_g
 
 BEST_LOSS = 9E32
 losses = []
-time0 = time.time()
+# time0 = time.time()
 for epoch in tqdm(range(1, EPOCHS+1)):
 	for batch_idx, sample_batch in enumerate(trainloader):
 		f = Variable(sample_batch['f']).to(device)
@@ -140,37 +141,39 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			return a_pred, u_pred, DE, loss
 		a_pred, u_pred, DE, loss = closure(f, a, u)
 		optimizer1.step(loss.item)
-		current_loss = np.round(float(loss.to('cpu').detach()), 8)
-		losses.append(current_loss) 
-	print(f"\tLoss: {current_loss}")
-	if epoch % int(.1*EPOCHS) == 0:
-		u_pred = reconstruct(a_pred, phi)
-		DE = ODE2(1E-1, u_pred, a_pred, phi_x, phi_xx)
-		plotter(xx, sample_batch, epoch, a=a_pred, u=u_pred, DE=DE, title='a', ks=KERNEL_SIZE, path=PATH)
-	if current_loss < BEST_LOSS:
-		torch.save(model1.state_dict(), PATH + '/model.pt')
-		BEST_LOSS = current_loss
+	# 	current_loss = np.round(float(loss.to('cpu').detach()), 8)
+	# 	losses.append(current_loss) 
+	# print(f"\tLoss: {current_loss}")
+	# if epoch % int(.1*EPOCHS) == 0:
+	# 	u_pred = reconstruct(a_pred, phi)
+	# 	DE = ODE2(1E-1, u_pred, a_pred, phi_x, phi_xx)
+	# 	plotter(xx, sample_batch, epoch, a=a_pred, u=u_pred, DE=DE, title='a', ks=KERNEL_SIZE, path=PATH)
+	# if current_loss < BEST_LOSS:
+	# 	torch.save(model1.state_dict(), PATH + '/model.pt')
+	# 	BEST_LOSS = current_loss
 
 
 time1 = time.time()
-dt = time1 - time0
-avg_iter_time = np.round(dt/EPOCHS, 6)
-if args.data == True:
-	subprocess.call(f'python evaluate_a.py --ks {KERNEL_SIZE} --input {FILE} --path {PATH} --data True', shell=True)
-else:
-	subprocess.call(f'python evaluate_a.py --ks {KERNEL_SIZE} --input {FILE} --path {PATH}', shell=True)
-loss_plot(losses, FILE, EPOCHS, SHAPE, KERNEL_SIZE, BEST_LOSS, title='a', path=PATH)
+# dt = time1 - time0
+# avg_iter_time = np.round(dt/EPOCHS, 6)
+# if args.data == True:
+# 	subprocess.call(f'python evaluate_a.py --ks {KERNEL_SIZE} --input {FILE} --path {PATH} --data True', shell=True)
+# else:
+# 	subprocess.call(f'python evaluate_a.py --ks {KERNEL_SIZE} --input {FILE} --path {PATH}', shell=True)
+# if args.data == True:
+# 	COLS = ['TIMESTAMP', 'DATASET', 'FOLDER', 'SHAPE', 'K.SIZE', 'BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']
+# 	df = pd.read_excel('temp.xlsx')
+# 	df.at[df.index[-1],'AVG IT/S'] = float(avg_iter_time)
+# 	df.at[df.index[-1],'LOSS'] = float(min(losses))
+# 	df.at[df.index[-1],'EPOCHS'] = int(EPOCHS)
+# 	df.at[df.index[-1],'BATCH'] = N
+# 	df = df[COLS]
+# 	_ = ['AVG IT/S', 'LOSS']
+# 	for obj in _:
+# 		df[obj] = df[obj].astype(float)
+# 	df.to_excel('temp.xlsx')
+
+# loss_plot(losses, FILE, EPOCHS, SHAPE, KERNEL_SIZE, BEST_LOSS, title='a', path=PATH)
+
 gc.collect()
 torch.cuda.empty_cache()
-if args.data == True:
-	COLS = ['TIMESTAMP', 'DATASET', 'FOLDER', 'SHAPE', 'K.SIZE', 'BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']
-	df = pd.read_excel('temp.xlsx')
-	df.at[df.index[-1],'AVG IT/S'] = float(avg_iter_time)
-	df.at[df.index[-1],'LOSS'] = float(min(losses))
-	df.at[df.index[-1],'EPOCHS'] = int(EPOCHS)
-	df.at[df.index[-1],'BATCH'] = N
-	df = df[COLS]
-	_ = ['AVG IT/S', 'LOSS']
-	for obj in _:
-		df[obj] = df[obj].astype(float)
-	df.to_excel('temp.xlsx')

@@ -77,13 +77,6 @@ def reconstruct(alphas, phi):
 
 def ODE2(eps, u, alphas, phi_x, phi_xx):
 	DE = reconstruct(alphas, -eps*phi_xx - phi_x)
-	# i, j = alphas.shape
-	# T = torch.zeros((i, j+2), requires_grad=False).to(device)
-	# for ii in range(i):
-	# 	a = alphas[ii,:].reshape(1, j)
-	# 	sol = torch.mm(a,-eps*phi_xx - phi_x).reshape(j+2,)
-	# 	T[ii,:] = sol
-	# return T
 	return DE
 
 
