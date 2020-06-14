@@ -106,7 +106,6 @@ for batch_idx, sample_batch in enumerate(testloader):
 # 	  f"\nAvg. u MinfE: {np.round(running_MinfE_u/N, 6)}\n"\
 # 	  "***************************************************")
 
-
 xx = legslbndm(SHAPE-2)
 ahat = a_pred[0,:]
 ff = sample_batch['f'][0,0,:].to('cpu').detach().numpy()
@@ -175,28 +174,22 @@ if args.data == True:
 	entries = df.to_dict('records')
 	entry = {c:0 for c in COLS}
 	PATH = PATH[len(INPUT)+1:]
-	entry['TIMESTAMP'] = datetime.datetime.now().timestamp()
+	entry['TIMESTAMP'] = datetime.datetime.now()
 	entry['FOLDER'] = PATH
 	entry['DATASET'] = INPUT
 	entry['N'] = SHAPE
 	entry['K.SIZE'] = KERNEL_SIZE
-	entry['MAEa'] = running_MAE_a
-	entry['MSEa'] = running_MSE_a
-	entry['MIEa'] = running_MinfE_a
-	entry['MAEu'] = running_MAE_u
-	entry['MSEu'] = running_MSE_u
-	entry['MIEu'] = running_MinfE_u
+	entry['MAEa'] = running_MAE_a/N
+	entry['MSEa'] = running_MSE_a/N
+	entry['MIEa'] = running_MinfE_a/N
+	entry['MAEu'] = running_MAE_u/N
+	entry['MSEu'] = running_MSE_u/N
+	entry['MIEu'] = running_MinfE_u/N
 	entries.append(entry)
 	# from pprint import pprint
 	# pprint(entry)
 	df = pd.DataFrame(entries)
 	df = df[COLS]
-	_ = ['SHAPE', 'K.SIZE', 'BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']
-	for obj in _:
-		df[obj] = df[obj].astype(float)
-	_ = ['DATASET', 'FOLDER']
-	for obj in _:
-		df[obj] = df[obj].astype(str)
 	df['TIMESTAMP'] = df['TIMESTAMP'].astype(str)
 	df.to_excel('temp.xlsx')
 	# print('Done')

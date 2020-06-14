@@ -177,4 +177,5 @@ if args.data == True:
 	_ = ['BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS']
 	for obj in _:
 		df[obj] = df[obj].astype(float)
+	print(df)
 	df.to_excel('temp.xlsx')
