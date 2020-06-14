@@ -91,38 +91,28 @@ def weak_form1(eps, N, f, u, alphas, lepolys, phi_x):
 	denom = torch.square(torch.from_numpy(lepolys[N-1]).to(device).float())
 	u_x = reconstruct(N, alphas, phi_x)
 	for index in range(u.shape[0]):
-		LHS[index] = eps*torch.sum(u_x[index,:]*u_x[index,:]*2/(N*(N+1))/denom)
+		LHS[index] = eps*torch.sum(torch.square(u_x[index,:])*2/(N*(N+1))/denom)
 		RHS[index] = torch.sum(f[index,:]*u[index,:]*2/(N*(N+1))/denom)
 	return LHS, RHS
 
 
 def weak_form2(eps, N, f, u, alphas, lepolys, phi, phi_x):
-	LHS = torch.zeros((u.shape[0],), requires_grad=False).to(device).float()
-	RHS = torch.zeros((u.shape[0],), requires_grad=False).to(device).float()
-	u_x = reconstruct(N, alphas, phi_x).reshape(u.shape[0], 1, u.shape[1])
-	print(u_x.shape)
-	print(u_x[0,0,:].shape)
-	end
-	def wf2(eps, N, f, u, alphas, lepolys, phi, phi_x):
-		phi = torch.transpose(phi, 0, 1)
-		dummy = torch.zeros((u.shape[0],phi.shape[0],phi.shape[1]), requires_grad=False).to(device).float()
-		dummy[:,:,:] = phi
-		temp_sum = torch.bmm(u_x,dummy).reshape(u.shape[0], phi.shape[1])
-		print(temp_sum.shape)
-		print(temp_sum[0,:])
-		denom = torch.square(torch.from_numpy(lepolys[N-1]).to(device).float())
-		denom = torch.transpose(denom, 0, 1)
-		print(denom.shape)
-		print(denom)
-		LHS, RHS = 0, 0
-		for l in range(u.shape[0]):
-			temp_sum = 0
-			difussion = -eps*(4*l+6)*(-1)*alphas[l,:]
-			convection = torch.sum(temp_sum[l,:]*2/(N*(N+1))/denom)
-			rhs = torch.sum(f*phi[l,:]*2/(N*(N+1))/denom)
-			LHS += diffusion - convection
-			RHS += rhs
-		return LHS, RHS
-
-	cumulative_error = wf2(eps, N, f, u, alphas, lepolys, phi, phi_x)
+	LHS = torch.zeros_like(u).to(device).float()
+	RHS = torch.zeros_like(u).to(device).float()
+	B = u.shape[0]
+	u_x = reconstruct(N, alphas, phi_x).reshape(B, 1, u.shape[1])
+	phi = torch.transpose(phi, 0, 1)
+	dummy = torch.zeros((B,*phi.shape), requires_grad=False).to(device).float()
+	dummy[:,:,:] = phi
+	temp_sum = torch.bmm(u_x,dummy).reshape(B, phi.shape[1])
+	denom = torch.square(torch.from_numpy(lepolys[N-1]).to(device).float())
+	denom = torch.transpose(denom, 0, 1)
+	LHS, RHS = 0, 0
+	for l in range(B):
+		temp_sum = 0
+		difussion = -eps*(4*l+6)*(-1)*alphas[l,:]
+		convection = torch.sum(temp_sum[l,:]*2/(N*(N+1))/denom)
+		rhs = torch.sum(f*phi[l,:]*2/(N*(N+1))/denom)
+		LHS += diffusion - convection
+		RHS += rhs
 	return LHS, RHS
