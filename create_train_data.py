@@ -35,7 +35,7 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False):
 		# m = 2*np.random.rand(4) - 1
 		# f = m[0]*np.sin(m[1]*np.pi*t) + m[2]*np.cos(m[3]*np.pi*t)
 		m = 2*np.random.rand(10) - 1
-		f = np.sum([m[i]*np.sin(m[i+1]*np.pi*t) for i in range(9)])
+		f = np.sum([m[i]*np.sin(m[i+1]*np.pi*t) for i in range(9)])[0]
 		return f, m
 
 	def gen_lepolys(N, x):
