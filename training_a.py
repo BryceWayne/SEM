@@ -167,13 +167,11 @@ loss_plot(losses, FILE, EPOCHS, SHAPE, KERNEL_SIZE, BEST_LOSS, title='a', path=P
 gc.collect()
 torch.cuda.empty_cache()
 if args.data == True:
-	COLS = ['TIMESTAMP', 'DATASET', 'FOLDER', 'N', 'K.SIZE', 'BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']
+	COLS = ['TIMESTAMP', 'DATASET', 'FOLDER', 'SHAPE', 'K.SIZE', 'BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']
 	df = pd.read_excel('temp.xlsx')
-	df.at[df.index[-1],'TIMESTAMP'] = datetime.datetime.now().timestamp()
 	df.at[df.index[-1],'AVG IT/S'] = avg_iter_time
 	df.at[df.index[-1],'LOSS'] = BEST_LOSS
 	df.at[df.index[-1],'EPOCHS'] = EPOCHS
 	df.at[df.index[-1],'BATCH'] = BATCH
 	df = df[COLS]
-	df = df.infer_objects()
 	df.to_excel('temp.xlsx')

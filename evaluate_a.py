@@ -13,7 +13,7 @@ from sem.sem import *
 from reconstruct import *
 import subprocess
 import pandas as pd
-
+import datetime
 
 
 if torch.cuda.is_available():  
@@ -167,19 +167,15 @@ plt.savefig(f'{PATH}/pics/a_ks{KERNEL_SIZE}_out_of_sample_DE.png', bbox_inches='
 plt.close()
 
 if args.data == True:
-	COLS = ['TIMESTAMP', 'DATASET', 'FOLDER', 'N', 'K.SIZE', 'BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']
+	COLS = ['TIMESTAMP', 'DATASET', 'FOLDER', 'SHAPE', 'K.SIZE', 'BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']
 	try:
 		df = pd.read_excel('temp.xlsx')
-
 	except:
 		df = pd.DataFrame([], columns=COLS)
 	entries = df.to_dict('records')
 	entry = {c:0 for c in COLS}
-	try:
-		PATH.split('\\')[1]
-	except:
-		PATH.split('/')[1]
 	PATH = PATH[len(INPUT)+1:]
+	entry['TIMESTAMP'] = pd.Timestamp(datetime.datetime.now().timestamp())
 	entry['FOLDER'] = PATH
 	entry['DATASET'] = INPUT
 	entry['N'] = SHAPE
@@ -195,9 +191,11 @@ if args.data == True:
 	# pprint(entry)
 	df = pd.DataFrame(entries)
 	df = df[COLS]
-	_ = ['AVG IT/S', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']
+	_ = ['SHAPE', 'K.SIZE', 'BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']
 	for obj in _:
 		df[obj] = df[obj].astype(float)
-	df = df.infer_objects()
+	_ = ['DATASET', 'FOLDER']
+	for obj in _:
+		df[obj] = df[obj].astype(str)
 	df.to_excel('temp.xlsx')
 	# print('Done')
