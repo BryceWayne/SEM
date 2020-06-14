@@ -34,8 +34,11 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False):
 		# Random force
 		m = 2*np.random.rand(4) - 1
 		f = m[0]*np.sin(m[1]*np.pi*t) + m[2]*np.cos(m[3]*np.pi*t)
+		# Fourier Series
 		# m = 2*np.random.rand(10) - 1
-		# f = m[i]*np.sin(m[i+1]*np.pi*t) for i in range(0,10,2)
+		# f = 0
+		# for i in range(0,10,2):
+		# 	f += m[i]*np.sin(m[i+1]*np.pi*t)
 		return f, m
 
 	def gen_lepolys(N, x):

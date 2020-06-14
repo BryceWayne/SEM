@@ -66,7 +66,7 @@ def basis_xx(N, phi, Dxx):
 	return phi_xx.to(device)
 
 
-def reconstruct(N, alphas, phi):
+def reconstruct(alphas, phi):
 	i, j = alphas.shape
 	T = torch.zeros((i, j+2), requires_grad=False).to(device)
 	for ii in range(i):
@@ -76,20 +76,22 @@ def reconstruct(N, alphas, phi):
 
 
 def ODE2(eps, u, alphas, phi_x, phi_xx):
-	i, j = alphas.shape
-	T = torch.zeros((i, j+2), requires_grad=False).to(device)
-	for ii in range(i):
-		a = alphas[ii,:].reshape(1, j)
-		sol = torch.mm(a,-eps*phi_xx - phi_x).reshape(j+2,)
-		T[ii,:] = sol
-	return T
+	DE = reconstruct(alphas, -eps*phi_xx - phi_x)
+	# i, j = alphas.shape
+	# T = torch.zeros((i, j+2), requires_grad=False).to(device)
+	# for ii in range(i):
+	# 	a = alphas[ii,:].reshape(1, j)
+	# 	sol = torch.mm(a,-eps*phi_xx - phi_x).reshape(j+2,)
+	# 	T[ii,:] = sol
+	# return T
+	return DE
 
 
 def weak_form1(eps, N, f, u, alphas, lepolys, phi_x):
 	LHS = torch.zeros((u.shape[0],), requires_grad=False).to(device).float()
 	RHS = torch.zeros((u.shape[0],), requires_grad=False).to(device).float()
 	denom = torch.square(torch.from_numpy(lepolys[N-1]).to(device).float())
-	u_x = reconstruct(N, alphas, phi_x)
+	u_x = reconstruct(alphas, phi_x)
 	for index in range(u.shape[0]):
 		LHS[index] = eps*torch.sum(torch.square(u_x[index,:])*2/(N*(N+1))/denom)
 		RHS[index] = torch.sum(f[index,:]*u[index,:]*2/(N*(N+1))/denom)
@@ -100,10 +102,11 @@ def weak_form2(eps, N, f, u, alphas, lepolys, phi, phi_x):
 	LHS = torch.zeros_like(u).to(device).float()
 	RHS = torch.zeros_like(u).to(device).float()
 	B = u.shape[0]
-	u_x = reconstruct(N, alphas, phi_x).reshape(B, 1, u.shape[1])
+	u_x = reconstruct(alphas, phi_x).reshape(B, 1, u.shape[1])
 	phi = torch.transpose(phi, 0, 1)
 	dummy = torch.zeros((B,*phi.shape), requires_grad=False).to(device).float()
-	dummy[:,:,:] = phi
+	for _ in range(B):
+		dummy[_,:,:] = phi
 	temp_sum = torch.bmm(u_x,dummy).reshape(B, phi.shape[1])
 	denom = torch.square(torch.from_numpy(lepolys[N-1]).to(device).float())
 	denom = torch.transpose(denom, 0, 1)

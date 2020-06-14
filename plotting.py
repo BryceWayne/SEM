@@ -27,7 +27,7 @@ def plotter(xx, sample, epoch, a=None, u=None, DE=None, title='alpha', ks=7, pat
 			      f'Alphas MAE Error: {np.round(mae_error_a, 6)}\n'\
 			      f'Alphas Rel. $L_2$ Error: {np.round(float(l2_error_a), 6)}\n'\
 			      f'Alphas Rel. $L_\\infty$ Error: {np.round(float(linf_error_a), 6)}')
-		plt.plot(x_, aa, 'r-', mfc='none', label='$\\alpha$')
+		plt.plot(x_, aa, 'ro-', label='$\\alpha$')
 		plt.plot(x_, ahat, 'bo', mfc='none', label='$\\hat{\\alpha}$')
 		# plt.plot(xxx, ff, 'g-', label='$f$')
 		plt.xlim(-1,1)
@@ -47,7 +47,7 @@ def plotter(xx, sample, epoch, a=None, u=None, DE=None, title='alpha', ks=7, pat
 			      f'Reconstruction MAE Error: {np.round(mae_error_u, 6)}\n'\
 			      f'Reconstruction Rel. $L_2$ Error: {np.round(float(l2_error_u), 6)}\n'\
 			      f'Reconstruction Rel. $L_\\infty$ Error: {np.round(float(linf_error_u), 6)}')
-		plt.plot(xx, uu, 'r-', mfc='none', label='$u$')
+		plt.plot(xx, uu, 'ro-', label='$u$')
 		plt.plot(xx, uhat.T, 'bo', mfc='none', label='$\\hat{u}$')
 		plt.xlim(-1,1)
 		plt.grid(alpha=0.618)
@@ -67,7 +67,7 @@ def plotter(xx, sample, epoch, a=None, u=None, DE=None, title='alpha', ks=7, pat
 			      f'DE MAE Error: {np.round(mae_error_de, 6)}\n'\
 			      f'DE Rel. $L_2$ Error: {np.round(float(l2_error_de), 6)}\n'\
 			      f'DE Rel. $L_\\infty$ Error: {np.round(float(linf_error_de), 6)}')
-		plt.plot(xxx, ff, 'g-', label='$f$')
+		plt.plot(xxx, ff, 'go-', label='$f$')
 		plt.plot(xxx, de, 'co', mfc='none', label='ODE')
 		plt.xlim(-1,1)
 		plt.grid(alpha=0.618)

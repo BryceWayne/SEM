@@ -25,12 +25,13 @@ class LGDataset():
     def __len__(self):
         return len(self.data)
     def __getitem__(self, idx):
+        L = len(self.data[:,3][idx])
         if torch.is_tensor(idx):
             idx = idx.tolist()
         u = torch.Tensor([self.data[:,0][idx]]).reshape(1, self.shape)
         f = torch.Tensor([self.data[:,1][idx]]).reshape(1, self.shape)
         a = torch.Tensor([self.data[:,2][idx]]).reshape(1, self.shape-2)
-        p = torch.Tensor([self.data[:,3][idx]]).reshape(1, 4)
+        p = torch.Tensor([self.data[:,3][idx]]).reshape(1, L)
         # if self.subsample:
         #     a = a[:,:self.subsample]
         if self.transform_f:

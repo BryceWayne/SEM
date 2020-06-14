@@ -27,7 +27,7 @@ torch.cuda.empty_cache()
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--file", type=str, default='500N31')
 parser.add_argument("--batch", type=int, default=500)
-parser.add_argument("--epochs", type=int, default=5)
+parser.add_argument("--epochs", type=int, default=10000)
 parser.add_argument("--ks", type=int, default=3)
 parser.add_argument("--data", type=bool, default=True)
 args = parser.parse_args()
@@ -95,7 +95,6 @@ criterion2 = torch.nn.MSELoss(reduction="sum")
 optimizer1 = torch.optim.LBFGS(model1.parameters(), history_size=10, tolerance_grad=1e-16, tolerance_change=1e-16, max_eval=10)
 # optimizer1 = torch.optim.SGD(model1.parameters(), lr=1E-4)
 
-
 BEST_LOSS = 9E32
 losses = []
 time0 = time.time()
@@ -116,7 +115,7 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			"""
 			RECONSTRUCT SOLUTIONS
 			"""
-			# u_pred = reconstruct(N, a_pred, phi)
+			# u_pred = reconstruct(a_pred, phi)
 			u = u.reshape(N, D_out)
 			# assert u_pred.shape == u.shape
 			u_pred = None
@@ -144,7 +143,9 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 		current_loss = np.round(float(loss.to('cpu').detach()), 8)
 		losses.append(current_loss) 
 	print(f"\tLoss: {current_loss}")
-	if epoch % EPOCHS == 0:
+	if epoch % int(.1*EPOCHS) == 0:
+		u_pred = reconstruct(a_pred, phi)
+		DE = ODE2(1E-1, u_pred, a_pred, phi_x, phi_xx)
 		plotter(xx, sample_batch, epoch, a=a_pred, u=u_pred, DE=DE, title='a', ks=KERNEL_SIZE, path=PATH)
 	if current_loss < BEST_LOSS:
 		torch.save(model1.state_dict(), PATH + '/model.pt')
@@ -153,7 +154,7 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 
 time1 = time.time()
 dt = time1 - time0
-avg_iter_time = np.round(dt/EPOCHS, 4)
+avg_iter_time = np.round(dt/EPOCHS, 6)
 if args.data == True:
 	subprocess.call(f'python evaluate_a.py --ks {KERNEL_SIZE} --input {FILE} --path {PATH} --data True', shell=True)
 else:
@@ -166,10 +167,10 @@ if args.data == True:
 	df = pd.read_excel('temp.xlsx')
 	df.at[df.index[-1],'AVG IT/S'] = float(avg_iter_time)
 	df.at[df.index[-1],'LOSS'] = float(min(losses))
-	df.at[df.index[-1],'EPOCHS'] = EPOCHS
+	df.at[df.index[-1],'EPOCHS'] = int(EPOCHS)
 	df.at[df.index[-1],'BATCH'] = N
 	df = df[COLS]
-	_ = ['EPOCHS', 'AVG IT/S', 'LOSS']
+	_ = ['AVG IT/S', 'LOSS']
 	for obj in _:
 		df[obj] = df[obj].astype(float)
 	df.to_excel('temp.xlsx')
