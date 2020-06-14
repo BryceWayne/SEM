@@ -174,4 +174,7 @@ if args.data == True:
 	df.at[df.index[-1],'EPOCHS'] = EPOCHS
 	df.at[df.index[-1],'BATCH'] = BATCH
 	df = df[COLS]
+	_ = ['BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS']
+	for obj in _:
+		df[obj] = df[obj].astype(float)
 	df.to_excel('temp.xlsx')
