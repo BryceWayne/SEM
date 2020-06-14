@@ -172,7 +172,7 @@ if args.data == True:
 	df.at[df.index[-1],'AVG IT/S'] = avg_iter_time
 	df.at[df.index[-1],'LOSS'] = BEST_LOSS
 	df.at[df.index[-1],'EPOCHS'] = EPOCHS
-	df.at[df.index[-1],'BATCH'] = BATCH
+	df.at[df.index[-1],'BATCH'] = N
 	df = df[COLS]
 	_ = ['BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS']
 	for obj in _:
