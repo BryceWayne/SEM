@@ -116,26 +116,26 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			"""
 			RECONSTRUCT SOLUTIONS
 			"""
-			u_pred = reconstruct(N, a_pred, phi)
+			# u_pred = reconstruct(N, a_pred, phi)
 			u = u.reshape(N, D_out)
-			assert u_pred.shape == u.shape
-			# u_pred = None
+			# assert u_pred.shape == u.shape
+			u_pred = None
 			"""
 			RECONSTRUCT ODE
 			"""
-			DE = ODE2(1E-1, u_pred, a_pred, phi_x, phi_xx)
+			# DE = ODE2(1E-1, u_pred, a_pred, phi_x, phi_xx)
 			f = f.reshape(N, D_out)
-			assert DE.shape == f.shape
-			# DE = None
+			# assert DE.shape == f.shape
+			DE = None
 			"""
 			WEAK FORM
 			"""
-			LHS, RHS = weak_form1(1E-1, SHAPE, f, u_pred, a_pred, lepolys, phi_x)
+			# LHS, RHS = weak_form1(1E-1, SHAPE, f, u_pred, a_pred, lepolys, phi_x)
 			# LHS, RHS = weak_form2(1E-1, SHAPE, f, u, a_pred, lepolys, phi, phi_x)
 			"""
 			COMPUTE LOSS
 			"""
-			loss = criterion2(a_pred, a) + criterion1(u_pred, u) + criterion1(DE, f) + criterion1(LHS, RHS) # + criterion1(DE, f)		
+			loss = criterion2(a_pred, a)# + criterion1(u_pred, u) + criterion1(DE, f) + criterion1(LHS, RHS) # + criterion1(DE, f)		
 			if loss.requires_grad:
 				loss.backward()
 			return a_pred, u_pred, DE, loss
