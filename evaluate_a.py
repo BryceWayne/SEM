@@ -179,12 +179,12 @@ if args.data == True:
 	entry['DATASET'] = INPUT
 	entry['SHAPE'] = SHAPE
 	entry['K.SIZE'] = KERNEL_SIZE
-	entry['MAEa'] = running_MAE_a/N
-	entry['MSEa'] = running_MSE_a/N
-	entry['MIEa'] = running_MinfE_a/N
-	entry['MAEu'] = running_MAE_u/N
-	entry['MSEu'] = running_MSE_u/N
-	entry['MIEu'] = running_MinfE_u/N
+	entry['MAEa'] = np.round(running_MAE_a/N, 6)
+	entry['MSEa'] = np.round(running_MSE_a/N, 6)
+	entry['MIEa'] = np.round(running_MinfE_a/N, 6)
+	entry['MAEu'] = np.round(running_MAE_u/N, 6)
+	entry['MSEu'] = np.round(running_MSE_u/N, 6)
+	entry['MIEu'] = np.round(running_MinfE_u/N, 6)
 	entries.append(entry)
 	# from pprint import pprint
 	# pprint(entry)
