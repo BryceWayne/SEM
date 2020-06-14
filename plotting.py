@@ -68,7 +68,7 @@ def plotter(xx, sample, epoch, a=None, u=None, DE=None, title='alpha', ks=7, pat
 			      f'DE Rel. $L_2$ Error: {np.round(float(l2_error_de), 6)}\n'\
 			      f'DE Rel. $L_\\infty$ Error: {np.round(float(linf_error_de), 6)}')
 		plt.plot(xxx, ff, 'go-', label='$f$')
-		plt.plot(xxx, de, 'co', mfc='none', label='ODE')
+		plt.plot(xxx, de, 'mo', mfc='none', label='ODE')
 		plt.xlim(-1,1)
 		plt.grid(alpha=0.618)
 		plt.xlabel('$x$')
