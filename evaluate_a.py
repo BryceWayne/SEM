@@ -175,6 +175,7 @@ if args.data == True:
 	entry = {c:0 for c in COLS}
 	PATH = PATH[len(INPUT)+1:]
 	entry['TIMESTAMP'] = datetime.datetime.now()
+	entry['BATCH'] =  INPUT[-2:]
 	entry['FOLDER'] = PATH
 	entry['DATASET'] = INPUT
 	entry['N'] = SHAPE
@@ -191,5 +192,6 @@ if args.data == True:
 	df = pd.DataFrame(entries)
 	df = df[COLS]
 	df['TIMESTAMP'] = df['TIMESTAMP'].astype(str)
+	df['BATCH'] = df['BATCH'].astype(int)
 	df.to_excel('temp.xlsx')
 	# print('Done')
