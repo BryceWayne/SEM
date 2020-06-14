@@ -52,18 +52,13 @@ except:
 os.mkdir(PATH)
 os.mkdir(os.path.join(PATH,'pics'))
 
-xx = legslbndm(D_out)
-lepolys = gen_lepolys(D_out, xx)
-lepoly_x = dx(D_out, xx, lepolys)
-lepoly_xx = dxx(D_out, xx, lepolys)
+xx = legslbndm(SHAPE)
+lepolys = gen_lepolys(SHAPE, xx)
+lepoly_x = dx(SHAPE, xx, lepolys)
+lepoly_xx = dxx(SHAPE, xx, lepolys)
 phi = basis(SHAPE, lepolys)
 phi_x = basis_x(SHAPE, phi, lepoly_x)
 phi_xx = basis_xx(SHAPE, phi_x, lepoly_xx)
-# for _ in [phi, phi_x, phi_xx]:
-# 	print(_.shape)
-# end
-
-
 
 # Check if CUDA is available and then use it.
 if torch.cuda.is_available():  
@@ -172,9 +167,9 @@ if args.data == True:
 	df.at[df.index[-1],'AVG IT/S'] = avg_iter_time
 	df.at[df.index[-1],'LOSS'] = BEST_LOSS
 	df.at[df.index[-1],'EPOCHS'] = EPOCHS
+	df.at[df.index[-1],'BATCH'] = N
 	df = df[COLS]
 	_ = ['EPOCHS', 'AVG IT/S', 'LOSS']
 	for obj in _:
 		df[obj] = df[obj].astype(float)
-	print(df)
 	df.to_excel('temp.xlsx')
