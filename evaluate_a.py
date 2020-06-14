@@ -175,7 +175,7 @@ if args.data == True:
 	entries = df.to_dict('records')
 	entry = {c:0 for c in COLS}
 	PATH = PATH[len(INPUT)+1:]
-	entry['TIMESTAMP'] = pd.Timestamp(datetime.datetime.now().timestamp())
+	entry['TIMESTAMP'] = datetime.datetime.now().timestamp()
 	entry['FOLDER'] = PATH
 	entry['DATASET'] = INPUT
 	entry['N'] = SHAPE
@@ -197,5 +197,6 @@ if args.data == True:
 	_ = ['DATASET', 'FOLDER']
 	for obj in _:
 		df[obj] = df[obj].astype(str)
+	df['TIMESTAMP'] = df['TIMESTAMP'].astype(str)
 	df.to_excel('temp.xlsx')
 	# print('Done')
