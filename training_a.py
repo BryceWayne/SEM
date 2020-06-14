@@ -123,20 +123,19 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			"""
 			RECONSTRUCT ODE
 			"""
-			# DE = ODE2(1E-1, u_pred, a_pred, phi_x, phi_xx)
+			DE = ODE2(1E-1, u_pred, a_pred, phi_x, phi_xx)
 			f = f.reshape(N, D_out)
-			# assert DE.shape == f.shape
-			DE = None
+			assert DE.shape == f.shape
+			# DE = None
 			"""
 			WEAK FORM
 			"""
-			# LHS, RHS = weak_form1(1E-1, SHAPE, f, u_pred, a_pred, lepolys, phi_x)
+			LHS, RHS = weak_form1(1E-1, SHAPE, f, u_pred, a_pred, lepolys, phi_x)
 			# LHS, RHS = weak_form2(1E-1, SHAPE, f, u, a_pred, lepolys, phi, phi_x)
-			# weak_form_loss = criterion1(LHS, RHS)
 			"""
 			COMPUTE LOSS
 			"""
-			loss = criterion2(a_pred, a) + criterion1(u_pred, u)# + criterion1(DE, f) + weak_form_loss # + criterion1(DE, f)		
+			loss = criterion2(a_pred, a) + criterion1(u_pred, u) + criterion1(DE, f) + criterion1(LHS, RHS) # + criterion1(DE, f)		
 			if loss.requires_grad:
 				loss.backward()
 			return a_pred, u_pred, DE, loss
@@ -150,9 +149,14 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 	if current_loss < BEST_LOSS:
 		torch.save(model1.state_dict(), PATH + '/model.pt')
 		BEST_LOSS = current_loss
+	if type(current_loss) != float:
+		end
+
+
 time1 = time.time()
 dt = time1 - time0
 avg_iter_time = np.round(dt/EPOCHS, 4)
+print(avg_iter_time)
 print(PATH)
 if args.data == True:
 	subprocess.call(f'python evaluate_a.py --ks {KERNEL_SIZE} --input {FILE} --path {PATH} --data True', shell=True)
@@ -165,7 +169,7 @@ if args.data == True:
 	COLS = ['TIMESTAMP', 'DATASET', 'FOLDER', 'SHAPE', 'K.SIZE', 'BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']
 	df = pd.read_excel('temp.xlsx')
 	df.at[df.index[-1],'AVG IT/S'] = float(avg_iter_time)
-	df.at[df.index[-1],'LOSS'] = BEST_LOSS
+	df.at[df.index[-1],'LOSS'] = float(min(losses))
 	df.at[df.index[-1],'EPOCHS'] = EPOCHS
 	df.at[df.index[-1],'BATCH'] = N
 	df = df[COLS]
