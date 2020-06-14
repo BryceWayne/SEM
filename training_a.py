@@ -149,8 +149,6 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 	if current_loss < BEST_LOSS:
 		torch.save(model1.state_dict(), PATH + '/model.pt')
 		BEST_LOSS = current_loss
-	if type(current_loss) != float:
-		end
 
 
 time1 = time.time()
