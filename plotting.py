@@ -35,7 +35,7 @@ def plotter(xx, sample, epoch, a=None, u=None, DE=None, title='alpha', ks=7, pat
 		plt.xlabel('$x$')
 		plt.ylabel('$y$')
 		plt.legend(shadow=True)
-		plt.savefig(f'{path}/pics/{title}_ks{ks}_epoch{str(epoch).zfill(5)}_alphas.png', bbox_inches='tight')
+		plt.savefig(f'{path}/pics/epoch{str(epoch).zfill(5)}_a.png', bbox_inches='tight')
 		plt.close(1)
 	if u is not None:
 		uhat = u[0,:].to('cpu').detach().numpy()
@@ -54,7 +54,7 @@ def plotter(xx, sample, epoch, a=None, u=None, DE=None, title='alpha', ks=7, pat
 		plt.xlabel('$x$')
 		plt.ylabel('$y$')
 		plt.legend(shadow=True)
-		plt.savefig(f'{path}/pics/{title}_ks{ks}_epoch{str(epoch).zfill(5)}_reconstruction.png', bbox_inches='tight')
+		plt.savefig(f'{path}/pics/epoch{str(epoch).zfill(5)}_u.png', bbox_inches='tight')
 		# plt.show()
 		plt.close(2)
 	if DE is not None:
@@ -74,7 +74,7 @@ def plotter(xx, sample, epoch, a=None, u=None, DE=None, title='alpha', ks=7, pat
 		plt.xlabel('$x$')
 		plt.ylabel('$y$')
 		plt.legend(shadow=True)
-		plt.savefig(f'{path}/pics/{title}_ks{ks}_epoch{str(epoch).zfill(5)}_DE.png', bbox_inches='tight')
+		plt.savefig(f'{path}/pics/epoch{str(epoch).zfill(5)}_f.png', bbox_inches='tight')
 		# plt.show()
 		plt.close(3)
 
@@ -90,6 +90,6 @@ def loss_plot(losses, file, epoch, shape, ks, best_loss, title='alpha', path='.'
 	plt.ylabel('Loss')
 	plt.legend(shadow=True)
 	plt.title(f'Training Parameter {title}\nLoss vs. Epoch,$\\quad$Best Loss: {best_loss}\nFile: {file},$\\quad$Shape: {shape},$\\quad$Kernel: {ks}')
-	plt.savefig(f'{path}/pics/{file}_ks{ks}_loss_{title}.png', bbox_inches='tight')
+	plt.savefig(f'{path}/pics/loss_{title}.png', bbox_inches='tight')
 	# plt.show()
 	plt.close(1)
