@@ -59,21 +59,8 @@ lepolys = gen_lepolys(SHAPE, xx)
 lepoly_x = dx(SHAPE, xx, lepolys)
 lepoly_xx = dxx(SHAPE, xx, lepolys)
 phi = basis(SHAPE, lepolys)
-P = torch.zeros((N, N-2, N), requires_grad=False).to(device)
-for b in range(N):
-	P[b,:,:] = phi
-phi = P.clone()
 phi_x = basis_x(SHAPE, phi, lepoly_x)
-P = torch.zeros((N, N-2, N), requires_grad=False).to(device)
-for b in range(N):
-	P[b,:,:] = phi_x
-phi_x = P.clone()
 phi_xx = basis_xx(SHAPE, phi_x, lepoly_xx)
-P = torch.zeros((N, N-2, N), requires_grad=False).to(device)
-for b in range(N):
-	P[b,:,:] = phi_xx
-phi_xx = P.clone()
-del P
 
 # Check if CUDA is available and then use it.
 if torch.cuda.is_available():  

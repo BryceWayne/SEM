@@ -80,8 +80,8 @@ def basis_xx(N, phi, Dxx):
 """
 def reconstruct(alphas, phi):
 	B, i, j = alphas.shape
-	# P = torch.zeros((B, j, j+2), requires_grad=False).to(device)
-	# P[:i,:,:] = phi
+	P = torch.zeros((B, j, j+2), requires_grad=False).to(device)
+	P[:i,:,:] = phi
 	T = torch.zeros((B, i, j+2), requires_grad=False).to(device)
 	T = torch.bmm(alphas,P)
 	return T
