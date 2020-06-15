@@ -32,7 +32,7 @@ parser.add_argument("--data", type=bool, default=False)
 args = parser.parse_args()
 
 INPUT = args.input
-FILE = args.file[:-2] + INPUT[-2:]
+FILE = args.file.split('N')[0] + 'N' + INPUT.split('N')[1]
 PATH = args.path
 KERNEL_SIZE = args.ks
 PADDING = (args.ks - 1)//2
@@ -61,6 +61,7 @@ def mae(measured, theoretical):
 	return float(np.linalg.norm(measured-theoretical, ord=1)/len(theoretical))
 
 # #Get out of sample data
+print(FILE, INPUT)
 if FILE.split('N')[1] != INPUT.split('N')[1]:
 	FILE = '1000N' + INPUT.split('N')[1]
 try:
@@ -76,13 +77,13 @@ for batch_idx, sample_batch in enumerate(testloader):
 	u = Variable(sample_batch['u']).to(device)
 	a = Variable(sample_batch['a']).to(device)
 	a_pred = model(f)
-	a = a.reshape(N, D_out-2)
+	# a = a.reshape(N, D_out-2)
 	assert a_pred.shape == a.shape
 	u_pred = reconstruct(a_pred, phi)
-	u = u.reshape(N, D_out)
+	# u = u.reshape(N, D_out)
 	assert u_pred.shape == u.shape
 	DE = ODE2(1E-1, u_pred, a_pred, phi_x, phi_xx)
-	f = f.reshape(N, D_out)
+	# f = f.reshape(N, D_out)
 	assert DE.shape == f.shape
 	a_pred = a_pred.to('cpu').detach().numpy()
 	u_pred = u_pred.to('cpu').detach().numpy()
@@ -107,7 +108,7 @@ for batch_idx, sample_batch in enumerate(testloader):
 # 	  "***************************************************")
 
 xx = legslbndm(SHAPE-2)
-ahat = a_pred[0,:]
+ahat = a_pred[0,0,:]
 ff = sample_batch['f'][0,0,:].to('cpu').detach().numpy()
 aa = sample_batch['a'][0,0,:].to('cpu').detach().numpy()
 mae_error_a = mae(ahat, aa)
@@ -128,7 +129,7 @@ plt.savefig(f'{PATH}/pics/sample_a.png', bbox_inches='tight')
 # plt.show()
 plt.close()
 
-uhat = u_pred[0,:]
+uhat = u_pred[0,0,:]
 uu = sample_batch['u'][0,0,:].to('cpu').detach().numpy()
 mae_error_u = mae(uhat, uu)
 l2_error_u = relative_l2(uhat, uu)
@@ -148,7 +149,7 @@ plt.savefig(f'{PATH}/pics/sample_u.png', bbox_inches='tight')
 plt.close()
 
 plt.figure(3, figsize=(10,6))
-de = DE[0,:].to('cpu').detach().numpy()
+de = DE[0,0,:].to('cpu').detach().numpy()
 mae_error_de = mae(de, ff)
 l2_error_de = relative_l2(de, ff)
 linf_error_de = relative_linf(de, ff)

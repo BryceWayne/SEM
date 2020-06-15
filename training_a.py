@@ -25,9 +25,9 @@ import time
 gc.collect()
 torch.cuda.empty_cache()
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--file", type=str, default='500N31')
-parser.add_argument("--batch", type=int, default=500)
-parser.add_argument("--epochs", type=int, default=10)
+parser.add_argument("--file", type=str, default='5000N31')
+parser.add_argument("--batch", type=int, default=5000)
+parser.add_argument("--epochs", type=int, default=1000)
 parser.add_argument("--ks", type=int, default=3)
 parser.add_argument("--data", type=bool, default=True)
 args = parser.parse_args()
@@ -44,15 +44,16 @@ cur_time = str(datetime.datetime.now()).replace(' ', 'T')
 cur_time = cur_time.replace(':','').split('.')[0].replace('-','')
 PATH = os.path.join(FILE, cur_time)
 
+#CREATE PATHING
 try:
 	os.mkdir(FILE)
 	exists = False
 except:
 	exists = True
-
 os.mkdir(PATH)
 os.mkdir(os.path.join(PATH,'pics'))
 
+#CREATE BASIS VECTORS
 xx = legslbndm(SHAPE)
 lepolys = gen_lepolys(SHAPE, xx)
 lepoly_x = dx(SHAPE, xx, lepolys)
@@ -80,12 +81,14 @@ trainloader = torch.utils.data.DataLoader(lg_dataset, batch_size=N, shuffle=True
 # Construct our model by instantiating the class
 model1 = network.NetA(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING)
 
+
 # KAIMING INITIALIZATION
 def weights_init(m):
     if isinstance(m, nn.Conv1d):
         # torch.nn.init.xavier_uniform_(m.weight)
         torch.nn.init.kaiming_normal_(m.weight.data)
         torch.nn.init.zeros_(m.bias)
+
 
 model1.apply(weights_init)
 # SEND TO GPU
@@ -96,8 +99,7 @@ criterion2 = torch.nn.MSELoss(reduction="sum")
 optimizer1 = torch.optim.LBFGS(model1.parameters(), history_size=10, tolerance_grad=1e-16, tolerance_change=1e-16, max_eval=10)
 # optimizer1 = torch.optim.SGD(model1.parameters(), lr=1E-4)
 
-BEST_LOSS = 9E32
-losses = []
+BEST_LOSS, losses = float('inf'), []
 time0 = time.time()
 for epoch in tqdm(range(1, EPOCHS+1)):
 	for batch_idx, sample_batch in enumerate(trainloader):
@@ -111,31 +113,19 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			if torch.is_grad_enabled():
 				optimizer1.zero_grad()
 			a_pred = model1(f)
-			a = a.reshape(N, D_out-2)
 			assert a_pred.shape == a.shape
-			"""
-			RECONSTRUCT SOLUTIONS
-			"""
-			# u_pred = reconstruct(a_pred, phi)
-			u = u.reshape(N, D_out)
-			# assert u_pred.shape == u.shape
-			u_pred = None
-			"""
-			RECONSTRUCT ODE
-			"""
-			# DE = ODE2(1E-1, u_pred, a_pred, phi_x, phi_xx)
-			f = f.reshape(N, D_out)
-			# assert DE.shape == f.shape
-			DE = None
+			u_pred = reconstruct(a_pred, phi)
+			assert u_pred.shape == u.shape
+			# u_pred = None
+			DE = ODE2(1E-1, u_pred, a_pred, phi_x, phi_xx)
+			assert DE.shape == f.shape
+			# DE = None
 			"""
 			WEAK FORM
 			"""
 			# LHS, RHS = weak_form1(1E-1, SHAPE, f, u_pred, a_pred, lepolys, phi_x)
 			# LHS, RHS = weak_form2(1E-1, SHAPE, f, u, a_pred, lepolys, phi, phi_x)
-			"""
-			COMPUTE LOSS
-			"""
-			loss = criterion2(a_pred, a)# + criterion1(u_pred, u) + criterion1(DE, f) + criterion1(LHS, RHS) # + criterion1(DE, f)		
+			loss = criterion2(a_pred, a) + criterion1(u_pred, u) + criterion1(DE, f)# + criterion1(LHS, RHS) # + criterion1(DE, f)		
 			if loss.requires_grad:
 				loss.backward()
 			return a_pred, u_pred, DE, loss
@@ -143,15 +133,18 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 		optimizer1.step(loss.item)
 		current_loss = np.round(float(loss.to('cpu').detach()), 8)
 		losses.append(current_loss) 
-	# print(f"\tLoss: {current_loss}")
-	if epoch % int(.1*EPOCHS) == 0:
-		u_pred = reconstruct(a_pred, phi)
-		DE = ODE2(1E-1, u_pred, a_pred, phi_x, phi_xx)
+	print(f"\tLoss: {current_loss}")
+	if EPOCHS >= 10 and epoch % int(.1*EPOCHS) == 0:
+		if u_pred == None:
+			u_pred = reconstruct(a_pred, phi)
+		if DE == None:
+			DE = ODE2(1E-1, u_pred, a_pred, phi_x, phi_xx)
 		plotter(xx, sample_batch, epoch, a=a_pred, u=u_pred, DE=DE, title='a', ks=KERNEL_SIZE, path=PATH)
 	if current_loss < BEST_LOSS:
 		torch.save(model1.state_dict(), PATH + '/model.pt')
 		BEST_LOSS = current_loss
-
+	if current_loss == float('inf'):
+		break
 
 time1 = time.time()
 dt = time1 - time0

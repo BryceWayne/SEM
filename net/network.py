@@ -103,5 +103,5 @@ class NetA(nn.Module) :
         out = out.flatten(start_dim=1)
         # out = self.fc1(out)
         out = self.fcH(out)
-        out = out.view(out.shape[0], self.d_out)
+        out = out.view(out.shape[0], 1, self.d_out)
         return out

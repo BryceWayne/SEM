@@ -18,7 +18,7 @@ def plotter(xx, sample, epoch, a=None, u=None, DE=None, title='alpha', ks=7, pat
 	x_ = legslbndm(len(xx)-2)
 	xxx = np.linspace(-1,1, len(ff), endpoint=True)
 	if a is not None:
-		ahat = a[0,:].to('cpu').detach().numpy()
+		ahat = a[0,0,:].to('cpu').detach().numpy()
 		mae_error_a = mae(ahat, aa)
 		l2_error_a = relative_l2(ahat, aa)
 		linf_error_a = relative_linf(ahat, aa)
@@ -38,7 +38,7 @@ def plotter(xx, sample, epoch, a=None, u=None, DE=None, title='alpha', ks=7, pat
 		plt.savefig(f'{path}/pics/epoch{str(epoch).zfill(5)}_a.png', bbox_inches='tight')
 		plt.close(1)
 	if u is not None:
-		uhat = u[0,:].to('cpu').detach().numpy()
+		uhat = u[0,0,:].to('cpu').detach().numpy()
 		mae_error_u = mae(uhat, uu)
 		l2_error_u = relative_l2(uhat, uu)
 		linf_error_u = relative_linf(uhat, uu)
@@ -58,7 +58,7 @@ def plotter(xx, sample, epoch, a=None, u=None, DE=None, title='alpha', ks=7, pat
 		# plt.show()
 		plt.close(2)
 	if DE is not None:
-		de = DE[0,:].to('cpu').detach().numpy()
+		de = DE[0,0,:].to('cpu').detach().numpy()
 		plt.figure(3, figsize=(10,6))
 		mae_error_de = mae(de, ff)
 		l2_error_de = relative_l2(de, ff)
@@ -85,7 +85,7 @@ def loss_plot(losses, file, epoch, shape, ks, best_loss, title='alpha', path='.'
 	plt.semilogy(x, losses, 'r-', label='Training')
 	plt.xlabel('Epoch')
 	plt.xlim(1, epoch)
-	plt.ylim(0, 1.168*max(losses))
+	# plt.ylim(0, 1.168*max(losses))
 	plt.grid(alpha=0.618)
 	plt.ylabel('Loss')
 	plt.legend(shadow=True)
