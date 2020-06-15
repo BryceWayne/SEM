@@ -59,8 +59,21 @@ lepolys = gen_lepolys(SHAPE, xx)
 lepoly_x = dx(SHAPE, xx, lepolys)
 lepoly_xx = dxx(SHAPE, xx, lepolys)
 phi = basis(SHAPE, lepolys)
+P = torch.zeros((N, N-2, N), requires_grad=False).to(device)
+for b in range(N):
+	P[b,:,:] = phi
+phi = P.clone()
 phi_x = basis_x(SHAPE, phi, lepoly_x)
+P = torch.zeros((N, N-2, N), requires_grad=False).to(device)
+for b in range(N):
+	P[b,:,:] = phi_x
+phi_x = P.clone()
 phi_xx = basis_xx(SHAPE, phi_x, lepoly_xx)
+P = torch.zeros((N, N-2, N), requires_grad=False).to(device)
+for b in range(N):
+	P[b,:,:] = phi_xx
+phi_xx = P.clone()
+del P
 
 # Check if CUDA is available and then use it.
 if torch.cuda.is_available():  
@@ -151,9 +164,6 @@ dt = time1 - time0
 avg_iter_time = np.round(dt/EPOCHS, 6)
 if args.data == True:
 	subprocess.call(f'python evaluate_a.py --ks {KERNEL_SIZE} --input {FILE} --path {PATH} --data True', shell=True)
-else:
-	subprocess.call(f'python evaluate_a.py --ks {KERNEL_SIZE} --input {FILE} --path {PATH}', shell=True)
-if args.data == True:
 	COLS = ['TIMESTAMP', 'DATASET', 'FOLDER', 'SHAPE', 'K.SIZE', 'BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']
 	df = pd.read_excel('temp.xlsx')
 	df.at[df.index[-1],'AVG IT/S'] = float(avg_iter_time)
@@ -165,8 +175,9 @@ if args.data == True:
 	for obj in _:
 		df[obj] = df[obj].astype(float)
 	df.to_excel('temp.xlsx')
+else:
+	subprocess.call(f'python evaluate_a.py --ks {KERNEL_SIZE} --input {FILE} --path {PATH}', shell=True)
 
 loss_plot(losses, FILE, EPOCHS, SHAPE, KERNEL_SIZE, BEST_LOSS, title='a', path=PATH)
-
 gc.collect()
 torch.cuda.empty_cache()

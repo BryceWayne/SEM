@@ -90,6 +90,6 @@ def loss_plot(losses, file, epoch, shape, ks, best_loss, title='alpha', path='.'
 	plt.ylabel('Loss')
 	plt.legend(shadow=True)
 	plt.title(f'Training Parameter {title}\nLoss vs. Epoch,$\\quad$Best Loss: {best_loss}\nFile: {file},$\\quad$Shape: {shape},$\\quad$Kernel: {ks}')
-	plt.savefig(f'{path}/pics/loss_{title}.png', bbox_inches='tight')
+	plt.savefig(f'{path}/loss_{title}.png', bbox_inches='tight')
 	# plt.show()
 	plt.close(1)
