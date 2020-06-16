@@ -27,6 +27,7 @@ parser.add_argument("--file", type=str, default='1000N63')
 parser.add_argument("--ks", type=int, default=7)
 parser.add_argument("--input", type=str, default='20000N63')
 parser.add_argument("--path", type=str, default='.')
+parser.add_argument("--blocks", type=int, default=3)
 parser.add_argument("--data", type=bool, default=False)
 # parser.add_argument("--deriv", type=np.ndarray, default=np.zeros((1,1)))
 args = parser.parse_args()
@@ -39,8 +40,10 @@ PADDING = (args.ks - 1)//2
 SHAPE = int(FILE[-2:]) + 1
 BATCH = int(args.file.split('N')[0])
 N, D_in, Filters, D_out = BATCH, 1, 32, SHAPE
+BLOCKS = args.blocks
+
 # LOAD MODEL
-model = network.ResNet(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING).to(device)
+model = network.ResNet(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING, blocks=BLOCKS).to(device)
 print(PATH)
 model.load_state_dict(torch.load(PATH + '/model.pt'))
 model.eval()

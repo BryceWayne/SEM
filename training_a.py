@@ -155,7 +155,7 @@ time1 = time.time()
 dt = time1 - time0
 avg_iter_time = np.round(dt/EPOCHS, 6)
 if args.data == True:
-	subprocess.call(f'python evaluate_a.py --ks {KERNEL_SIZE} --input {FILE} --path {PATH} --data True', shell=True)
+	subprocess.call(f'python evaluate_a.py --ks {KERNEL_SIZE} --input {FILE} --path {PATH} --blocks {BLOCKS} --data True', shell=True)
 	COLS = ['TIMESTAMP', 'DATASET', 'FOLDER', 'SHAPE', 'BLOCKS', 'K.SIZE', 'BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']
 	df = pd.read_excel('temp.xlsx')
 	df.at[df.index[-1],'AVG IT/S'] = float(avg_iter_time)
@@ -169,7 +169,7 @@ if args.data == True:
 		df[obj] = df[obj].astype(float)
 	df.to_excel('temp.xlsx')
 else:
-	subprocess.call(f'python evaluate_a.py --ks {KERNEL_SIZE} --input {FILE} --path {PATH}', shell=True)
+	subprocess.call(f'python evaluate_a.py --ks {KERNEL_SIZE} --input {FILE} --path {PATH} --blocks {BLOCKS}', shell=True)
 
 loss_plot(losses, FILE, EPOCHS, SHAPE, KERNEL_SIZE, BEST_LOSS, title='a', path=PATH)
 gc.collect()
