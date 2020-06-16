@@ -40,7 +40,7 @@ SHAPE = int(FILE[-2:]) + 1
 BATCH = int(args.file.split('N')[0])
 N, D_in, Filters, D_out = BATCH, 1, 32, SHAPE
 # LOAD MODEL
-model = network.NetA(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING).to(device)
+model = network.ResNet(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING).to(device)
 print(PATH)
 model.load_state_dict(torch.load(PATH + '/model.pt'))
 model.eval()
@@ -187,8 +187,6 @@ if args.data == True:
 	entry['MSEu'] = np.round(running_MSE_u/N, 6)
 	entry['MIEu'] = np.round(running_MinfE_u/N, 6)
 	entries.append(entry)
-	# from pprint import pprint
-	# pprint(entry)
 	df = pd.DataFrame(entries)
 	df = df[COLS]
 	df['TIMESTAMP'] = df['TIMESTAMP'].astype(str)

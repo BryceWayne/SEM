@@ -14,10 +14,10 @@ class ResNet(nn.Module):
         self.d_in = d_in
         self.d_out = d_out
         self.conv = conv1d(d_in, filters, kernel_size=kernel_size, padding=padding)
-        self.n1 = nn.GroupNorm1d(filters)
+        self.n1 = nn.GroupNorm(1, filters)
         self.relu = nn.ReLU(inplace=True)
         self.conv1 = conv1d(filters, filters, kernel_size=kernel_size, padding=padding)
-        self.n2 = nn.GroupNorm1d(filters)
+        self.n2 = nn.GroupNorm(1, filters)
         self.conv2 = conv1d(filters, filters, kernel_size=kernel_size, padding=padding)
         self.residual = nn.Sequential(
             self.n1,
@@ -29,17 +29,18 @@ class ResNet(nn.Module):
         self.fc1 = nn.Linear(filters*(self.d_out + 2), self.d_out, bias=True)
     def forward(self, x):
         x = self.conv(x)
-        out = self.residual(x)
-        x = F.relu(x + out)
-        out = self.residual(x)
-        x = F.relu(x + out)
-        out = self.residual(x)
-        x = F.relu(x + out)
-        out = self.residual(x)
-        x = F.relu(x + out)
+        # out = self.residual(x)
+        # x = F.relu(x + out)
+        out = F.relu(x + self.residual(x))
+        out = F.relu(out + self.residual(out))
+        out = F.relu(out + self.residual(out))
+        out = F.relu(out + self.residual(out))
+        out = F.relu(out + self.residual(out))
+        out = F.relu(out + self.residual(out))
+        out = F.relu(out + self.residual(out))
         x = x.flatten(start_dim=1)
         x = self.fc1(x)
-        x = x.view(x.shape[0], self.d_out)
+        x = x.view(x.shape[0], 1, self.d_out)
         return x
 
 
