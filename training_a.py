@@ -27,7 +27,7 @@ torch.cuda.empty_cache()
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--file", type=str, default='1000N31')
 parser.add_argument("--batch", type=int, default=1000)
-parser.add_argument("--epochs", type=int, default=10)
+parser.add_argument("--epochs", type=int, default=10000)
 parser.add_argument("--ks", type=int, default=3)
 parser.add_argument("--data", type=bool, default=True)
 args = parser.parse_args()
@@ -76,6 +76,7 @@ try:
 except:
 	subprocess.call(f'python create_train_data.py --size {BATCH} --N {SHAPE - 1}', shell=True)
 	lg_dataset = LGDataset(pickle_file=FILE, shape=SHAPE, subsample=D_out)
+
 #Batch DataLoader with shuffle
 trainloader = torch.utils.data.DataLoader(lg_dataset, batch_size=N, shuffle=True)
 # Construct our model by instantiating the class
@@ -133,8 +134,8 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 		optimizer1.step(loss.item)
 		current_loss = np.round(float(loss.to('cpu').detach()), 8)
 		losses.append(current_loss) 
-	print(f"\tLoss: {current_loss}")
 	if EPOCHS >= 10 and epoch % int(.1*EPOCHS) == 0:
+		print(f"\tLoss: {current_loss}")
 		if u_pred == None:
 			u_pred = reconstruct(a_pred, phi)
 		if DE == None:
