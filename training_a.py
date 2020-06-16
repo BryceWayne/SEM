@@ -143,8 +143,8 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 	if current_loss < BEST_LOSS:
 		torch.save(model1.state_dict(), PATH + '/model.pt')
 		BEST_LOSS = current_loss
-	if current_loss == float('inf'):
-		break
+	if np.isnan(current_loss):
+		raise Exception("Model diverged.")
 
 time1 = time.time()
 dt = time1 - time0
