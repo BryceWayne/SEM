@@ -90,12 +90,12 @@ for batch_idx, sample_batch in enumerate(testloader):
 	a = a.to('cpu').detach().numpy()
 	u = u.to('cpu').detach().numpy()
 	for i in range(N):
-		running_MAE_a += mae(a_pred[i,:], a[i,:])
-		running_MSE_a += relative_l2(a_pred[i,:], a[i,:])
-		running_MinfE_a += relative_linf(a_pred[i,:], a[i,:])
-		running_MAE_u += mae(u_pred[i,:], u[i,:])
-		running_MSE_u += relative_l2(u_pred[i,:], u[i,:])
-		running_MinfE_u += relative_linf(u_pred[i,:], u[i,:])
+		running_MAE_a += mae(a_pred[i,0,:], a[i,0,:])
+		running_MSE_a += relative_l2(a_pred[i,0,:], a[i,0,:])
+		running_MinfE_a += relative_linf(a_pred[i,0,:], a[i,0,:])
+		running_MAE_u += mae(u_pred[i,0,:], u[i,0,:])
+		running_MSE_u += relative_l2(u_pred[i,0,:], u[i,0,:])
+		running_MinfE_u += relative_linf(u_pred[i,0,:], u[i,0,:])
 
 
 # print("***************************************************"\

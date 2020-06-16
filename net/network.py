@@ -14,14 +14,16 @@ class ResNet(nn.Module):
         self.d_in = d_in
         self.d_out = d_out
         self.conv = conv1d(d_in, filters, kernel_size=kernel_size, padding=padding)
-        # self.n1 = nn.BatchNorm1d(filters)
+        self.n1 = nn.GroupNorm1d(filters)
         self.relu = nn.ReLU(inplace=True)
         self.conv1 = conv1d(filters, filters, kernel_size=kernel_size, padding=padding)
-        # self.n2 = nn.BatchNorm1d(filters)
+        self.n2 = nn.GroupNorm1d(filters)
         self.conv2 = conv1d(filters, filters, kernel_size=kernel_size, padding=padding)
         self.residual = nn.Sequential(
+            self.n1,
             self.relu,
             self.conv1,
+            self.n2,
             self.relu,
             self.conv2)
         self.fc1 = nn.Linear(filters*(self.d_out + 2), self.d_out, bias=True)
@@ -80,28 +82,13 @@ class NetA(nn.Module) :
         self.kern = kernel_size
         self.pad = padding
         self.conv1 = conv1d(d_in, filters, kernel_size=self.kern, padding=self.pad)
-        self.convH1 = conv1d(filters, filters, kernel_size=self.kern, padding=self.pad)
-        self.convH2 = conv1d(filters, filters, kernel_size=self.kern, padding=self.pad)
-        self.convH3 = conv1d(filters, filters, kernel_size=self.kern, padding=self.pad)
-        self.convH4 = conv1d(filters, filters, kernel_size=self.kern, padding=self.pad)
-        # self.conv2 = conv1d(filters, 2*filters, kernel_size=self.kern, padding=self.pad)
-        # self.conv3 = conv1d(2*filters, 3*filters, kernel_size=self.kern, padding=self.pad)
-        # self.conv4 = conv1d(3*filters, 4*filters, kernel_size=self.kern, padding=self.pad)
-        # self.conv5 = conv1d(4*filters, 5*filters, kernel_size=self.kern, padding=self.pad)
-        # self.fc1 = nn.Linear(5*filters*(self.d_out + 2), self.d_out, bias=True)
+        self.convH = conv1d(filters, filters, kernel_size=self.kern, padding=self.pad)
         self.fcH = nn.Linear(filters*(self.d_out + 2), self.d_out, bias=True)
     def forward(self, x):
         out = F.relu(self.conv1(x))
-        out = F.relu(self.convH1(out))
-        out = F.relu(self.convH2(out))
-        out = F.relu(self.convH3(out))
-        out = F.relu(self.convH4(out))
-        # out = F.relu(self.conv2(out))
-        # out = F.relu(self.conv3(out))
-        # out = F.relu(self.conv4(out))
-        # out = F.relu(self.conv5(out))
+        out = F.relu(self.convH(out))
+        out = self.convH(out)
         out = out.flatten(start_dim=1)
-        # out = self.fc1(out)
         out = self.fcH(out)
         out = out.view(out.shape[0], 1, self.d_out)
         return out

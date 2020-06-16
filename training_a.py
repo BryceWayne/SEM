@@ -25,9 +25,9 @@ import time
 gc.collect()
 torch.cuda.empty_cache()
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--file", type=str, default='5000N31')
-parser.add_argument("--batch", type=int, default=5000)
-parser.add_argument("--epochs", type=int, default=1000)
+parser.add_argument("--file", type=str, default='500N31')
+parser.add_argument("--batch", type=int, default=500)
+parser.add_argument("--epochs", type=int, default=10)
 parser.add_argument("--ks", type=int, default=3)
 parser.add_argument("--data", type=bool, default=True)
 args = parser.parse_args()
@@ -125,7 +125,7 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			"""
 			# LHS, RHS = weak_form1(1E-1, SHAPE, f, u_pred, a_pred, lepolys, phi_x)
 			# LHS, RHS = weak_form2(1E-1, SHAPE, f, u, a_pred, lepolys, phi, phi_x)
-			loss = criterion2(a_pred, a) + criterion1(u_pred, u) + criterion1(DE, f)# + criterion1(LHS, RHS) # + criterion1(DE, f)		
+			loss = criterion1(a_pred, a) + criterion1(u_pred, u) + criterion1(DE, f)# + criterion1(LHS, RHS) # + criterion1(DE, f)		
 			if loss.requires_grad:
 				loss.backward()
 			return a_pred, u_pred, DE, loss

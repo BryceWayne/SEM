@@ -65,19 +65,7 @@ def basis_xx(N, phi, Dxx):
 		phi_xx[i,:] = torch.from_numpy(Dxx[i] - Dxx[i+2])
 	return phi_xx.to(device)
 
-"""
-   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
-   1819/1    0.007    0.000    6.201    6.201 {built-in method builtins.exec}
-        1    0.001    0.001    6.201    6.201 training_a.py:2(<module>)
-  1493/10    0.012    0.000    2.650    0.265 <frozen importlib._bootstrap>:978(_find_and_load)
-  1487/10    0.006    0.000    2.650    0.265 <frozen importlib._bootstrap>:948(_find_and_load_unlocked)
-  1438/11    0.006    0.000    2.647    0.241 <frozen importlib._bootstrap>:663(_load_unlocked)
-  1316/11    0.004    0.000    2.647    0.241 <frozen importlib._bootstrap_external>:722(exec_module)
-  1839/11    0.001    0.000    2.642    0.240 <frozen importlib._bootstrap>:211(_call_with_frames_removed)
-      101    0.001    0.000    1.858    0.018 __init__.py:1(<module>)
-       45    1.530    0.034    1.688    0.038 {method 'to' of 'torch._C._TensorBase' objects}
-        1    0.000    0.000    1.681    1.681 reconstruct.py:22(basis)
-"""
+
 def reconstruct(alphas, phi):
 	B, i, j = alphas.shape
 	P = torch.zeros((B, j, j+2), requires_grad=False).to(device)

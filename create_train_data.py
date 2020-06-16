@@ -86,8 +86,7 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False):
 				k = j-1
 				L = lepolys[k]
 				_ += g[j-1]*L[i-1]
-			_ = _[0]
-			u[i-1] = _
+			u[i-1] = _[0]
 		return u, f, alphas, params
 
 	def loop(N, epsilon, size, lepolys, eps_flag):
@@ -99,6 +98,10 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False):
 			if eps_flag == True:
 				epsilon = epsilons[n]
 			u, f, alphas, params = generate(x, D, a, b, lepolys, epsilon)
+			# u = torch.Tensor(u).reshape(1, self.shape)
+			# f = torch.Tensor(f).reshape(1, self.shape)
+			# a = torch.Tensor(a).reshape(1, self.shape-2)
+			# params = torch.Tensor(params).reshape(1, )
 			data.append([u, f, alphas, params, epsilon])
 		return data
 

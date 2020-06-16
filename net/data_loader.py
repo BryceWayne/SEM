@@ -8,7 +8,6 @@ from pprint import pprint
 
 class LGDataset():
     """Legendre-Galerkin Dataset."""
-
     def __init__(self, pickle_file, shape=64, transform_f=None, transform_a=None, subsample=None):
         """
         Args:
