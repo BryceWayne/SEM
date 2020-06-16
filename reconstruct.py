@@ -98,8 +98,7 @@ def weak_form2(eps, N, f, u, alphas, lepolys, phi, phi_x):
 	u_x = reconstruct(alphas, phi_x)
 	phi = torch.transpose(phi, 1, 2)
 	dummy = torch.zeros((B,i,j), requires_grad=False).to(device).float()
-	for _ in range(B):
-		dummy[_,:,:] = phi
+	dummy[:,:,:] = phi
 	temp_sum = torch.bmm(u_x,dummy).reshape(B, phi.shape[1])
 	denom = torch.square(torch.from_numpy(lepolys[N-1]).to(device).float())
 	denom = torch.transpose(denom, 0, 1)

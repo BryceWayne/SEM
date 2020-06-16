@@ -9,10 +9,11 @@ def conv1d(in_planes, out_planes, stride=1, bias=True, kernel_size=5, padding=2,
 ## TRY GROUP NORM, NOT BATCH NORM
 ## Kaiming He
 class ResNet(nn.Module):
-    def __init__(self, d_in, filters, d_out, kernel_size=5, padding=2):
+    def __init__(self, d_in, filters, d_out, kernel_size=5, padding=2, blocks=5):
         super(ResNet, self).__init__()
         self.d_in = d_in
         self.d_out = d_out
+        self.blocks = blocks
         self.conv = conv1d(d_in, filters, kernel_size=kernel_size, padding=padding)
         self.n1 = nn.GroupNorm(1, filters)
         self.relu = nn.ReLU(inplace=True)
@@ -28,17 +29,13 @@ class ResNet(nn.Module):
             self.conv2)
         self.fc1 = nn.Linear(filters*(self.d_out + 2), self.d_out, bias=True)
     def forward(self, x):
-        x = self.conv(x)
-        # out = self.residual(x)
-        # x = F.relu(x + out)
-        out = F.relu(x + self.residual(x))
-        out = F.relu(out + self.residual(out))
-        out = F.relu(out + self.residual(out))
-        out = F.relu(out + self.residual(out))
-        x = x.flatten(start_dim=1)
-        x = self.fc1(x)
-        x = x.view(x.shape[0], 1, self.d_out)
-        return x
+        out = self.conv(x) #1
+        for block in range(self.blocks):
+            out = F.relu(out + self.residual(out))
+        out = out.flatten(start_dim=1)
+        out = self.fc1(out)
+        out = out.view(out.shape[0], 1, self.d_out)
+        return out
 
 
 class NetU(nn.Module) :

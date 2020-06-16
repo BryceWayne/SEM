@@ -27,8 +27,9 @@ torch.cuda.empty_cache()
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--file", type=str, default='1000N31')
 parser.add_argument("--batch", type=int, default=1000)
-parser.add_argument("--epochs", type=int, default=10000)
+parser.add_argument("--epochs", type=int, default=1000)
 parser.add_argument("--ks", type=int, default=3)
+parser.add_argument("--blocks", type=int, default=3)
 parser.add_argument("--data", type=bool, default=True)
 args = parser.parse_args()
 
@@ -43,6 +44,7 @@ EPOCHS = args.epochs
 cur_time = str(datetime.datetime.now()).replace(' ', 'T')
 cur_time = cur_time.replace(':','').split('.')[0].replace('-','')
 PATH = os.path.join(FILE, cur_time)
+BLOCKS = args.blocks
 
 #CREATE PATHING
 try:
@@ -53,6 +55,7 @@ except:
 os.mkdir(PATH)
 os.mkdir(os.path.join(PATH,'pics'))
 
+
 #CREATE BASIS VECTORS
 xx = legslbndm(SHAPE)
 lepolys = gen_lepolys(SHAPE, xx)
@@ -61,6 +64,7 @@ lepoly_xx = dxx(SHAPE, xx, lepolys)
 phi = basis(SHAPE, lepolys)
 phi_x = basis_x(SHAPE, phi, lepoly_x)
 phi_xx = basis_xx(SHAPE, phi_x, lepoly_xx)
+
 
 # Check if CUDA is available and then use it.
 if torch.cuda.is_available():  
@@ -80,7 +84,7 @@ except:
 #Batch DataLoader with shuffle
 trainloader = torch.utils.data.DataLoader(lg_dataset, batch_size=N, shuffle=True)
 # Construct our model by instantiating the class
-model1 = network.ResNet(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING)
+model1 = network.ResNet(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING, blocks=BLOCKS)
 
 
 # KAIMING INITIALIZATION
@@ -152,14 +156,15 @@ dt = time1 - time0
 avg_iter_time = np.round(dt/EPOCHS, 6)
 if args.data == True:
 	subprocess.call(f'python evaluate_a.py --ks {KERNEL_SIZE} --input {FILE} --path {PATH} --data True', shell=True)
-	COLS = ['TIMESTAMP', 'DATASET', 'FOLDER', 'SHAPE', 'K.SIZE', 'BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']
+	COLS = ['TIMESTAMP', 'DATASET', 'FOLDER', 'SHAPE', 'BLOCKS', 'K.SIZE', 'BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']
 	df = pd.read_excel('temp.xlsx')
 	df.at[df.index[-1],'AVG IT/S'] = float(avg_iter_time)
 	df.at[df.index[-1],'LOSS'] = float(min(losses))
 	df.at[df.index[-1],'EPOCHS'] = int(EPOCHS)
 	df.at[df.index[-1],'BATCH'] = N
+	df.at[df.index[-1], 'BLOCKS'] = int(BLOCKS)
 	df = df[COLS]
-	_ = ['AVG IT/S', 'LOSS']
+	_ = ['SHAPE', 'BLOCKS', 'K.SIZE', 'BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']
 	for obj in _:
 		df[obj] = df[obj].astype(float)
 	df.to_excel('temp.xlsx')

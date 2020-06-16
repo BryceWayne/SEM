@@ -31,7 +31,7 @@ def create(N:int, epsilon:float):
 
 def create_fast(N:int, epsilon:float, size:int, eps_flag=False):
 	def func(t: float) -> float:
-		# Random force
+		# Random force (0,2)
 		m = 2*np.random.rand(4) - 1
 		f = m[0]*np.sin(m[1]*np.pi*t) + m[2]*np.cos(m[3]*np.pi*t)
 		return f, m
