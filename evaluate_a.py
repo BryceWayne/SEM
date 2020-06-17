@@ -27,6 +27,7 @@ parser.add_argument("--file", type=str, default='1000N63')
 parser.add_argument("--ks", type=int, default=7)
 parser.add_argument("--input", type=str, default='20000N63')
 parser.add_argument("--path", type=str, default='.')
+parser.add_argument("--filters", type=int, default=32)
 parser.add_argument("--blocks", type=int, default=3)
 parser.add_argument("--data", type=bool, default=False)
 # parser.add_argument("--deriv", type=np.ndarray, default=np.zeros((1,1)))
@@ -39,7 +40,8 @@ KERNEL_SIZE = args.ks
 PADDING = (args.ks - 1)//2
 SHAPE = int(FILE[-2:]) + 1
 BATCH = int(args.file.split('N')[0])
-N, D_in, Filters, D_out = BATCH, 1, 32, SHAPE
+FILTERS = args.filters
+N, D_in, Filters, D_out = BATCH, 1, FILTERS, SHAPE
 BLOCKS = args.blocks
 
 # LOAD MODEL

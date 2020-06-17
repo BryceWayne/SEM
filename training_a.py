@@ -27,7 +27,8 @@ parser.add_argument("--file", type=str, default='1000N31')
 parser.add_argument("--batch", type=int, default=1000)
 parser.add_argument("--epochs", type=int, default=10000)
 parser.add_argument("--ks", type=int, default=3)
-parser.add_argument("--blocks", type=int, default=1)
+parser.add_argument("--blocks", type=int, default=0)
+parser.add_argument("--filters", type=int, default=32)
 parser.add_argument("--data", type=bool, default=True)
 args = parser.parse_args()
 
@@ -37,7 +38,8 @@ PADDING = (args.ks - 1)//2
 FILE = args.file
 BATCH = int(args.file.split('N')[0])
 SHAPE = int(args.file.split('N')[1]) + 1
-N, D_in, Filters, D_out = BATCH, 1, 32, SHAPE
+FILTERS = args.filters
+N, D_in, Filters, D_out = BATCH, 1, FILTERS, SHAPE
 EPOCHS = args.epochs
 cur_time = str(datetime.datetime.now()).replace(' ', 'T')
 cur_time = cur_time.replace(':','').split('.')[0].replace('-','')
