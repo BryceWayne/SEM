@@ -72,8 +72,8 @@ def plotter(xx, sample, epoch, a=None, u=None, DE=None, title='alpha', ks=7, pat
 		plt.close(2)
 		plt.figure(2, figsize=(10,6))
 		plt.title(f'Reconstruction Example Epoch {epoch}\n'\
-			      f'Reconstruction Point-Wise Error: {np.round(np.sum(np.abs(uu-uhat))/len(x_), 6)}')
-		plt.plot(x_, uu-uhat, 'ro-', mfc='none', label='Error')
+			      f'Reconstruction Point-Wise Error: {np.round(np.sum(np.abs(uu-uhat))/len(xx), 6)}')
+		plt.plot(xx, uu-uhat, 'ro-', mfc='none', label='Error')
 		# plt.plot(x_, ahat, 'bo', mfc='none', label='$\\hat{\\alpha}$')
 		# plt.plot(xxx, ff, 'g-', label='$f$')
 		plt.xlim(-1,1)
