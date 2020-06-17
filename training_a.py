@@ -149,6 +149,8 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 		torch.save(model1.state_dict(), PATH + '/model.pt')
 		BEST_LOSS = current_loss
 	if np.isnan(current_loss):
+		gc.collect()
+		torch.cuda.empty_cache()
 		raise Exception("Model diverged!")
 
 time1 = time.time()
