@@ -39,7 +39,7 @@ def plotter(xx, sample, epoch, a=None, u=None, DE=None, title='alpha', ks=7, pat
 		plt.close(1)
 		plt.figure(1, figsize=(10,6))
 		plt.title(f'Alphas Example Epoch {epoch}\n'\
-			      f'Alphas Point-Wise Error: {np.round(np.sum(aa-ahat)/len(x_), 6)}')
+			      f'Alphas Point-Wise Error: {np.round(np.sum(np.abs(aa-ahat))/len(x_), 6)}')
 		plt.plot(x_, aa-ahat, 'ro-', mfc='none', label='Error')
 		# plt.plot(x_, ahat, 'bo', mfc='none', label='$\\hat{\\alpha}$')
 		# plt.plot(xxx, ff, 'g-', label='$f$')
@@ -70,6 +70,19 @@ def plotter(xx, sample, epoch, a=None, u=None, DE=None, title='alpha', ks=7, pat
 		plt.savefig(f'{path}/pics/epoch{str(epoch).zfill(5)}_u.png', bbox_inches='tight')
 		# plt.show()
 		plt.close(2)
+		plt.figure(2, figsize=(10,6))
+		plt.title(f'Reconstruction Example Epoch {epoch}\n'\
+			      f'Reconstruction Point-Wise Error: {np.round(np.sum(np.abs(uu-uhat))/len(x_), 6)}')
+		plt.plot(x_, uu-uhat, 'ro-', mfc='none', label='Error')
+		# plt.plot(x_, ahat, 'bo', mfc='none', label='$\\hat{\\alpha}$')
+		# plt.plot(xxx, ff, 'g-', label='$f$')
+		plt.xlim(-1,1)
+		plt.grid(alpha=0.618)
+		plt.xlabel('$x$')
+		plt.ylabel('Point-Wise Error')
+		plt.legend(shadow=True)
+		plt.savefig(f'{path}/pics/epoch{str(epoch).zfill(5)}_u_pwe.png', bbox_inches='tight')
+		plt.close(2)
 	if DE is not None:
 		de = DE[0,0,:].to('cpu').detach().numpy()
 		plt.figure(3, figsize=(10,6))
@@ -89,6 +102,19 @@ def plotter(xx, sample, epoch, a=None, u=None, DE=None, title='alpha', ks=7, pat
 		plt.legend(shadow=True)
 		plt.savefig(f'{path}/pics/epoch{str(epoch).zfill(5)}_f.png', bbox_inches='tight')
 		# plt.show()
+		plt.close(3)
+		plt.figure(3, figsize=(10,6))
+		plt.title(f'DE Example Epoch {epoch}\n'\
+			      f'DE Point-Wise Error: {np.round(np.sum(np.abs(ff-de))/len(xxx), 6)}')
+		plt.plot(xxx, ff-de, 'ro-', mfc='none', label='Error')
+		# plt.plot(x_, ahat, 'bo', mfc='none', label='$\\hat{\\alpha}$')
+		# plt.plot(xxx, ff, 'g-', label='$f$')
+		plt.xlim(-1,1)
+		plt.grid(alpha=0.618)
+		plt.xlabel('$x$')
+		plt.ylabel('Point-Wise Error')
+		plt.legend(shadow=True)
+		plt.savefig(f'{path}/pics/epoch{str(epoch).zfill(5)}_f_pwe.png', bbox_inches='tight')
 		plt.close(3)
 
 
