@@ -72,6 +72,7 @@ def reconstruct(alphas, phi):
 	P[:i,:,:] = phi
 	T = torch.zeros((B, i, j+2), requires_grad=False).to(device)
 	T = torch.bmm(alphas,P)
+	del P
 	return T
 
 
@@ -99,7 +100,7 @@ def weak_form2(eps, N, f, u, alphas, lepolys, phi, phi_x):
 	phi = torch.transpose(phi, 1, 2)
 	dummy = torch.zeros((B,i,j), requires_grad=False).to(device).float()
 	dummy[:,:,:] = phi
-	temp_sum = torch.bmm(u_x,dummy).reshape(B, phi.shape[1])
+	temp_sum = torch.bmm(u_x,dummy).reshape(B, ux.shape[1], phi.shape[2])
 	denom = torch.square(torch.from_numpy(lepolys[N-1]).to(device).float())
 	denom = torch.transpose(denom, 0, 1)
 	LHS, RHS = 0, 0

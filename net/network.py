@@ -30,8 +30,8 @@ class ResNet(nn.Module):
         self.fc1 = nn.Linear(filters*(self.d_out + 2), self.d_out, bias=True)
     def forward(self, x):
         out = self.conv(x) #1
-        for block in range(self.blocks):
-            out = F.relu(out + self.residual(out))
+        # for block in range(self.blocks):
+        #     out = F.relu(out + self.residual(out))
         out = out.flatten(start_dim=1)
         out = self.fc1(out)
         out = out.view(out.shape[0], 1, self.d_out)

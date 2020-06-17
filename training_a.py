@@ -10,16 +10,14 @@ import LG_1d
 import argparse
 import scipy as sp
 from scipy.sparse import diags
-import gc
-import subprocess, os
+import subprocess, os, gc
 import net.network as network
 from net.data_loader import *
 from sem.sem import *
 from plotting import *
 from reconstruct import *
-import datetime
 import pandas as pd
-import time
+import time, datetime
 
 
 gc.collect()
@@ -27,9 +25,9 @@ torch.cuda.empty_cache()
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--file", type=str, default='1000N31')
 parser.add_argument("--batch", type=int, default=1000)
-parser.add_argument("--epochs", type=int, default=1000)
+parser.add_argument("--epochs", type=int, default=10000)
 parser.add_argument("--ks", type=int, default=3)
-parser.add_argument("--blocks", type=int, default=3)
+parser.add_argument("--blocks", type=int, default=1)
 parser.add_argument("--data", type=bool, default=True)
 args = parser.parse_args()
 
