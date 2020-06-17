@@ -14,12 +14,13 @@ class ResNet(nn.Module):
         self.d_in = d_in
         self.d_out = d_out
         self.blocks = blocks
-        self.conv = conv1d(d_in, filters, kernel_size=kernel_size, padding=padding)
-        self.n1 = nn.GroupNorm(1, filters)
+        self.filters = filters
+        self.conv = conv1d(d_in, self.filters, kernel_size=kernel_size, padding=padding)
+        self.n1 = nn.GroupNorm(1, self.filters)
         self.relu = nn.ReLU(inplace=True)
-        self.conv1 = conv1d(filters, filters, kernel_size=kernel_size, padding=padding)
-        self.n2 = nn.GroupNorm(1, filters)
-        self.conv2 = conv1d(filters, filters, kernel_size=kernel_size, padding=padding)
+        self.conv1 = conv1d(self.filters, self.filters, kernel_size=kernel_size, padding=padding)
+        self.n2 = nn.GroupNorm(1, self.filters)
+        self.conv2 = conv1d(self.filters, self.filters, kernel_size=kernel_size, padding=padding)
         self.residual = nn.Sequential(
             self.n1,
             self.relu,
@@ -27,7 +28,7 @@ class ResNet(nn.Module):
             self.n2,
             self.relu,
             self.conv2)
-        self.fc1 = nn.Linear(filters*(self.d_out + 2), self.d_out, bias=True)
+        self.fc1 = nn.Linear(self.filters*(self.d_out + 2), self.d_out, bias=True)
     def forward(self, x):
         out = self.conv(x) #1
         if self.blocks != 0:

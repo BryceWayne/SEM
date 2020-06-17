@@ -19,20 +19,22 @@ from reconstruct import *
 import pandas as pd
 import time, datetime
 
-
+# EVERYONE APRECIATES A CLEAN WORKSPACE
 gc.collect()
 torch.cuda.empty_cache()
+
+# ARGS
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--file", type=str, default='1000N31')
 parser.add_argument("--batch", type=int, default=1000)
-parser.add_argument("--epochs", type=int, default=10000)
+parser.add_argument("--epochs", type=int, default=1000)
 parser.add_argument("--ks", type=int, default=3)
 parser.add_argument("--blocks", type=int, default=0)
-parser.add_argument("--filters", type=int, default=32)
+parser.add_argument("--filters", type=int, default=320)
 parser.add_argument("--data", type=bool, default=True)
 args = parser.parse_args()
 
-
+# VARIABLES
 KERNEL_SIZE = args.ks
 PADDING = (args.ks - 1)//2
 FILE = args.file
@@ -96,8 +98,10 @@ def weights_init(m):
 
 
 model1.apply(weights_init)
+
 # SEND TO GPU
 model1.to(device)
+
 # Construct our loss function and an Optimizer.
 criterion1 = torch.nn.L1Loss()
 criterion2 = torch.nn.MSELoss(reduction="sum")
@@ -157,7 +161,7 @@ time1 = time.time()
 dt = time1 - time0
 avg_iter_time = np.round(dt/EPOCHS, 6)
 if args.data == True:
-	subprocess.call(f'python evaluate_a.py --ks {KERNEL_SIZE} --input {FILE} --path {PATH} --blocks {BLOCKS} --data True', shell=True)
+	subprocess.call(f'python evaluate_a.py --ks {KERNEL_SIZE} --input {FILE} --path {PATH} --blocks {BLOCKS} --filters {FILTERS} --data True', shell=True)
 	COLS = ['TIMESTAMP', 'DATASET', 'FOLDER', 'SHAPE', 'BLOCKS', 'K.SIZE', 'BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']
 	df = pd.read_excel('temp.xlsx')
 	df.at[df.index[-1],'AVG IT/S'] = float(avg_iter_time)
@@ -171,7 +175,7 @@ if args.data == True:
 		df[obj] = df[obj].astype(float)
 	df.to_excel('temp.xlsx')
 else:
-	subprocess.call(f'python evaluate_a.py --ks {KERNEL_SIZE} --input {FILE} --path {PATH} --blocks {BLOCKS}', shell=True)
+	subprocess.call(f'python evaluate_a.py --ks {KERNEL_SIZE} --input {FILE} --path {PATH} --blocks {BLOCKS}  --filters {FILTERS}', shell=True)
 
 loss_plot(losses, FILE, EPOCHS, SHAPE, KERNEL_SIZE, BEST_LOSS, title='a', path=PATH)
 gc.collect()
