@@ -70,7 +70,7 @@ def reconstruct(alphas, phi):
 	B, i, j = alphas.shape
 	P = torch.zeros((B, j, j+2), requires_grad=False).to(device)
 	P[:i,:,:] = phi
-	T = torch.zeros((B, i, j+2), requires_grad=False).to(device)
+	T = torch.zeros((B, i, j+2)).to(device)
 	T = torch.bmm(alphas,P)
 	del P
 	return T
