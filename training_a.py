@@ -19,6 +19,7 @@ from reconstruct import *
 import pandas as pd
 import time, datetime
 
+
 # EVERYONE APRECIATES A CLEAN WORKSPACE
 gc.collect()
 torch.cuda.empty_cache()
@@ -27,7 +28,7 @@ torch.cuda.empty_cache()
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--file", type=str, default='5000N31')
 parser.add_argument("--batch", type=int, default=5000)
-parser.add_argument("--epochs", type=int, default=1000)
+parser.add_argument("--epochs", type=int, default=10000)
 parser.add_argument("--ks", type=int, default=3)
 parser.add_argument("--blocks", type=int, default=0)
 parser.add_argument("--filters", type=int, default=32)
