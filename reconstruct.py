@@ -70,9 +70,8 @@ def reconstruct(alphas, phi):
 	B, i, j = alphas.shape
 	P = torch.zeros((B, j, j+2), requires_grad=False).to(device)
 	P[:i,:,:] = phi
-	T = torch.zeros((B, i, j+2)).to(device)
+	T = torch.zeros((B, i, j+2), requires_grad=False).to(device)
 	T = torch.bmm(alphas,P)
-	del P
 	return T
 
 
@@ -83,8 +82,8 @@ def ODE2(eps, u, alphas, phi_x, phi_xx):
 
 def weak_form1(eps, N, f, u, alphas, lepolys, phi_x):
 	B = u.shape[0]
-	LHS = torch.zeros((B,)).to(device).float()
-	RHS = torch.zeros((B,)).to(device).float()
+	# LHS = torch.zeros((B,)).to(device).float()
+	# RHS = torch.zeros((B,)).to(device).float()
 	denom = torch.square(torch.from_numpy(lepolys[N-1]).to(device).float())
 	u_x = reconstruct(alphas, phi_x)
 	LHS = eps*torch.sum(torch.square(u_x)*2/(N*(N+1))/denom)
@@ -97,21 +96,21 @@ def weak_form1(eps, N, f, u, alphas, lepolys, phi_x):
 
 def weak_form2(eps, N, f, u, alphas, lepolys, phi, phi_x):
 	B, i, j = u.shape
+	# print("\n",B, i, j)
 	LHS = torch.zeros_like(u).to(device).float()
 	RHS = torch.zeros_like(u).to(device).float()
 	u_x = reconstruct(alphas, phi_x)
-	phi = torch.transpose(phi, 1, 2)
-	dummy = torch.zeros((B,i,j), requires_grad=False).to(device).float()
+	phi = torch.transpose(phi, 0, 1)
+	dummy = torch.zeros((B,j,j-2), requires_grad=False).to(device).float()
 	dummy[:,:,:] = phi
-	temp_sum = torch.bmm(u_x,dummy).reshape(B, ux.shape[1], phi.shape[2])
+	ux_phi = torch.bmm(u_x,dummy).reshape(B, i, j-2)
 	denom = torch.square(torch.from_numpy(lepolys[N-1]).to(device).float())
-	denom = torch.transpose(denom, 0, 1)
-	LHS, RHS = 0, 0
-	for l in range(B):
-		temp_sum = 0
-		difussion = -eps*(4*l+6)*(-1)*alphas[l,:]
-		convection = torch.sum(temp_sum[l,:]*2/(N*(N+1))/denom)
-		rhs = torch.sum(f*phi[l,:]*2/(N*(N+1))/denom)
-		LHS += diffusion - convection
-		RHS += rhs
+	diff = torch.from_numpy(np.array([[-eps*(4*l+6)*(-1) for l in range(j-2)]])).to(device).float()
+	diffusion = diff*alphas
+	temp = torch.bmm(f,dummy)
+	N -= 1
+	convection = ux_phi*2/(N*(N+1))/denom
+	LHS = torch.sum(diffusion - convection, axis=2)
+	RHS = torch.sum(temp*2/(N*(N+1))/denom, axis=2)
+	# print(LHS.shape, RHS.shape)
 	return LHS, RHS

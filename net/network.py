@@ -22,11 +22,11 @@ class ResNet(nn.Module):
         self.n2 = nn.GroupNorm(1, self.filters)
         self.conv2 = conv1d(self.filters, self.filters, kernel_size=kernel_size, padding=padding)
         self.residual = nn.Sequential(
-            self.n1,
-            self.relu,
-            self.conv1,
-            self.n2,
-            self.relu,
+            # self.n1,
+            # self.relu,
+            # self.conv1,
+            # self.n2,
+            # self.relu,
             self.conv2)
         self.fc1 = nn.Linear(self.filters*(self.d_out + 2), self.d_out, bias=True)
     def forward(self, x):
@@ -71,7 +71,7 @@ class NetU(nn.Module) :
 
 
 class NetA(nn.Module) :
-    def __init__(self, d_in, filters, d_out, kernel_size=7, padding=3) :
+    def __init__(self, d_in, filters, d_out, kernel_size=7, padding=3, blocks=0) :
         super(NetA,self).__init__()
         self.d_in = d_in
         self.filters = filters

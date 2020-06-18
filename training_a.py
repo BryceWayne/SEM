@@ -25,12 +25,12 @@ torch.cuda.empty_cache()
 
 # ARGS
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--file", type=str, default='1000N31')
-parser.add_argument("--batch", type=int, default=1000)
+parser.add_argument("--file", type=str, default='5000N31')
+parser.add_argument("--batch", type=int, default=5000)
 parser.add_argument("--epochs", type=int, default=1000)
 parser.add_argument("--ks", type=int, default=3)
 parser.add_argument("--blocks", type=int, default=0)
-parser.add_argument("--filters", type=int, default=320)
+parser.add_argument("--filters", type=int, default=32)
 parser.add_argument("--data", type=bool, default=True)
 args = parser.parse_args()
 
@@ -126,15 +126,15 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			u_pred = reconstruct(a_pred, phi)
 			assert u_pred.shape == u.shape
 			# u_pred = None
-			DE = ODE2(1E-1, u_pred, a_pred, phi_x, phi_xx)
-			assert DE.shape == f.shape
-			# DE = None
+			# DE = ODE2(1E-1, u_pred, a_pred, phi_x, phi_xx)
+			# assert DE.shape == f.shape
+			DE = None
 			"""
 			WEAK FORM
 			"""
 			# LHS, RHS = weak_form1(1E-1, SHAPE, f, u_pred, a_pred, lepolys, phi_x)
-			# LHS, RHS = weak_form2(1E-1, SHAPE, f, u, a_pred, lepolys, phi, phi_x)
-			loss = criterion2(a_pred, a) + criterion1(u_pred, u) + criterion1(DE, f)# + criterion1(LHS, RHS) # + criterion1(DE, f)		
+			LHS, RHS = weak_form2(1E-1, SHAPE, f, u, a_pred, lepolys, phi, phi_x)
+			loss = criterion2(a_pred, a) + criterion1(u_pred, u) + criterion1(LHS, RHS)	# + criterion1(DE, f)	
 			if loss.requires_grad:
 				loss.backward()
 			return a_pred, u_pred, DE, loss
@@ -157,7 +157,9 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 		torch.cuda.empty_cache()
 		raise Exception("Model diverged!")
 
+
 time1 = time.time()
+loss_plot(losses, FILE, EPOCHS, SHAPE, KERNEL_SIZE, BEST_LOSS, title='a', path=PATH)
 dt = time1 - time0
 avg_iter_time = np.round(dt/EPOCHS, 6)
 if args.data == True:
@@ -169,7 +171,7 @@ if args.data == True:
 	df.at[df.index[-1],'EPOCHS'] = int(EPOCHS)
 	df.at[df.index[-1],'BATCH'] = N
 	df.at[df.index[-1], 'BLOCKS'] = int(BLOCKS)
-	df.at[df.index[-1], 'BLOCKS'] = int(FILTERS)
+	df.at[df.index[-1], 'FILTERS'] = int(FILTERS)
 	df = df[COLS]
 	_ = ['SHAPE', 'BLOCKS', 'K.SIZE', 'BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']
 	for obj in _:
@@ -178,6 +180,6 @@ if args.data == True:
 else:
 	subprocess.call(f'python evaluate_a.py --ks {KERNEL_SIZE} --input {FILE} --path {PATH} --blocks {BLOCKS}  --filters {FILTERS}', shell=True)
 
-loss_plot(losses, FILE, EPOCHS, SHAPE, KERNEL_SIZE, BEST_LOSS, title='a', path=PATH)
+
 gc.collect()
 torch.cuda.empty_cache()
