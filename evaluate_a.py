@@ -143,7 +143,7 @@ plt.grid(alpha=0.618)
 plt.xlabel('$x$')
 plt.ylabel('Point-Wise Error')
 plt.legend(shadow=True)
-plt.savefig(f'{path}/a_pwe.png', bbox_inches='tight')
+plt.savefig(f'{PATH}/a_pwe.png', bbox_inches='tight')
 plt.close(1)
 
 
@@ -173,7 +173,7 @@ plt.grid(alpha=0.618)
 plt.xlabel('$x$')
 plt.ylabel('Point-Wise Error')
 plt.legend(shadow=True)
-plt.savefig(f'{path}/sample_u_pwe.png', bbox_inches='tight')
+plt.savefig(f'{PATH}/sample_u_pwe.png', bbox_inches='tight')
 plt.close(2)
 
 
@@ -202,7 +202,7 @@ plt.grid(alpha=0.618)
 plt.xlabel('$x$')
 plt.ylabel('Point-Wise Error')
 plt.legend(shadow=True)
-plt.savefig(f'{path}/f_pwe.png', bbox_inches='tight')
+plt.savefig(f'{PATH}/f_pwe.png', bbox_inches='tight')
 plt.close(3)
 
 
