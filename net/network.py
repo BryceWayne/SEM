@@ -34,8 +34,6 @@ class ResNet(nn.Module):
         if self.blocks != 0:
             for block in range(self.blocks):
                 out = F.relu(out + self.residual(out))
-        else:
-            out = F.relu(out)
         out = out.flatten(start_dim=1)
         out = self.fc1(out)
         out = out.view(out.shape[0], 1, self.d_out)
