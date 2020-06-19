@@ -1,6 +1,7 @@
 #logging.py
 import pandas as pd
 import subprocess
+import numpy as np
 
 
 def log_data(KERNEL_SIZE, FILE, PATH, BLOCKS, FILTERS, DATA, EPOCHS, N, LOSS, AVG_ITER):
