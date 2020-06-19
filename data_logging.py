@@ -2,7 +2,7 @@
 import pandas as pd
 import subprocess
 
-\
+
 def log_data(KERNEL_SIZE, FILE, PATH, BLOCKS, FILTERS, DATA, EPOCHS, N, LOSS, AVG_ITER):
 	COLS = ['TIMESTAMP', 'DATASET', 'FOLDER', 'SHAPE', 'BLOCKS', 'K.SIZE', 'FILTERS', 'BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']
 	if DATA == True:
