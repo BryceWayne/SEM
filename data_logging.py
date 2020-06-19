@@ -8,8 +8,8 @@ def log_data(KERNEL_SIZE, FILE, PATH, BLOCKS, FILTERS, DATA, EPOCHS, N, LOSS, AV
 	if DATA == True:
 		subprocess.call(f'python evaluate_a.py --ks {KERNEL_SIZE} --input {FILE} --path {PATH} --blocks {BLOCKS} --filters {FILTERS} --data True', shell=True)
 		df = pd.read_excel('temp.xlsx')
-		df.at[df.index[-1],'AVG IT/S'] = {AVG_ITER}
-		df.at[df.index[-1],'LOSS'] = {LOSS}
+		df.at[df.index[-1],'AVG IT/S'] = {np.round(AVG_ITER, 1)}
+		df.at[df.index[-1],'LOSS'] = {np.round(LOSS, 6)}
 		df.at[df.index[-1],'EPOCHS'] = {EPOCHS}
 		df.at[df.index[-1],'BATCH'] = {N}
 		df.at[df.index[-1], 'BLOCKS'] = {BLOCKS}
