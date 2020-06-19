@@ -98,17 +98,19 @@ def weights_init(m):
         torch.nn.init.kaiming_normal_(m.weight.data)
         torch.nn.init.zeros_(m.bias)
 
-
 model1.apply(weights_init)
+
 
 # SEND TO GPU
 model1.to(device)
+
 
 # Construct our loss function and an Optimizer.
 criterion1 = torch.nn.L1Loss()
 criterion2 = torch.nn.MSELoss(reduction="sum")
 optimizer1 = torch.optim.LBFGS(model1.parameters(), history_size=10, tolerance_grad=1e-16, tolerance_change=1e-16, max_eval=10)
 # optimizer1 = torch.optim.SGD(model1.parameters(), lr=1E-4)
+
 
 BEST_LOSS, losses = float('inf'), []
 time0 = time.time()
