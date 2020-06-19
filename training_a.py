@@ -16,6 +16,7 @@ from net.data_loader import *
 from sem.sem import *
 from plotting import *
 from reconstruct import *
+from data_logging import *
 import pandas as pd
 import time, datetime
 
@@ -28,7 +29,7 @@ torch.cuda.empty_cache()
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--file", type=str, default='5000N31')
 parser.add_argument("--batch", type=int, default=5000)
-parser.add_argument("--epochs", type=int, default=10000)
+parser.add_argument("--epochs", type=int, default=1)
 parser.add_argument("--ks", type=int, default=3)
 parser.add_argument("--blocks", type=int, default=0)
 parser.add_argument("--filters", type=int, default=32)
@@ -135,7 +136,7 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			"""
 			# LHS, RHS = weak_form1(1E-1, SHAPE, f, u_pred, a_pred, lepolys, phi_x)
 			LHS, RHS = weak_form2(1E-1, SHAPE, f, u, a_pred, lepolys, phi, phi_x)
-			loss = criterion2(a_pred, a) + criterion1(u_pred, u) + criterion1(LHS, RHS)	# + criterion1(DE, f)	
+			loss = criterion2(a_pred, a) + criterion2(u_pred, u) + criterion2(LHS, RHS)	# + criterion1(DE, f)	
 			if loss.requires_grad:
 				loss.backward()
 			return a_pred, u_pred, DE, loss
@@ -163,24 +164,22 @@ time1 = time.time()
 loss_plot(losses, FILE, EPOCHS, SHAPE, KERNEL_SIZE, BEST_LOSS, title='a', path=PATH)
 dt = time1 - time0
 avg_iter_time = np.round(dt/EPOCHS, 6)
-if args.data == True:
-	subprocess.call(f'python evaluate_a.py --ks {KERNEL_SIZE} --input {FILE} --path {PATH} --blocks {BLOCKS} --filters {FILTERS} --data True', shell=True)
-	COLS = ['TIMESTAMP', 'DATASET', 'FOLDER', 'SHAPE', 'BLOCKS', 'K.SIZE', 'FILTERS', 'BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']
-	df = pd.read_excel('temp.xlsx')
-	df.at[df.index[-1],'AVG IT/S'] = float(avg_iter_time)
-	df.at[df.index[-1],'LOSS'] = float(min(losses))
-	df.at[df.index[-1],'EPOCHS'] = int(EPOCHS)
-	df.at[df.index[-1],'BATCH'] = N
-	df.at[df.index[-1], 'BLOCKS'] = int(BLOCKS)
-	df.at[df.index[-1], 'FILTERS'] = int(FILTERS)
-	df = df[COLS]
-	_ = ['SHAPE', 'BLOCKS', 'K.SIZE', 'BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']
-	for obj in _:
-		df[obj] = df[obj].astype(float)
-	df.to_excel('temp.xlsx')
-else:
-	subprocess.call(f'python evaluate_a.py --ks {KERNEL_SIZE} --input {FILE} --path {PATH} --blocks {BLOCKS}  --filters {FILTERS}', shell=True)
 
+params = {
+	'KERNEL_SIZE': KERNEL_SIZE,
+	'FILE': FILE,
+	'PATH': PATH,
+	'BLOCKS': BLOCKS,
+	'FILTERS': FILTERS,
+	'DATA': args.data,
+	'EPOCHS': EPOCHS,
+	'N': N,
+	'LOSS': float(min(losses)),
+	'AVG_ITER': float(avg_iter_time)
+}
 
+log_data(**params)
+
+# EVERYONE APRECIATES A CLEAN WORKSPACE
 gc.collect()
 torch.cuda.empty_cache()
