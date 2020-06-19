@@ -101,7 +101,7 @@ def weak_form2(eps, N, f, u, alphas, lepolys, phi, phi_x):
 	RHS = torch.zeros_like(u).to(device).float()
 	u_x = reconstruct(alphas, phi_x)
 	phi = torch.transpose(phi, 0, 1)
-	dummy = torch.zeros((B,j,j-2), requires_grad=False).to(device).float()
+	dummy = torch.zeros((B, j, j-2), requires_grad=False).to(device).float()
 	dummy[:,:,:] = phi
 	ux_phi = torch.bmm(u_x,dummy).reshape(B, i, j-2)
 	N -= 1
@@ -110,7 +110,7 @@ def weak_form2(eps, N, f, u, alphas, lepolys, phi, phi_x):
 	diffusion = diff*alphas
 	temp = torch.bmm(f,dummy)
 	convection = ux_phi*2/(N*(N+1))/denom
-	LHS = torch.sum(diffusion - convection, axis=2)
-	RHS = torch.sum(temp*2/(N*(N+1))/denom, axis=2)
+	LHS = torch.sum(torch.sum(diffusion - convection, axis=2), axis=1)
+	RHS = torch.sum(torch.sum(temp*2/(N*(N+1))/denom, axis=2), axis=1)
 	# print(LHS.shape, RHS.shape)
 	return LHS, RHS
