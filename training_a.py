@@ -27,12 +27,13 @@ torch.cuda.empty_cache()
 
 # ARGS
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--file", type=str, default='5000N31')
-parser.add_argument("--batch", type=int, default=5000)
-parser.add_argument("--epochs", type=int, default=100)
+parser.add_argument("--file", type=str, default='500N127')
+parser.add_argument("--batch", type=int, default=500)
+parser.add_argument("--epochs", type=int, default=2)
 parser.add_argument("--ks", type=int, default=3)
 parser.add_argument("--blocks", type=int, default=0)
 parser.add_argument("--filters", type=int, default=32)
+# parser.add_argument("--funcs")
 parser.add_argument("--data", type=bool, default=True)
 args = parser.parse_args()
 
@@ -108,7 +109,7 @@ model1.to(device)
 # Construct our loss function and an Optimizer.
 criterion1 = torch.nn.L1Loss()
 criterion2 = torch.nn.MSELoss(reduction="sum")
-optimizer1 = torch.optim.LBFGS(model1.parameters(), history_size=10, tolerance_grad=1e-16, tolerance_change=1e-16, max_eval=10)
+optimizer1 = torch.optim.LBFGS(model1.parameters(), history_size=10, tolerance_grad=1e-16, tolerance_change=1e-16, max_eval=20)
 # optimizer1 = torch.optim.SGD(model1.parameters(), lr=1E-4)
 
 
@@ -130,7 +131,7 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			u_pred = reconstruct(a_pred, phi)
 			assert u_pred.shape == u.shape
 			# u_pred = None
-			# DE = ODE2(1E-1, u_pred, a_pred, phi_x, phi_xx)
+			# 	
 			# assert DE.shape == f.shape
 			DE = None
 			"""

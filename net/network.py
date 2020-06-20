@@ -85,7 +85,7 @@ class NetA(nn.Module) :
         out = F.relu(self.conv1(x))
         out = F.relu(self.convH(out))
         out = F.relu(self.convH(out))
-        out = F.relu(self.convH(out))
+        out = self.convH(out)
         out = out.flatten(start_dim=1)
         out = self.fcH(out)
         out = out.view(out.shape[0], 1, self.d_out)
