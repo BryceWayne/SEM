@@ -45,8 +45,8 @@ def validate(model, optim, shape, filters, criterion1, criterion2, lepolys, phi,
 				optim.zero_grad()
 			a_pred = model(f)
 			u_pred = reconstruct(a_pred, phi)
-			LHS, RHS = weak_form1(1E-1, shape, f, u_pred, a_pred, lepolys, phi_x)
-			# LHS, RHS = weak_form2(1E-1, shape, f, u, a_pred, lepolys, phi, phi_x)
+			# LHS, RHS = weak_form1(1E-1, shape, f, u_pred, a_pred, lepolys, phi_x)
+			LHS, RHS = weak_form2(1E-1, shape, f, u, a_pred, lepolys, phi, phi_x)
 			loss1 = criterion2(a_pred, a)
 			loss2 = criterion1(u_pred, u)
 			loss3 = criterion1(LHS, RHS)
@@ -72,7 +72,7 @@ def model_metrics(file_name, ks, path, filters, blocks, data):
 	BLOCKS = blocks
 
 	# LOAD MODEL
-	model = network.NetA(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING, blocks=BLOCKS).to(device)
+	model = network.ResNet(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING, blocks=BLOCKS).to(device)
 	# print(PATH)
 	model.load_state_dict(torch.load(PATH + '/model.pt'))
 	model.eval()
