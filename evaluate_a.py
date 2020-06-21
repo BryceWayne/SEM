@@ -109,13 +109,10 @@ def model_metrics(file_name, ks, path, filters, blocks, data):
 		u = Variable(sample_batch['u']).to(device)
 		a = Variable(sample_batch['a']).to(device)
 		a_pred = model(f)
-		# a = a.reshape(N, D_out-2)
 		assert a_pred.shape == a.shape
 		u_pred = reconstruct(a_pred, phi)
-		# u = u.reshape(N, D_out)
 		assert u_pred.shape == u.shape
 		DE = ODE2(1E-1, u_pred, a_pred, phi_x, phi_xx)
-		# f = f.reshape(N, D_out)
 		assert DE.shape == f.shape
 		a_pred = a_pred.to('cpu').detach().numpy()
 		u_pred = u_pred.to('cpu').detach().numpy()

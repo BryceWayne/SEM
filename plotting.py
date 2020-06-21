@@ -112,18 +112,16 @@ def plotter(xx, sample, epoch, a=None, u=None, DE=None, title='alpha', ks=7, pat
 
 
 def loss_plot(losses, file, epoch, shape, ks, best_loss, path='.'):
-	loss1, loss2, loss3, lossT, lossV = [], [], [], [], []
-	for _ in losses:
-		loss1.append(_[0])
-		loss2.append(_[1])
-		loss3.append(_[2])
-		lossT.append(_[3])
-		lossV.append(_[4])
+	loss_a = losses['loss_a']
+	loss_u = losses['loss_u']
+	loss_wf = losses['loss_wf']
+	loss_train = losses['loss_train']
+	loss_validate = losses['loss_validate'] 
 
 	plt.figure(1, figsize=(10,6))
-	x = list(range(1, len(loss1)+1))
-	plt.semilogy(x, lossT, label='Train')
-	plt.semilogy(x, lossV, label='Validate')
+	x = list(range(1, len(loss_a)+1))
+	plt.semilogy(x, loss_train, label='Train')
+	plt.semilogy(x, loss_validate, label='Validate')
 	plt.xlabel('Epoch')
 	plt.xlim(1, epoch)
 	plt.grid(alpha=0.618)
@@ -134,10 +132,10 @@ def loss_plot(losses, file, epoch, shape, ks, best_loss, path='.'):
 	# plt.show()
 	plt.close(1)
 	plt.figure(2, figsize=(10,6))
-	x = list(range(1, len(loss1)+1))
-	plt.semilogy(x, loss1, label='$\\hat{\\alpha}$')
-	plt.semilogy(x, loss2, label='$\\hat{u}$')
-	plt.semilogy(x, loss3, label='Weak Form')
+	x = list(range(1, len(loss_a)+1))
+	plt.semilogy(x, loss_a, label='$\\hat{\\alpha}$')
+	plt.semilogy(x, loss_u, label='$\\hat{u}$')
+	plt.semilogy(x, loss_wf, label='Weak Form')
 	plt.xlabel('Epoch')
 	plt.xlim(1, epoch)
 	plt.grid(alpha=0.618)

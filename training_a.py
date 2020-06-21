@@ -28,8 +28,8 @@ torch.cuda.empty_cache()
 
 # ARGS
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--file", type=str, default='500N31')
-parser.add_argument("--batch", type=int, default=500)
+parser.add_argument("--file", type=str, default='2000N31')
+parser.add_argument("--batch", type=int, default=2000)
 parser.add_argument("--epochs", type=int, default=1000)
 parser.add_argument("--ks", type=int, default=3)
 parser.add_argument("--blocks", type=int, default=0)
@@ -51,6 +51,8 @@ cur_time = str(datetime.datetime.now()).replace(' ', 'T')
 cur_time = cur_time.replace(':','').split('.')[0].replace('-','')
 PATH = os.path.join(FILE, cur_time)
 BLOCKS = args.blocks
+EPSILON = 1E-1
+
 
 #CREATE PATHING
 try:
@@ -73,11 +75,7 @@ phi_xx = basis_xx(SHAPE, phi_x, lepoly_xx)
 
 
 # Check if CUDA is available and then use it.
-if torch.cuda.is_available():  
-  dev = "cuda:0" 
-else:  
-  dev = "cpu"
-device = torch.device(dev)
+device = get_device()
 
 
 # Load the dataset
@@ -90,7 +88,7 @@ except:
 #Batch DataLoader with shuffle
 trainloader = torch.utils.data.DataLoader(lg_dataset, batch_size=N, shuffle=True)
 # Construct our model by instantiating the class
-model1 = network.ResNet(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING, blocks=BLOCKS)
+model = network.ResNet(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING, blocks=BLOCKS)
 
 
 # KAIMING INITIALIZATION
@@ -100,62 +98,66 @@ def weights_init(m):
         torch.nn.init.kaiming_normal_(m.weight.data)
         torch.nn.init.zeros_(m.bias)
 
-model1.apply(weights_init)
-
+model.apply(weights_init)
 
 # SEND TO GPU
-model1.to(device)
-
+model.to(device)
 
 # Construct our loss function and an Optimizer.
 criterion1 = torch.nn.L1Loss()
 criterion2 = torch.nn.MSELoss(reduction="sum")
-optimizer1 = torch.optim.LBFGS(model1.parameters(), history_size=10, tolerance_grad=1e-14, tolerance_change=1e-14, max_eval=10)
-# optimizer1 = torch.optim.SGD(model1.parameters(), lr=1E-4)
+optimizer = torch.optim.LBFGS(model.parameters(), history_size=10, tolerance_grad=1e-14, tolerance_change=1e-14, max_eval=10)
+# optimizer1 = torch.optim.SGD(model.parameters(), lr=1E-4)
 
 
-BEST_LOSS, losses = float('inf'), []
+BEST_LOSS, losses = float('inf'), {'loss_a':[], 'loss_u':[], 'loss_wf':[], 'loss_train':[], 'loss_validate':[]}
 time0 = time.time()
 for epoch in tqdm(range(1, EPOCHS+1)):
-	loss1, loss2, loss3, current_loss = 0, 0, 0, 0
+	loss_a, loss_u, loss_wf, loss_train = 0, 0, 0, 0
 	for batch_idx, sample_batch in enumerate(trainloader):
 		f = Variable(sample_batch['f']).to(device)
 		a = Variable(sample_batch['a']).to(device)
 		u = Variable(sample_batch['u']).to(device)
 		def closure(f, a, u):
 			if torch.is_grad_enabled():
-				optimizer1.zero_grad()
-			a_pred = model1(f)
+				optimizer.zero_grad()
+			a_pred = model(f)
 			assert a_pred.shape == a.shape
 			u_pred = reconstruct(a_pred, phi)
 			assert u_pred.shape == u.shape
-			LHS, RHS = weak_form1(1E-1, SHAPE, f, u_pred, a_pred, lepolys, phi_x)
-			# LHS, RHS = weak_form2(1E-1, SHAPE, f, u, a_pred, lepolys, phi, phi_x)
-			loss1 = criterion2(a_pred, a)
-			loss2 = criterion1(u_pred, u)
-			loss3 = criterion1(LHS, RHS)
-			loss = loss1 + loss2 + loss3	# + criterion1(DE, f)	
+			# LHS, RHS = weak_form1(1E-1, SHAPE, f, u_pred, a_pred, lepolys, phi_x)
+			LHS, RHS = weak_form2(EPSILON, SHAPE, f, u, a_pred, lepolys, phi, phi_x)
+			loss_a = criterion2(a_pred, a)
+			loss_u = criterion2(u_pred, u)
+			# loss_u = 0
+			loss_wf = criterion1(LHS, RHS)
+			# loss_wf = 0
+			loss = loss_a + loss_u + loss_wf	# + criterion1(DE, f)	
 			if loss.requires_grad:
 				loss.backward()
-			return a_pred, u_pred, loss, loss1, loss2, loss3
-		a_pred, u_pred, loss, loss1, loss2, loss3 = closure(f, a, u)
-		optimizer1.step(loss.item)
-		loss1 += np.round(float(loss1.to('cpu').detach()), 8)
-		loss2 += np.round(float(loss2.to('cpu').detach()), 8)
-		loss3 += np.round(float(loss3.to('cpu').detach()), 8)
-		current_loss += np.round(float(loss.to('cpu').detach()), 8)
-	loss_val = validate(model1, optimizer1, SHAPE, FILTERS, criterion1, criterion2, lepolys, phi, phi_x)
-	losses.append((loss1, loss2, loss3, current_loss, loss_val))
+			return a_pred, u_pred, loss, loss_a, loss_u, loss_wf
+		a_pred, u_pred, loss, loss_a, loss_u, loss_wf = closure(f, a, u)
+		optimizer.step(loss.item)
+		loss_a += np.round(float(loss_a.to('cpu').detach()), 8)
+		loss_u += np.round(float(loss_u.to('cpu').detach()), 8)
+		loss_wf += np.round(float(loss_wf.to('cpu').detach()), 8)
+		loss_train += np.round(float(loss.to('cpu').detach()), 8)
+	loss_validate = validate(model, optimizer, SHAPE, FILTERS, criterion1, criterion2, lepolys, phi, phi_x)
+	losses['loss_a'].append(loss_a)
+	losses['loss_u'].append(loss_u)
+	losses['loss_wf'].append(loss_wf)
+	losses['loss_train'].append(loss_train)
+	losses['loss_validate'].append(loss_validate)
 	if EPOCHS >= 10 and epoch % int(.1*EPOCHS) == 0:
-		print(f"\tLoss: {current_loss}")
+		print(f"\tLoss: {loss_train}")
 		if u_pred == None:
 			u_pred = reconstruct(a_pred, phi)
-		DE = ODE2(1E-1, u_pred, a_pred, phi_x, phi_xx)
+		DE = ODE2(EPSILON, u_pred, a_pred, phi_x, phi_xx)
 		plotter(xx, sample_batch, epoch, a=a_pred, u=u_pred, DE=DE, title='a', ks=KERNEL_SIZE, path=PATH)
-	if current_loss < BEST_LOSS:
-		torch.save(model1.state_dict(), PATH + '/model.pt')
-		BEST_LOSS = current_loss
-	if np.isnan(current_loss):
+	if loss_train < BEST_LOSS:
+		torch.save(model.state_dict(), PATH + '/model.pt')
+		BEST_LOSS = loss_train
+	if np.isnan(loss_train):
 		gc.collect()
 		torch.cuda.empty_cache()
 		raise Exception("Model diverged!")
