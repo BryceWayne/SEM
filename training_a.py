@@ -134,7 +134,7 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			# loss2 = criterion1(u_pred, u)
 			# loss1 = 0
 			loss2 = 0
-			loss3 = criterion2(LHS-RHS, torch.zeros_like(LHS))
+			loss3 = criterion1(LHS-RHS, torch.zeros_like(LHS))
 			loss = loss1 + loss2 + loss3	# + criterion1(DE, f)	
 			if loss.requires_grad:
 				loss.backward()
