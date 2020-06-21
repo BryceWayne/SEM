@@ -81,16 +81,10 @@ def ODE2(eps, u, alphas, phi_x, phi_xx):
 
 
 def weak_form1(eps, N, f, u, alphas, lepolys, phi_x):
-	B = u.shape[0]
-	# LHS = torch.zeros((B,)).to(device).float()
-	# RHS = torch.zeros((B,)).to(device).float()
 	denom = torch.square(torch.from_numpy(lepolys[N-1]).to(device).float())
 	u_x = reconstruct(alphas, phi_x)
 	LHS = eps*torch.sum(torch.square(u_x)*2/(N*(N+1))/denom)
 	RHS = torch.sum(f*u*2/(N*(N+1))/denom)
-	# for index in range(u.shape[0]):
-	# 	LHS[index] = eps*torch.sum(torch.square(u_x[index,:])*2/(N*(N+1))/denom)
-	# 	RHS[index] = torch.sum(f[index,:]*u[index,:]*2/(N*(N+1))/denom)
 	return LHS, RHS
 
 

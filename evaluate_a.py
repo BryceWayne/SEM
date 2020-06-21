@@ -35,6 +35,7 @@ def validate(model, optim, shape, filters, criterion1, criterion2, lepolys, phi,
 		test_data = LGDataset(pickle_file=FILE, shape=shape, subsample=D_out)
 	testloader = torch.utils.data.DataLoader(test_data, batch_size=N, shuffle=False)
 	loss = 0
+	optim.zero_grad()
 	for batch_idx, sample_batch in enumerate(testloader):
 		f = Variable(sample_batch['f']).to(device)
 		a = Variable(sample_batch['a']).to(device)
@@ -44,15 +45,15 @@ def validate(model, optim, shape, filters, criterion1, criterion2, lepolys, phi,
 				optim.zero_grad()
 			a_pred = model(f)
 			u_pred = reconstruct(a_pred, phi)
-			LHS, RHS = weak_form2(1E-1, shape, f, u, a_pred, lepolys, phi, phi_x)
+			LHS, RHS = weak_form1(1E-1, shape, f, u_pred, a_pred, lepolys, phi_x)
+			# LHS, RHS = weak_form2(1E-1, shape, f, u, a_pred, lepolys, phi, phi_x)
 			loss1 = criterion2(a_pred, a)
 			loss2 = criterion1(u_pred, u)
-			loss3 = criterion1(LHS-RHS, torch.zeros_like(LHS))
+			loss3 = criterion1(LHS, RHS)
 			loss = loss1 + loss2 + loss3
 			return np.round(float(loss.to('cpu').detach()), 8)
 		loss += closure(f, a, u)
-	if torch.is_grad_enabled():
-		optim.zero_grad()
+	optim.zero_grad()
 	return loss
 
 
@@ -72,7 +73,7 @@ def model_metrics(file_name, ks, path, filters, blocks, data):
 
 	# LOAD MODEL
 	model = network.NetA(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING, blocks=BLOCKS).to(device)
-	print(PATH)
+	# print(PATH)
 	model.load_state_dict(torch.load(PATH + '/model.pt'))
 	model.eval()
 
@@ -92,7 +93,7 @@ def model_metrics(file_name, ks, path, filters, blocks, data):
 		return float(np.linalg.norm(measured-theoretical, ord=1)/len(theoretical))
 
 	# #Get out of sample data
-	print(FILE, INPUT)
+	# print(FILE, INPUT)
 	if FILE.split('N')[1] != INPUT.split('N')[1]:
 		FILE = '1000N' + INPUT.split('N')[1]
 	try:

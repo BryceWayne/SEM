@@ -30,7 +30,7 @@ torch.cuda.empty_cache()
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--file", type=str, default='500N31')
 parser.add_argument("--batch", type=int, default=500)
-parser.add_argument("--epochs", type=int, default=10)
+parser.add_argument("--epochs", type=int, default=1000)
 parser.add_argument("--ks", type=int, default=3)
 parser.add_argument("--blocks", type=int, default=0)
 parser.add_argument("--filters", type=int, default=32)
@@ -110,7 +110,7 @@ model1.to(device)
 # Construct our loss function and an Optimizer.
 criterion1 = torch.nn.L1Loss()
 criterion2 = torch.nn.MSELoss(reduction="sum")
-optimizer1 = torch.optim.LBFGS(model1.parameters(), history_size=10, tolerance_grad=1e-16, tolerance_change=1e-16, max_eval=20)
+optimizer1 = torch.optim.LBFGS(model1.parameters(), history_size=10, tolerance_grad=1e-14, tolerance_change=1e-14, max_eval=10)
 # optimizer1 = torch.optim.SGD(model1.parameters(), lr=1E-4)
 
 
@@ -129,13 +129,11 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			assert a_pred.shape == a.shape
 			u_pred = reconstruct(a_pred, phi)
 			assert u_pred.shape == u.shape
-			# LHS, RHS = weak_form1(1E-1, SHAPE, f, u_pred, a_pred, lepolys, phi_x)
-			LHS, RHS = weak_form2(1E-1, SHAPE, f, u, a_pred, lepolys, phi, phi_x)
+			LHS, RHS = weak_form1(1E-1, SHAPE, f, u_pred, a_pred, lepolys, phi_x)
+			# LHS, RHS = weak_form2(1E-1, SHAPE, f, u, a_pred, lepolys, phi, phi_x)
 			loss1 = criterion2(a_pred, a)
 			loss2 = criterion1(u_pred, u)
-			# loss1 = 0
-			# loss2 = 0
-			loss3 = criterion1(LHS-RHS, torch.zeros_like(LHS))
+			loss3 = criterion1(LHS, RHS)
 			loss = loss1 + loss2 + loss3	# + criterion1(DE, f)	
 			if loss.requires_grad:
 				loss.backward()
