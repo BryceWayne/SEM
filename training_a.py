@@ -29,7 +29,7 @@ torch.cuda.empty_cache()
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--file", type=str, default='500N31')
 parser.add_argument("--batch", type=int, default=500)
-parser.add_argument("--epochs", type=int, default=1000)
+parser.add_argument("--epochs", type=int, default=10)
 parser.add_argument("--ks", type=int, default=3)
 parser.add_argument("--blocks", type=int, default=0)
 parser.add_argument("--filters", type=int, default=32)
@@ -131,8 +131,10 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			# LHS, RHS = weak_form1(1E-1, SHAPE, f, u_pred, a_pred, lepolys, phi_x)
 			LHS, RHS = weak_form2(1E-1, SHAPE, f, u, a_pred, lepolys, phi, phi_x)
 			loss1 = criterion2(a_pred, a)
-			loss2 = criterion1(u_pred, u)
-			loss3 = criterion1(LHS-RHS, torch.zeros_like(LHS))
+			# loss2 = criterion1(u_pred, u)
+			# loss1 = 0
+			loss2 = 0
+			loss3 = criterion2(LHS-RHS, torch.zeros_like(LHS))
 			loss = loss1 + loss2 + loss3	# + criterion1(DE, f)	
 			if loss.requires_grad:
 				loss.backward()
@@ -140,7 +142,8 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 		a_pred, u_pred, loss, loss1, loss2, loss3 = closure(f, a, u)
 		optimizer1.step(loss.item)
 		loss1 += np.round(float(loss1.to('cpu').detach()), 8)
-		loss2 += np.round(float(loss2.to('cpu').detach()), 8)
+		# loss2 += np.round(float(loss2.to('cpu').detach()), 8)
+
 		loss3 += np.round(float(loss3.to('cpu').detach()), 8)
 		current_loss += np.round(float(loss.to('cpu').detach()), 8)
 	loss_val = validate(model1, optimizer1, SHAPE, FILTERS, criterion1, criterion2, lepolys, phi, phi_x)
