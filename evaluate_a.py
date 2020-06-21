@@ -31,7 +31,7 @@ def validate(model, optim, shape, filters, criterion1, criterion2, lepolys, phi,
 	try:
 		test_data = LGDataset(pickle_file=FILE, shape=shape, subsample=D_out)
 	except:
-		subprocess.call(f'python create_train_data.py --size {BATCH} --N {shape - 1}', shell=True)
+		subprocess.call(f'python create_train_data.py --size 1000 --N {shape - 1}', shell=True)
 		test_data = LGDataset(pickle_file=FILE, shape=shape, subsample=D_out)
 	testloader = torch.utils.data.DataLoader(test_data, batch_size=N, shuffle=False)
 	loss = 0

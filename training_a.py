@@ -17,6 +17,7 @@ from sem.sem import *
 from plotting import *
 from reconstruct import *
 from data_logging import *
+from evaluate_a import *
 import pandas as pd
 import time, datetime
 
