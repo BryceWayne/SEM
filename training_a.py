@@ -13,6 +13,7 @@ from scipy.sparse import diags
 import subprocess, os, gc
 import net.network as network
 from net.data_loader import *
+from net.network import *
 from sem.sem import *
 from plotting import *
 from reconstruct import *
@@ -28,9 +29,10 @@ torch.cuda.empty_cache()
 
 # ARGS
 parser = argparse.ArgumentParser("SEM")
+parser.add_argument("--model", type=object, default=ResNet)
 parser.add_argument("--file", type=str, default='2000N31')
 parser.add_argument("--batch", type=int, default=2000)
-parser.add_argument("--epochs", type=int, default=1000)
+parser.add_argument("--epochs", type=int, default=100)
 parser.add_argument("--ks", type=int, default=3)
 parser.add_argument("--blocks", type=int, default=0)
 parser.add_argument("--filters", type=int, default=32)
@@ -39,6 +41,8 @@ parser.add_argument("--data", type=bool, default=True)
 args = parser.parse_args()
 
 # VARIABLES
+MODEL = args.model
+DATA = args.data
 KERNEL_SIZE = args.ks
 PADDING = (args.ks - 1)//2
 FILE = args.file
@@ -74,10 +78,6 @@ phi_x = basis_x(SHAPE, phi, lepoly_x)
 phi_xx = basis_xx(SHAPE, phi_x, lepoly_xx)
 
 
-# Check if CUDA is available and then use it.
-device = get_device()
-
-
 # Load the dataset
 try:
 	lg_dataset = LGDataset(pickle_file=FILE, shape=SHAPE, subsample=D_out)
@@ -88,7 +88,7 @@ except:
 #Batch DataLoader with shuffle
 trainloader = torch.utils.data.DataLoader(lg_dataset, batch_size=N, shuffle=True)
 # Construct our model by instantiating the class
-model = network.ResNet(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING, blocks=BLOCKS)
+model = MODEL(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING, blocks=BLOCKS)
 
 
 # KAIMING INITIALIZATION
@@ -100,7 +100,9 @@ def weights_init(m):
 
 model.apply(weights_init)
 
-# SEND TO GPU
+# Check if CUDA is available and then use it.
+device = get_device()
+# SEND TO GPU (or CPU)
 model.to(device)
 
 # Construct our loss function and an Optimizer.
@@ -125,13 +127,11 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			assert a_pred.shape == a.shape
 			u_pred = reconstruct(a_pred, phi)
 			assert u_pred.shape == u.shape
-			# LHS, RHS = weak_form1(1E-1, SHAPE, f, u_pred, a_pred, lepolys, phi_x)
+			# LHS, RHS = weak_form1(EPSILON, SHAPE, f, u_pred, a_pred, lepolys, phi, phi_x)
 			LHS, RHS = weak_form2(EPSILON, SHAPE, f, u, a_pred, lepolys, phi, phi_x)
 			loss_a = criterion2(a_pred, a)
-			loss_u = criterion2(u_pred, u)
-			# loss_u = 0
+			loss_u = criterion1(u_pred, u)
 			loss_wf = criterion1(LHS, RHS)
-			# loss_wf = 0
 			loss = loss_a + loss_u + loss_wf	# + criterion1(DE, f)	
 			if loss.requires_grad:
 				loss.backward()
@@ -142,7 +142,7 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 		loss_u += np.round(float(loss_u.to('cpu').detach()), 8)
 		loss_wf += np.round(float(loss_wf.to('cpu').detach()), 8)
 		loss_train += np.round(float(loss.to('cpu').detach()), 8)
-	loss_validate = validate(model, optimizer, SHAPE, FILTERS, criterion1, criterion2, lepolys, phi, phi_x)
+	loss_validate = validate(model, optimizer, EPSILON, SHAPE, FILTERS, criterion1, criterion2, lepolys, phi, phi_x)
 	losses['loss_a'].append(loss_a)
 	losses['loss_u'].append(loss_u)
 	losses['loss_wf'].append(loss_wf)
@@ -166,19 +166,21 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 time1 = time.time()
 loss_plot(losses, FILE, EPOCHS, SHAPE, KERNEL_SIZE, BEST_LOSS, path=PATH)
 dt = time1 - time0
-avg_iter_time = np.round(dt/EPOCHS, 6)
+AVG_ITER = np.round(dt/EPOCHS, 6)
 
 params = {
+	'MODEL': MODEL,
 	'KERNEL_SIZE': KERNEL_SIZE,
 	'FILE': FILE,
 	'PATH': PATH,
 	'BLOCKS': BLOCKS,
+	'EPSILON': EPSILON,
 	'FILTERS': FILTERS,
-	'DATA': args.data,
+	'DATA': DATA,
 	'EPOCHS': EPOCHS,
 	'N': N,
 	'LOSS': BEST_LOSS,
-	'AVG_ITER': avg_iter_time
+	'AVG_ITER': AVG_ITER
 }
 
 log_data(**params)

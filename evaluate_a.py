@@ -9,6 +9,7 @@ import LG_1d
 import argparse
 import net.network as network
 from net.data_loader import *
+from net.network import *
 from sem.sem import *
 from reconstruct import *
 import subprocess
@@ -23,7 +24,7 @@ def get_device():
 		dev = "cpu"
 	return torch.device(dev)
 
-def validate(model, optim, shape, filters, criterion1, criterion2, lepolys, phi, phi_x):
+def validate(model, optim, epsilon, shape, filters, criterion1, criterion2, lepolys, phi, phi_x):
 	device = get_device()
 	FILE = f'1000N{shape-1}'
 	N, D_in, Filters, D_out = 1000, 1, filters, shape
@@ -45,8 +46,8 @@ def validate(model, optim, shape, filters, criterion1, criterion2, lepolys, phi,
 				optim.zero_grad()
 			a_pred = model(f)
 			u_pred = reconstruct(a_pred, phi)
-			# LHS, RHS = weak_form1(1E-1, shape, f, u_pred, a_pred, lepolys, phi_x)
-			LHS, RHS = weak_form2(1E-1, shape, f, u, a_pred, lepolys, phi, phi_x)
+			# LHS, RHS = weak_form1(epsilon, shape, f, u_pred, a_pred, lepolys, phi, phi_x)
+			LHS, RHS = weak_form2(epsilon, shape, f, u, a_pred, lepolys, phi, phi_x)
 			loss1 = criterion2(a_pred, a)
 			loss2 = criterion1(u_pred, u)
 			loss3 = criterion1(LHS, RHS)
@@ -57,7 +58,7 @@ def validate(model, optim, shape, filters, criterion1, criterion2, lepolys, phi,
 	return loss
 
 
-def model_metrics(file_name, ks, path, filters, blocks, data):
+def model_metrics(input_model, file_name, ks, path, epsilon, filters, blocks, data):
 	device = get_device()
 
 	INPUT = file_name
@@ -72,7 +73,7 @@ def model_metrics(file_name, ks, path, filters, blocks, data):
 	BLOCKS = blocks
 
 	# LOAD MODEL
-	model = network.ResNet(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING, blocks=BLOCKS).to(device)
+	model = input_model(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING, blocks=BLOCKS).to(device)
 	# print(PATH)
 	model.load_state_dict(torch.load(PATH + '/model.pt'))
 	model.eval()
@@ -221,7 +222,7 @@ def model_metrics(file_name, ks, path, filters, blocks, data):
 	plt.close(3)
 
 	if data == True:
-		COLS = ['TIMESTAMP', 'DATASET', 'FOLDER', 'SHAPE', 'BLOCKS', 'K.SIZE', 'FILTERS', 'BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']
+		COLS = ['MODEL', 'TIMESTAMP', 'DATASET', 'FOLDER', 'SHAPE', 'BLOCKS', 'K.SIZE', 'FILTERS', 'BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']
 		try:
 			df = pd.read_excel('temp.xlsx')
 		except:

@@ -70,7 +70,7 @@ def reconstruct(alphas, phi):
 	B, i, j = alphas.shape
 	P = torch.zeros((B, j, j+2)).to(device)
 	P[:i,:,:] = phi
-	T = torch.zeros((B, i, j+2)).to(device)
+	# T = torch.zeros((B, i, j+2)).to(device)
 	T = torch.bmm(alphas,P)
 	return T
 
@@ -80,7 +80,7 @@ def ODE2(eps, u, alphas, phi_x, phi_xx):
 	return DE
 
 
-def weak_form1(eps, N, f, u, alphas, lepolys, phi_x):
+def weak_form1(eps, N, f, u, alphas, lepolys, phi, phi_x):
 	denom = torch.square(torch.from_numpy(lepolys[N-1]).to(device).float())
 	u_x = reconstruct(alphas, phi_x)
 	LHS = eps*torch.sum(torch.square(u_x)*2/(N*(N+1))/denom)

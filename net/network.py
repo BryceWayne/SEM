@@ -3,6 +3,15 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 
+
+# KAIMING INITIALIZATION
+def weights_init(m):
+    if isinstance(m, nn.Conv1d):
+        # torch.nn.init.xavier_uniform_(m.weight)
+        torch.nn.init.kaiming_normal_(m.weight.data)
+        torch.nn.init.zeros_(m.bias)
+
+
 def conv1d(in_planes, out_planes, stride=1, bias=True, kernel_size=5, padding=2, dialation=1) :
     return nn.Conv1d(in_planes, out_planes, kernel_size=kernel_size, stride=stride, padding=padding, bias=bias)
 
