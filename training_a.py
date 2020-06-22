@@ -36,7 +36,6 @@ parser.add_argument("--epochs", type=int, default=100)
 parser.add_argument("--ks", type=int, default=3)
 parser.add_argument("--blocks", type=int, default=0)
 parser.add_argument("--filters", type=int, default=32)
-# parser.add_argument("--funcs")
 parser.add_argument("--data", type=bool, default=True)
 args = parser.parse_args()
 
