@@ -29,7 +29,7 @@ torch.cuda.empty_cache()
 
 # ARGS
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--model", type=object, default=ResNet)
+parser.add_argument("--model", type=object, default=ResNet) #ResNet or NetA
 parser.add_argument("--file", type=str, default='2000N31')
 parser.add_argument("--batch", type=int, default=2000)
 parser.add_argument("--epochs", type=int, default=100)
@@ -105,10 +105,14 @@ device = get_device()
 model.to(device)
 
 # Construct our loss function and an Optimizer.
-criterion1 = torch.nn.L1Loss()
-criterion2 = torch.nn.MSELoss(reduction="sum")
+# criterion_a = torch.nn.L1Loss()
+criterion_a = torch.nn.MSELoss(reduction="sum")
+# criterion_u = torch.nn.L1Loss()
+criterion_u = torch.nn.MSELoss(reduction="sum")
+# criterion_wf = torch.nn.L1Loss()
+criterion_wf = torch.nn.MSELoss(reduction="sum")
 optimizer = torch.optim.LBFGS(model.parameters(), history_size=10, tolerance_grad=1e-14, tolerance_change=1e-14, max_eval=10)
-# optimizer1 = torch.optim.SGD(model.parameters(), lr=1E-4)
+# optimizer = torch.optim.SGD(model.parameters(), lr=1E-8)
 
 
 BEST_LOSS, losses = float('inf'), {'loss_a':[], 'loss_u':[], 'loss_wf':[], 'loss_train':[], 'loss_validate':[]}
@@ -128,9 +132,9 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			assert u_pred.shape == u.shape
 			# LHS, RHS = weak_form1(EPSILON, SHAPE, f, u_pred, a_pred, lepolys, phi, phi_x)
 			LHS, RHS = weak_form2(EPSILON, SHAPE, f, u, a_pred, lepolys, phi, phi_x)
-			loss_a = criterion2(a_pred, a)
-			loss_u = criterion1(u_pred, u)
-			loss_wf = criterion1(LHS, RHS)
+			loss_a = criterion_a(a_pred, a)
+			loss_u = criterion_u(u_pred, u)
+			loss_wf = criterion_wf(LHS, RHS)
 			loss = loss_a + loss_u + loss_wf	# + criterion1(DE, f)	
 			if loss.requires_grad:
 				loss.backward()
@@ -141,7 +145,7 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 		loss_u += np.round(float(loss_u.to('cpu').detach()), 8)
 		loss_wf += np.round(float(loss_wf.to('cpu').detach()), 8)
 		loss_train += np.round(float(loss.to('cpu').detach()), 8)
-	loss_validate = validate(model, optimizer, EPSILON, SHAPE, FILTERS, criterion1, criterion2, lepolys, phi, phi_x)
+	loss_validate = validate(model, optimizer, EPSILON, SHAPE, FILTERS, criterion_a, criterion_u, criterion_wf, lepolys, phi, phi_x)
 	losses['loss_a'].append(loss_a)
 	losses['loss_u'].append(loss_u)
 	losses['loss_wf'].append(loss_wf)

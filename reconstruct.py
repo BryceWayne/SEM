@@ -69,8 +69,7 @@ def basis_xx(N, phi, Dxx):
 def reconstruct(alphas, phi):
 	B, i, j = alphas.shape
 	P = torch.zeros((B, j, j+2)).to(device)
-	P[:i,:,:] = phi
-	# T = torch.zeros((B, i, j+2)).to(device)
+	P[:,:,:] = phi
 	T = torch.bmm(alphas,P)
 	return T
 
@@ -93,13 +92,13 @@ def weak_form2(eps, N, f, u, alphas, lepolys, phi, phi_x):
 	u_x = reconstruct(alphas, phi_x)
 	phi = torch.transpose(phi, 0, 1)
 	ux_phi = u_x*phi[:,0]
-	N -= 1
-	denom = torch.square(torch.from_numpy(lepolys[N-1]).to(device).float())
+	n = N - 1
+	denom = torch.square(torch.from_numpy(lepolys[n]).to(device).float())
 	denom = torch.transpose(denom, 0, 1)
 	diff = 6*eps
 	diffusion = diff*alphas[:,:,0]
-	convection = torch.sum(ux_phi*2/(N*(N+1))/denom, axis=2)
+	convection = torch.sum(ux_phi*2/(n*(n+1))/denom, axis=2)
 	LHS = diffusion - convection
 	temp = f*phi[:,0]
-	RHS = torch.sum(temp*2/(N*(N+1))/denom, axis=2)
+	RHS = torch.sum(temp*2/(n*(n+1))/denom, axis=2)
 	return LHS, RHS

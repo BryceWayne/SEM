@@ -24,7 +24,7 @@ def get_device():
 		dev = "cpu"
 	return torch.device(dev)
 
-def validate(model, optim, epsilon, shape, filters, criterion1, criterion2, lepolys, phi, phi_x):
+def validate(model, optim, epsilon, shape, filters, criterion_a, criterion_u, criterion_wf, lepolys, phi, phi_x):
 	device = get_device()
 	FILE = f'1000N{shape-1}'
 	N, D_in, Filters, D_out = 1000, 1, filters, shape
@@ -48,9 +48,9 @@ def validate(model, optim, epsilon, shape, filters, criterion1, criterion2, lepo
 			u_pred = reconstruct(a_pred, phi)
 			# LHS, RHS = weak_form1(epsilon, shape, f, u_pred, a_pred, lepolys, phi, phi_x)
 			LHS, RHS = weak_form2(epsilon, shape, f, u, a_pred, lepolys, phi, phi_x)
-			loss1 = criterion2(a_pred, a)
-			loss2 = criterion1(u_pred, u)
-			loss3 = criterion1(LHS, RHS)
+			loss1 = criterion_a(a_pred, a)
+			loss2 = criterion_u(u_pred, u)
+			loss3 = criterion_wf(LHS, RHS)
 			loss = loss1 + loss2 + loss3
 			return np.round(float(loss.to('cpu').detach()), 8)
 		loss += closure(f, a, u)
