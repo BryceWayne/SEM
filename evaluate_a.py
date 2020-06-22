@@ -50,7 +50,7 @@ def validate(model, optim, epsilon, shape, filters, criterion_a, criterion_u, cr
 			LHS, RHS = weak_form2(epsilon, shape, f, u, a_pred, lepolys, phi, phi_x)
 			loss1 = criterion_a(a_pred, a)
 			loss2 = criterion_u(u_pred, u)
-			loss3 = criterion_wf(LHS, RHS)
+			loss3 = 1E1*criterion_wf(LHS, RHS)
 			loss = loss1 + loss2 + loss3
 			return np.round(float(loss.to('cpu').detach()), 8)
 		loss += closure(f, a, u)

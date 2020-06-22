@@ -32,7 +32,7 @@ parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--model", type=object, default=ResNet) #ResNet or NetA
 parser.add_argument("--file", type=str, default='2000N31')
 parser.add_argument("--batch", type=int, default=2000)
-parser.add_argument("--epochs", type=int, default=100)
+parser.add_argument("--epochs", type=int, default=10000)
 parser.add_argument("--ks", type=int, default=3)
 parser.add_argument("--blocks", type=int, default=0)
 parser.add_argument("--filters", type=int, default=32)
@@ -134,7 +134,7 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			LHS, RHS = weak_form2(EPSILON, SHAPE, f, u, a_pred, lepolys, phi, phi_x)
 			loss_a = criterion_a(a_pred, a)
 			loss_u = criterion_u(u_pred, u)
-			loss_wf = criterion_wf(LHS, RHS)
+			loss_wf = 1E1*criterion_wf(LHS, RHS)
 			loss = loss_a + loss_u + loss_wf	# + criterion1(DE, f)	
 			if loss.requires_grad:
 				loss.backward()
