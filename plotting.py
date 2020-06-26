@@ -1,17 +1,23 @@
 #plotting.py
 import torch
+import torch.nn as nn
+from torch.autograd import Variable
+from torchvision import transforms
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
-from sem.sem import legslbndm
+from sem.sem import *
+
+
+def relative_l2(measured, theoretical):
+	return np.linalg.norm(measured-theoretical, ord=2)/np.linalg.norm(theoretical, ord=2)
+def relative_linf(measured, theoretical):
+	return np.linalg.norm(measured-theoretical, ord=np.inf)/np.linalg.norm(theoretical, ord=np.inf)
+def mae(measured, theoretical):
+	return np.linalg.norm(measured-theoretical, ord=1)/len(theoretical)
 
 
 def plotter(xx, sample, epoch, a=None, u=None, DE=None, title='alpha', ks=7, path='.'):
-	def relative_l2(measured, theoretical):
-		return np.linalg.norm(measured-theoretical, ord=2)/np.linalg.norm(theoretical, ord=2)
-	def relative_linf(measured, theoretical):
-		return np.linalg.norm(measured-theoretical, ord=np.inf)/np.linalg.norm(theoretical, ord=np.inf)
-	def mae(measured, theoretical):
-		return np.linalg.norm(measured-theoretical, ord=1)/len(theoretical)
 	aa = sample['a'][0,0,:].to('cpu').detach().numpy()
 	uu = sample['u'][0,0,:].to('cpu').detach().numpy()
 	ff = sample['f'][0,0,:].to('cpu').detach().numpy()
@@ -88,8 +94,8 @@ def plotter(xx, sample, epoch, a=None, u=None, DE=None, title='alpha', ks=7, pat
 			      f'$f$ MAE Error: {np.round(mae_error_de, 6)}\n'\
 			      f'$f$ Rel. $L_2$ Error: {np.round(float(l2_error_de), 6)}\n'\
 			      f'$f$ Rel. $L_\\infty$ Error: {np.round(float(linf_error_de), 6)}')
-		plt.plot(xxx, ff, 'ro-', label='$f$')
-		plt.plot(xxx, de, 'bo', mfc='none', label='ODE')
+		plt.plot(xx, ff, 'ro-', label='$f$')
+		plt.plot(xx, de, 'bo', mfc='none', label='ODE')
 		plt.xlim(-1,1)
 		plt.grid(alpha=0.618)
 		plt.xlabel('$x$')
@@ -101,7 +107,7 @@ def plotter(xx, sample, epoch, a=None, u=None, DE=None, title='alpha', ks=7, pat
 		plt.figure(3, figsize=(10,6))
 		plt.title(f'$f$ Example Epoch {epoch}\n'\
 			      f'$f$ Point-Wise Error: {np.round(np.sum(np.abs(ff-de))/len(xxx), 6)}')
-		plt.plot(xxx, np.abs(ff-de), 'ro-', mfc='none', label='Error')
+		plt.plot(xx, np.abs(ff-de), 'ro-', mfc='none', label='Error')
 		plt.xlim(-1,1)
 		plt.grid(alpha=0.618)
 		plt.xlabel('$x$')
@@ -111,9 +117,10 @@ def plotter(xx, sample, epoch, a=None, u=None, DE=None, title='alpha', ks=7, pat
 		plt.close(3)
 
 
-def loss_plot(losses, file, epoch, shape, ks, best_loss, path='.'):
+def loss_plot(losses, file, epoch, shape, ks, best_loss, path):
 	loss_a = losses['loss_a']
 	loss_u = losses['loss_u']
+	loss_f = losses['loss_f']
 	loss_wf = losses['loss_wf']
 	loss_train = losses['loss_train']
 	loss_validate = losses['loss_validate'] 
@@ -135,6 +142,7 @@ def loss_plot(losses, file, epoch, shape, ks, best_loss, path='.'):
 	x = list(range(1, len(loss_a)+1))
 	plt.semilogy(x, loss_a, label='$\\hat{\\alpha}$')
 	plt.semilogy(x, loss_u, label='$\\hat{u}$')
+	# plt.semilogy(x, loss_f, label='$\\hat{f}$')
 	plt.semilogy(x, loss_wf, label='Weak Form')
 	plt.xlabel('Epoch')
 	plt.xlim(1, epoch)
@@ -147,7 +155,9 @@ def loss_plot(losses, file, epoch, shape, ks, best_loss, path='.'):
 	plt.close(2)
 
 
-def out_of_sample(SHAPE, a_pred, u_pred):
+def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path):
+	PATH = path
+	SHAPE = shape
 	xx = legslbndm(SHAPE-2)
 	ahat = a_pred[0,0,:]
 	ff = sample_batch['f'][0,0,:].to('cpu').detach().numpy()
@@ -166,7 +176,7 @@ def out_of_sample(SHAPE, a_pred, u_pred):
 	plt.xlabel('$x$')
 	plt.ylabel('$y$')
 	plt.legend(shadow=True)
-	plt.savefig(f'{PATH}/sample_a.png', bbox_inches='tight')
+	plt.savefig(f'{PATH}/{equation}_sample_a.png', bbox_inches='tight')
 	# plt.show()
 	plt.close()
 	plt.figure(1, figsize=(10,6))
@@ -179,7 +189,7 @@ def out_of_sample(SHAPE, a_pred, u_pred):
 	plt.xlabel('$x$')
 	plt.ylabel('Point-Wise Error')
 	plt.legend(shadow=True)
-	plt.savefig(f'{PATH}/sample_a_pwe.png', bbox_inches='tight')
+	plt.savefig(f'{PATH}/{equation}_sample_a_pwe.png', bbox_inches='tight')
 	plt.close(1)
 
 
@@ -198,7 +208,7 @@ def out_of_sample(SHAPE, a_pred, u_pred):
 	plt.xlabel('$x$')
 	plt.ylabel('$y$')
 	plt.legend(shadow=True)
-	plt.savefig(f'{PATH}/sample_u.png', bbox_inches='tight')
+	plt.savefig(f'{PATH}/{equation}_sample_u.png', bbox_inches='tight')
 	# plt.show()
 	plt.close()
 	plt.figure(2, figsize=(10,6))
@@ -209,34 +219,34 @@ def out_of_sample(SHAPE, a_pred, u_pred):
 	plt.xlabel('$x$')
 	plt.ylabel('Point-Wise Error')
 	plt.legend(shadow=True)
-	plt.savefig(f'{PATH}/sample_u_pwe.png', bbox_inches='tight')
+	plt.savefig(f'{PATH}/{equation}_sample_u_pwe.png', bbox_inches='tight')
 	plt.close(2)
 
 
 	plt.figure(3, figsize=(10,6))
-	de = DE[0,0,:].to('cpu').detach().numpy()
-	mae_error_de = mae(de, ff)
-	l2_error_de = relative_l2(de, ff)
-	linf_error_de = relative_linf(de, ff)
-	plt.title(f'Out of Sample Example\nMAE Error: {np.round(float(mae_error_de), 6)}\nRel. $L_2$ Error: {np.round(float(l2_error_de), 6)}\nRel. $L_\\infty$ Error: {np.round(float(linf_error_de), 6)}')
-	xx_ = np.linspace(-1,1, len(ff), endpoint=True)
-	plt.plot(xx_, ff, 'ro-', label='$f$')
-	plt.plot(xx_, de, 'bo', mfc='none', label='ODE')
+	f_pred = f_pred[0,0,:]
+	mae_error_f = mae(f_pred, ff)
+	l2_error_f = relative_l2(f_pred, ff)
+	linf_error_f = relative_linf(f_pred, ff)
+	plt.title(f'Out of Sample Example\nMAE Error: {np.round(float(mae_error_f), 6)}\nRel. $L_2$ Error: {np.round(float(l2_error_f), 6)}\nRel. $L_\\infty$ Error: {np.round(float(linf_error_f), 6)}')
+	plt.plot(xx, ff, 'ro-', label='$f$')
+	plt.plot(xx, f_pred, 'bo', mfc='none', label='ODE')
 	plt.xlim(-1,1)
 	plt.grid(alpha=0.618)
 	plt.xlabel('$x$')
 	plt.ylabel('$y$')
 	plt.legend(shadow=True)
-	plt.savefig(f'{PATH}/sample_f.png', bbox_inches='tight')
+	plt.savefig(f'{PATH}/{equation}_sample_f.png', bbox_inches='tight')
 	# plt.show()
 	plt.close()
 	plt.figure(3, figsize=(10,6))
-	plt.title(f'$f$ Point-Wise Error: {np.round(np.sum(np.abs(ff-de))/len(xx_), 6)}')
-	plt.plot(xx_, np.abs(ff-de), 'ro-', mfc='none', label='Error')
+	plt.title(f'$f$ Point-Wise Error: {np.round(np.sum(np.abs(ff-f_pred))/len(xx_), 6)}')
+	plt.plot(xx, np.abs(ff-f_pred), 'ro-', mfc='none', label='Error')
 	plt.xlim(-1,1)
 	plt.grid(alpha=0.618)
 	plt.xlabel('$x$')
 	plt.ylabel('Point-Wise Error')
 	plt.legend(shadow=True)
-	plt.savefig(f'{PATH}/sample_f_pwe.png', bbox_inches='tight')
+	plt.savefig(f'{PATH}/{equation}_sample_f_pwe.png', bbox_inches='tight')
 	plt.close(3)
+

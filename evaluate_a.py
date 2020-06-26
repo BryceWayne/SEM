@@ -3,15 +3,12 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 from torchvision import transforms
-import numpy as np
-import matplotlib.pyplot as plt
 import LG_1d
-import argparse
-import net.network as network
 from net.data_loader import *
 from net.network import *
 from sem.sem import *
 from reconstruct import *
+from plotting import *
 import subprocess
 import pandas as pd
 import datetime
@@ -24,43 +21,42 @@ def get_device():
 		dev = "cpu"
 	return torch.device(dev)
 
-def validate(model, optim, epsilon, shape, filters, criterion_a, criterion_u, criterion_wf, lepolys, phi, phi_x):
+def validate(equation, model, optim, epsilon, shape, filters, criterion_a, criterion_u, criterion_f, criterion_wf, lepolys, phi, phi_x, phi_xx):
 	device = get_device()
-	FILE = f'1000N{shape-1}'
-	N, D_in, Filters, D_out = 1000, 1, filters, shape
+	FILE, EQUATION, SHAPE, BATCH = f'1000N{shape-1}', equation, shape, 1000
+	N, D_in, Filters, D_out = BATCH, 1, filters, shape
 	# Load the dataset
-	try:
-		test_data = LGDataset(pickle_file=FILE, shape=shape, subsample=D_out)
-	except:
-		subprocess.call(f'python create_train_data.py --size 1000 --N {shape - 1}', shell=True)
-		test_data = LGDataset(pickle_file=FILE, shape=shape, subsample=D_out)
+	test_data = get_data(EQUATION, FILE, SHAPE, BATCH, D_out, epsilon)
 	testloader = torch.utils.data.DataLoader(test_data, batch_size=N, shuffle=False)
 	loss = 0
 	optim.zero_grad()
 	for batch_idx, sample_batch in enumerate(testloader):
 		f = Variable(sample_batch['f']).to(device)
-		a = Variable(sample_batch['a']).to(device)
-		u = Variable(sample_batch['u']).to(device)
+		a = sample_batch['a'].to(device)
+		u = sample_batch['u'].to(device)
 		def closure(f, a, u):
 			if torch.is_grad_enabled():
 				optim.zero_grad()
 			a_pred = model(f)
 			u_pred = reconstruct(a_pred, phi)
+			# f_pred = ODE2(epsilon, u_pred, a_pred, phi_x, phi_xx)
 			# LHS, RHS = weak_form1(epsilon, shape, f, u_pred, a_pred, lepolys, phi, phi_x)
 			LHS, RHS = weak_form2(epsilon, shape, f, u, a_pred, lepolys, phi, phi_x)
-			loss1 = criterion_a(a_pred, a)
-			loss2 = criterion_u(u_pred, u)
-			loss3 = 1E1*criterion_wf(LHS, RHS)
-			loss = loss1 + loss2 + loss3
+			loss_a = criterion_a(a_pred, a)
+			loss_u = criterion_u(u_pred, u)
+			# lossf = criterion_f(f_pred, f)
+			loss_f = 0
+			loss_wf = 1E1*criterion_wf(LHS, RHS)
+			loss = loss_a + loss_u + loss_f + loss_wf
 			return np.round(float(loss.to('cpu').detach()), 8)
 		loss += closure(f, a, u)
 	optim.zero_grad()
 	return loss
 
 
-def model_metrics(input_model, file_name, ks, path, epsilon, filters, blocks, data):
+def model_metrics(equation, input_model, file_name, ks, path, epsilon, filters, blocks):
 	device = get_device()
-
+	EQUATION = equation
 	INPUT = file_name
 	FILE = '1000N' + INPUT.split('N')[1]
 	PATH = path
@@ -72,36 +68,15 @@ def model_metrics(input_model, file_name, ks, path, epsilon, filters, blocks, da
 	N, D_in, Filters, D_out = BATCH, 1, FILTERS, SHAPE
 	BLOCKS = blocks
 
+	xx, lepolys, lepoly_x, lepoly_xx, phi, phi_x, phi_xx = basis_vectors(D_out)
 	# LOAD MODEL
 	model = input_model(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING, blocks=BLOCKS).to(device)
-	# print(PATH)
 	model.load_state_dict(torch.load(PATH + '/model.pt'))
 	model.eval()
 
-	xx = legslbndm(D_out)
-	lepolys = gen_lepolys(D_out, xx)
-	lepoly_x = dx(D_out, xx, lepolys)
-	lepoly_xx = dxx(D_out, xx, lepolys)
-	phi = basis(SHAPE, lepolys)
-	phi_x = basis_x(SHAPE, phi, lepoly_x)
-	phi_xx = basis_xx(SHAPE, phi_x, lepoly_xx)
-
-	def relative_l2(measured, theoretical):
-		return float(np.linalg.norm(measured-theoretical, ord=2)/np.linalg.norm(theoretical, ord=2))
-	def relative_linf(measured, theoretical):
-		return float(np.linalg.norm(measured-theoretical, ord=np.inf)/np.linalg.norm(theoretical, ord=np.inf))
-	def mae(measured, theoretical):
-		return float(np.linalg.norm(measured-theoretical, ord=1)/len(theoretical))
-
-	# #Get out of sample data
-	# print(FILE, INPUT)
 	if FILE.split('N')[1] != INPUT.split('N')[1]:
 		FILE = '1000N' + INPUT.split('N')[1]
-	try:
-		test_data = LGDataset(pickle_file=FILE, shape=SHAPE, subsample=D_out)
-	except:
-		subprocess.call(f'python create_train_data.py --size {BATCH} --N {SHAPE - 1}', shell=True)
-		test_data = LGDataset(pickle_file=FILE, shape=SHAPE, subsample=D_out)
+	test_data = get_data(EQUATION, FILE, SHAPE, BATCH, D_out, epsilon)
 	testloader = torch.utils.data.DataLoader(test_data, batch_size=N, shuffle=False)
 
 	running_MAE_a, running_MAE_u, running_MSE_a, running_MSE_u, running_MinfE_a, running_MinfE_u = 0, 0, 0, 0, 0, 0
@@ -110,13 +85,11 @@ def model_metrics(input_model, file_name, ks, path, epsilon, filters, blocks, da
 		u = Variable(sample_batch['u']).to(device)
 		a = Variable(sample_batch['a']).to(device)
 		a_pred = model(f)
-		assert a_pred.shape == a.shape
 		u_pred = reconstruct(a_pred, phi)
-		assert u_pred.shape == u.shape
-		DE = ODE2(1E-1, u_pred, a_pred, phi_x, phi_xx)
-		assert DE.shape == f.shape
+		f_pred = ODE2(1E-1, u_pred, a_pred, phi_x, phi_xx)
 		a_pred = a_pred.to('cpu').detach().numpy()
 		u_pred = u_pred.to('cpu').detach().numpy()
+		f_pred = f_pred.to('cpu').detach().numpy()
 		a = a.to('cpu').detach().numpy()
 		u = u.to('cpu').detach().numpy()
 		for i in range(N):
@@ -127,123 +100,19 @@ def model_metrics(input_model, file_name, ks, path, epsilon, filters, blocks, da
 			running_MSE_u += relative_l2(u_pred[i,0,:], u[i,0,:])
 			running_MinfE_u += relative_linf(u_pred[i,0,:], u[i,0,:])
 
-
-	xx = legslbndm(SHAPE-2)
-	ahat = a_pred[0,0,:]
-	ff = sample_batch['f'][0,0,:].to('cpu').detach().numpy()
-	aa = sample_batch['a'][0,0,:].to('cpu').detach().numpy()
-	mae_error_a = mae(ahat, aa)
-	l2_error_a = relative_l2(ahat, aa)
-	linf_error_a = relative_linf(ahat, aa)
-	plt.figure(1, figsize=(10,6))
-	plt.title(f'Out of Sample Example\nMAE Error: {np.round(float(mae_error_a), 6)}\nRel. $L_2$ Error: {np.round(float(l2_error_a), 6)}\nRel. $L_\\infty$ Error: {np.round(float(linf_error_a), 6)}')
-	plt.plot(xx, aa, 'ro-', label='$\\alpha$')
-	plt.plot(xx, ahat, 'bo', mfc='none', label='$\\hat{\\alpha}$')
-	xx_ = np.linspace(-1,1, len(xx)+2, endpoint=True)
-	# plt.plot(xx_, ff, 'g', label='$f$')
-	plt.xlim(-1,1)
-	plt.grid(alpha=0.618)
-	plt.xlabel('$x$')
-	plt.ylabel('$y$')
-	plt.legend(shadow=True)
-	plt.savefig(f'{PATH}/sample_a.png', bbox_inches='tight')
-	# plt.show()
-	plt.close()
-	plt.figure(1, figsize=(10,6))
-	plt.title(f'$\\alpha$ Point-Wise Error: {np.round(np.sum(np.abs(aa-ahat))/len(xx), 6)}')
-	plt.plot(xx, np.abs(aa-ahat), 'ro-', mfc='none', label='Error')
-	# plt.plot(x_, ahat, 'bo', mfc='none', label='$\\hat{\\alpha}$')
-	# plt.plot(xxx, ff, 'g-', label='$f$')
-	plt.xlim(-1,1)
-	plt.grid(alpha=0.618)
-	plt.xlabel('$x$')
-	plt.ylabel('Point-Wise Error')
-	plt.legend(shadow=True)
-	plt.savefig(f'{PATH}/sample_a_pwe.png', bbox_inches='tight')
-	plt.close(1)
-
-
-	uhat = u_pred[0,0,:]
-	uu = sample_batch['u'][0,0,:].to('cpu').detach().numpy()
-	mae_error_u = mae(uhat, uu)
-	l2_error_u = relative_l2(uhat, uu)
-	linf_error_u = relative_linf(uhat, uu)
-	xx = legslbndm(SHAPE)
-	plt.figure(2, figsize=(10,6))
-	plt.title(f'Out of Sample Example\nMAE Error: {np.round(float(mae_error_u), 6)}\nRel. $L_2$ Error: {np.round(float(l2_error_u), 6)}\nRel. $L_\\infty$ Error: {np.round(float(linf_error_u), 6)}')
-	plt.plot(xx, uu, 'ro-', label='$u$')
-	plt.plot(xx, uhat, 'bo', mfc='none', label='$\\hat{u}$')
-	plt.xlim(-1,1)
-	plt.grid(alpha=0.618)
-	plt.xlabel('$x$')
-	plt.ylabel('$y$')
-	plt.legend(shadow=True)
-	plt.savefig(f'{PATH}/sample_u.png', bbox_inches='tight')
-	# plt.show()
-	plt.close()
-	plt.figure(2, figsize=(10,6))
-	plt.title(f'$u$ Point-Wise Error: {np.round(np.sum(np.abs(uu-uhat))/len(xx), 6)}')
-	plt.plot(xx, np.abs(uu-uhat), 'ro-', mfc='none', label='Error')
-	plt.xlim(-1,1)
-	plt.grid(alpha=0.618)
-	plt.xlabel('$x$')
-	plt.ylabel('Point-Wise Error')
-	plt.legend(shadow=True)
-	plt.savefig(f'{PATH}/sample_u_pwe.png', bbox_inches='tight')
-	plt.close(2)
-
-
-	plt.figure(3, figsize=(10,6))
-	de = DE[0,0,:].to('cpu').detach().numpy()
-	mae_error_de = mae(de, ff)
-	l2_error_de = relative_l2(de, ff)
-	linf_error_de = relative_linf(de, ff)
-	plt.title(f'Out of Sample Example\nMAE Error: {np.round(float(mae_error_de), 6)}\nRel. $L_2$ Error: {np.round(float(l2_error_de), 6)}\nRel. $L_\\infty$ Error: {np.round(float(linf_error_de), 6)}')
-	xx_ = np.linspace(-1,1, len(ff), endpoint=True)
-	plt.plot(xx_, ff, 'ro-', label='$f$')
-	plt.plot(xx_, de, 'bo', mfc='none', label='ODE')
-	plt.xlim(-1,1)
-	plt.grid(alpha=0.618)
-	plt.xlabel('$x$')
-	plt.ylabel('$y$')
-	plt.legend(shadow=True)
-	plt.savefig(f'{PATH}/sample_f.png', bbox_inches='tight')
-	# plt.show()
-	plt.close()
-	plt.figure(3, figsize=(10,6))
-	plt.title(f'$f$ Point-Wise Error: {np.round(np.sum(np.abs(ff-de))/len(xx_), 6)}')
-	plt.plot(xx_, np.abs(ff-de), 'ro-', mfc='none', label='Error')
-	plt.xlim(-1,1)
-	plt.grid(alpha=0.618)
-	plt.xlabel('$x$')
-	plt.ylabel('Point-Wise Error')
-	plt.legend(shadow=True)
-	plt.savefig(f'{PATH}/sample_f_pwe.png', bbox_inches='tight')
-	plt.close(3)
-
-	if data == True:
-		COLS = ['MODEL', 'TIMESTAMP', 'DATASET', 'FOLDER', 'SHAPE', 'BLOCKS', 'K.SIZE', 'FILTERS', 'BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']
-		try:
-			df = pd.read_excel('temp.xlsx')
-		except:
-			df = pd.DataFrame([], columns=COLS)
-		entries = df.to_dict('records')
-		entry = {c:0 for c in COLS}
-		PATH = PATH[len(INPUT)+1:]
-		entry['TIMESTAMP'] = datetime.datetime.now()
-		entry['FOLDER'] = PATH
-		entry['DATASET'] = INPUT
-		entry['SHAPE'] = SHAPE
-		entry['K.SIZE'] = KERNEL_SIZE
-		entry['MAEa'] = np.round(running_MAE_a/N, 6)
-		entry['MSEa'] = np.round(running_MSE_a/N, 6)
-		entry['MIEa'] = np.round(running_MinfE_a/N, 6)
-		entry['MAEu'] = np.round(running_MAE_u/N, 6)
-		entry['MSEu'] = np.round(running_MSE_u/N, 6)
-		entry['MIEu'] = np.round(running_MinfE_u/N, 6)
-		entries.append(entry)
-		df = pd.DataFrame(entries)
-		df = df[COLS]
-		df['TIMESTAMP'] = df['TIMESTAMP'].astype(str)
-		df.to_excel('temp.xlsx')
-		# print('Done')
+	out_of_sample(EQUATION, SHAPE, a_pred, u_pred, f_pred, sample_batch, PATH)
+	
+	data = {}
+	data['EQUATION'] = equation
+	data['TIMESTAMP'] = datetime.datetime.now()
+	data['FOLDER'] = PATH[len(INPUT)+1:]
+	data['DATASET'] = INPUT
+	data['SHAPE'] = SHAPE
+	data['K.SIZE'] = KERNEL_SIZE
+	data['MAEa'] = np.round(running_MAE_a/N, 6)
+	data['MSEa'] = np.round(running_MSE_a/N, 6)
+	data['MIEa'] = np.round(running_MinfE_a/N, 6)
+	data['MAEu'] = np.round(running_MAE_u/N, 6)
+	data['MSEu'] = np.round(running_MSE_u/N, 6)
+	data['MIEu'] = np.round(running_MinfE_u/N, 6)
+	return data

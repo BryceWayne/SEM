@@ -50,7 +50,7 @@ def lg_1d_standard(N:int, epsilon:float, exact_flag = False) -> np.ndarray:
 	D = legslbdiff(N+1, x)
 	a = 0
 	b = -1
-	def func(t: float, exact_flag) -> float:
+	def func(t: float, exact_flag: bool) -> float:
 		# Random force
 		if exact_flag == False:
 			m = 2*np.random.rand(4)
@@ -105,6 +105,8 @@ def lg_1d_standard(N:int, epsilon:float, exact_flag = False) -> np.ndarray:
 		_ = _[0]
 		u[i-1] = _
 	return x, u, f, alphas
+
+
 def lg_1d_enriched(N:int, epsilon:float, exact_flag = False) -> np.ndarray:
 	sigma = 1
 	x = legslbndm(N+1)
@@ -185,24 +187,30 @@ def lg_1d_enriched(N:int, epsilon:float, exact_flag = False) -> np.ndarray:
 		u_sol += element.T[0]
 	u = u_sol + (u_temp[N-1]*phi).T[0]
 	return x, u
+
+
 def DE(t: float, x: np.ndarray) -> np.ndarray:
     return x*(1-x)
+
+
 def RK(t: float, x: np.ndarray, dt: float) -> np.ndarray:
     k1 = DE(t, x)*dt
     k2 = DE(t, x+0.5*k1)*dt
     k3 = DE(t, x+0.5*k2)*dt
     k4 = DE(t, x+k3)*dt
     return x+1/6*(k1+2*k2+2*k3+k4)
+
+
 def rk4(x: np.ndarray, t0=0, dt=0.1) -> np.ndarray:
 	pass
+
+
 def reconstruct(alphas:np.ndarray):
 	a, b, N = 0, -1, len(alphas) - 1
 	x = legslbndm(N+1)
 	u_sol = np.zeros((N+1,))
 	for ij in range(1,N):
 		i_ind = ij - 1
-		# print(i_ind)
-		# print(len(x))
 		element = alphas[ij-1]*(lepoly(i_ind,x) + a*lepoly(i_ind+1,x) + b*lepoly(i_ind+2,x))
 		u_sol += element.T[0]
 	return u_sol

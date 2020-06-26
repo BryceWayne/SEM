@@ -31,11 +31,11 @@ class ResNet(nn.Module):
         self.n2 = nn.GroupNorm(1, self.filters)
         self.conv2 = conv1d(self.filters, self.filters, kernel_size=kernel_size, padding=padding)
         self.residual = nn.Sequential(
-            # self.n1,
-            # self.relu,
-            # self.conv1,
-            # self.n2,
-            # self.relu,
+            self.n1,
+            self.relu,
+            self.conv1,
+            self.n2,
+            self.relu,
             self.conv2)
         self.fc1 = nn.Linear(self.filters*(self.d_out + 2), self.d_out, bias=True)
     def forward(self, x):

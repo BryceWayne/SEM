@@ -4,17 +4,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 from pprint import pprint
-
+import subprocess
 
 class LGDataset():
     """Legendre-Galerkin Dataset."""
-    def __init__(self, pickle_file, shape=64, transform_f=None, transform_a=None, subsample=None):
+    def __init__(self, equation, pickle_file, shape=64, transform_f=None, transform_a=None, subsample=None):
         """
         Args:
             pickle_file (string): Path to the pkl file with annotations.
             root_dir (string): Directory with all the images.
         """
-        with open('./data/' + pickle_file + '.pkl', 'rb') as f:
+        with open(f'./data/{equation}/' + pickle_file + '.pkl', 'rb') as f:
             self.data = pickle.load(f)
             self.data = self.data[:,:]
         self.transform_f = transform_f
@@ -62,11 +62,15 @@ def normalize(pickle_file, dim):
     fst_moment = (f.shape[0] * fst_moment + sum_) / (f.shape[0] + f.shape[1])
     snd_moment = (f.shape[0] * snd_moment + sum_of_square) / (f.shape[0] + f.shape[1])
     return fst_moment.mean().item(), torch.sqrt(snd_moment - fst_moment ** 2).mean().item()
+
+
 def load_obj(name):
     with open('./data/' + name + '.pkl', 'rb') as f:
         data = pickle.load(f)
         data = data[:,:,0,:]
     return data
+
+    
 def show_solution(solution):
 	x, y = solution[0], solution[1]
 	plt.figure(1, figsize=(10,6))
@@ -87,3 +91,12 @@ def debug():
 	    show_solution([sample['x'], sample['u']])
 	    if i == 10:
 	        break
+
+
+def get_data(EQUATION, FILE, SHAPE, BATCH, D_out, EPSILON):
+    try:
+        data = LGDataset(equation=EQUATION, pickle_file=FILE, shape=SHAPE, subsample=D_out)
+    except:
+        subprocess.call(f'python create_train_data.py --equation {EQUATION} --size {BATCH} --N {SHAPE - 1} --eps {EPSILON}', shell=True)
+        data = LGDataset(equation=EQUATION, pickle_file=FILE, shape=SHAPE, subsample=D_out)
+    return data

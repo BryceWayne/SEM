@@ -66,16 +66,30 @@ def basis_xx(N, phi, Dxx):
 	return phi_xx.to(device)
 
 
+def basis_vectors(D_out):
+	xx = legslbndm(D_out)
+	lepolys = gen_lepolys(D_out, xx)
+	lepoly_x = dx(D_out, xx, lepolys)
+	lepoly_xx = dxx(D_out, xx, lepolys)
+	phi = basis(D_out, lepolys)
+	phi_x = basis_x(D_out, phi, lepoly_x)
+	phi_xx = basis_xx(D_out, phi_x, lepoly_xx)
+	return xx, lepolys, lepoly_x, lepoly_xx, phi, phi_x, phi_xx
+
+
 def reconstruct(alphas, phi):
 	B, i, j = alphas.shape
-	P = torch.zeros((B, j, j+2)).to(device)
+	P = torch.zeros((B, j, j+2), requires_grad=False).to(device)
 	P[:,:,:] = phi
 	T = torch.bmm(alphas,P)
 	return T
 
 
-def ODE2(eps, u, alphas, phi_x, phi_xx):
-	DE = reconstruct(alphas, -eps*phi_xx - phi_x)
+def ODE2(eps, u, alphas, phi_x, phi_xx, equation='Standard'):
+	if equation == 'Standard':
+		DE = reconstruct(alphas, -eps*phi_xx - phi_x)
+	elif equation == 'Burgers':
+		DE = reconstruct(alphas, -eps*phi_xx - u*phi_x)
 	return DE
 
 
