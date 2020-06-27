@@ -140,7 +140,7 @@ def loss_plot(losses, file, epoch, shape, ks, best_loss, path):
 	plt.close(1)
 	plt.figure(2, figsize=(10,6))
 	x = list(range(1, len(loss_a)+1))
-	plt.semilogy(x, loss_a, label='$\\hat{\\alpha}$')
+	# plt.semilogy(x, loss_a, label='$\\hat{\\alpha}$')
 	plt.semilogy(x, loss_u, label='$\\hat{u}$')
 	# plt.semilogy(x, loss_f, label='$\\hat{f}$')
 	plt.semilogy(x, loss_wf, label='Weak Form')
