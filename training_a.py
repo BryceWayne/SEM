@@ -29,11 +29,11 @@ torch.cuda.empty_cache()
 
 # ARGS
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--model", type=object, default=ResNet) #ResNet or NetA
+parser.add_argument("--model", type=object, default=NetA) #ResNet or NetA
 parser.add_argument("--equation", type=str, default='Burgers', choices=['Standard', 'Burgers'])
-parser.add_argument("--file", type=str, default='10000N31', help='Example: --file 2000N31')
-parser.add_argument("--batch", type=int, default=1000)
-parser.add_argument("--epochs", type=int, default=5000)
+parser.add_argument("--file", type=str, default='2000N31', help='Example: --file 2000N31')
+parser.add_argument("--batch", type=int, default=2000)
+parser.add_argument("--epochs", type=int, default=50000)
 parser.add_argument("--ks", type=int, default=5)
 parser.add_argument("--blocks", type=int, default=0)
 parser.add_argument("--filters", type=int, default=32)
@@ -122,6 +122,8 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			if torch.is_grad_enabled():
 				optimizer.zero_grad()
 			a_pred = model(f)
+			# ablation study **
+			# f -> u
 			assert a_pred.shape == a.shape
 			u_pred = reconstruct(a_pred, phi)
 			assert u_pred.shape == u.shape
@@ -130,8 +132,8 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			# assert f_pred.shape == f.shape
 			# LHS, RHS = weak_form1(EPSILON, SHAPE, f, u_pred, a_pred, lepolys, phi, phi_x)
 			LHS, RHS = weak_form2(EPSILON, SHAPE, f, u, a_pred, lepolys, phi, phi_x)
-			# loss_a = criterion_a(a_pred, a)
-			loss_a = 0
+			loss_a = criterion_a(a_pred, a)
+			# loss_a = 0
 			loss_u = criterion_u(u_pred, u)
 			loss_f = 0
 			# loss_f = 1E-6*criterion_f(f_pred, f)
@@ -150,21 +152,18 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 		loss_wf += np.round(float(loss_wf.to('cpu').detach()), 8)
 		loss_train += np.round(float(loss.to('cpu').detach()), 8)
 	loss_validate = validate(EQUATION, model, optimizer, EPSILON, SHAPE, FILTERS, criterion_a, criterion_u, criterion_f, criterion_wf, lepolys, phi, phi_x, phi_xx)
-	if type(loss_a) == int:
-		losses['loss_a'].append(loss_a) 
-	else:
-		losses['loss_a'].append(loss_a.item())
-	losses['loss_u'].append(loss_u.item())
+	losses['loss_a'].append(loss_a.item()/BATCH)
+	losses['loss_u'].append(loss_u.item()/BATCH)
 	if type(loss_f) == int:
-		losses['loss_f'].append(loss_f) 
+		losses['loss_f'].append(loss_f/BATCH) 
 	else:
-		losses['loss_f'].append(loss_f.item())
-	losses['loss_wf'].append(loss_wf.item())
-	losses['loss_train'].append(loss_train.item())
-	losses['loss_validate'].append(loss_validate.item())
+		losses['loss_f'].append(loss_f.item()/BATCH)
+	losses['loss_wf'].append(loss_wf.item()/BATCH)
+	losses['loss_train'].append(loss_train.item()/BATCH)
+	losses['loss_validate'].append(loss_validate.item()/BATCH)
 
 	if EPOCHS >= 10 and epoch % int(.1*EPOCHS) == 0:
-		print(f"\tLoss: {loss_train}")
+		print(f"\tLoss: {np.round(np.array(loss_train)/BATCH, 6)}")
 		f_pred = ODE2(EPSILON, u_pred, a_pred, phi_x, phi_xx)
 		plotter(xx, sample_batch, epoch, a=a_pred, u=u_pred, DE=f_pred, title=MODEL, ks=KERNEL_SIZE, path=PATH)
 	if loss_train < BEST_LOSS:

@@ -124,11 +124,12 @@ def loss_plot(losses, file, epoch, shape, ks, best_loss, path):
 	loss_wf = losses['loss_wf']
 	loss_train = losses['loss_train']
 	loss_validate = losses['loss_validate'] 
+	N = int(file.split('N')[0])
 
 	plt.figure(1, figsize=(10,6))
 	x = list(range(1, len(loss_a)+1))
-	plt.semilogy(x, loss_train, label='Train')
-	plt.semilogy(x, loss_validate, label='Validate')
+	plt.semilogy(x, np.array(loss_train)/N, label='Train')
+	plt.semilogy(x, np.array(loss_validate)/1000, label='Validate')
 	plt.xlabel('Epoch')
 	plt.xlim(1, epoch)
 	plt.grid(alpha=0.618)
@@ -140,10 +141,10 @@ def loss_plot(losses, file, epoch, shape, ks, best_loss, path):
 	plt.close(1)
 	plt.figure(2, figsize=(10,6))
 	x = list(range(1, len(loss_a)+1))
-	# plt.semilogy(x, loss_a, label='$\\hat{\\alpha}$')
-	plt.semilogy(x, loss_u, label='$\\hat{u}$')
+	plt.semilogy(x, np.array(loss_a)/N, label='$\\hat{\\alpha}$')
+	plt.semilogy(x, np.array(loss_u)/N, label='$\\hat{u}$')
 	# plt.semilogy(x, loss_f, label='$\\hat{f}$')
-	plt.semilogy(x, loss_wf, label='Weak Form')
+	plt.semilogy(x, np.array(loss_wf)/N, label='Weak Form')
 	plt.xlabel('Epoch')
 	plt.xlim(1, epoch)
 	plt.grid(alpha=0.618)

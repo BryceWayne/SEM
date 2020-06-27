@@ -113,13 +113,13 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 			iterations = 0
 			# print(u_old.shape, force.shape, D.shape)
 			while error > tolerance:
-				f_ = force - u_old*(D@u_old)
-				# print(f_.shape)
+				f = force - u_old*(D@u_old)
+				# print(f.shape)
 				g = np.zeros((N+1,))
 				for i in range(1,N+1):
 					k = i-1
-					g[k] = (2*k+1)/(N*(N+1))*np.sum(f_*(lepolys[k])/(lepolys[N]**2))
-				g[N-1] = 1/(N+1)*np.sum(f_/lepolys[N])
+					g[k] = (2*k+1)/(N*(N+1))*np.sum(f*(lepolys[k])/(lepolys[N]**2))
+				g[N-1] = 1/(N+1)*np.sum(f/lepolys[N])
 
 				bar_f = np.zeros((N-1,))
 				for i in range(1,N):
@@ -140,13 +140,13 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 				iterations += 1
 			# print(f"Number of Iterations: {iterations}")
 			u = u_sol
-			cummulative_error = 0
-			for l in range(5):
-				diffusion = -epsilon*(4*l+6)*(-1)*alphas[l+1]
-				temp = 0.5*u**2*(lepolys[l] + a*lepolys[l+1] + b*lepolys[l+2])
-				convection = np.sum(2*temp/(N*(N+1))/lepolys[N]**2)
-				rhs = np.sum(2*f*(lepolys[l] + a*lepolys[l+1] + b*lepolys[l+2])/(N*(N+1))/(lepolys[N]**2))
-				cummulative_error += np.abs(diffusion - convection - rhs)
+			# cummulative_error = 0
+			# for l in range(5):
+			# 	diffusion = -epsilon*(4*l+6)*(-1)*alphas[l+1]
+			# 	temp = 0.5*u**2*(lepolys[l] + a*lepolys[l+1] + b*lepolys[l+2])
+			# 	convection = np.sum(2*temp/(N*(N+1))/lepolys[N]**2)
+			# 	rhs = np.sum(2*f*(lepolys[l] + a*lepolys[l+1] + b*lepolys[l+2])/(N*(N+1))/(lepolys[N]**2))
+			# 	cummulative_error += np.abs(diffusion - convection - rhs)
 			# print(f"Cummulative Error: {cummulative_error}")
 			# import matplotlib.pyplot as plt
 			# plt.figure(figsize=(10,6))
