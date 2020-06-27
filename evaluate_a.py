@@ -86,7 +86,7 @@ def model_metrics(equation, input_model, file_name, ks, path, epsilon, filters, 
 		a = Variable(sample_batch['a']).to(device)
 		a_pred = model(f)
 		u_pred = reconstruct(a_pred, phi)
-		f_pred = ODE2(1E-1, u_pred, a_pred, phi_x, phi_xx)
+		f_pred = ODE2(epsilon, u_pred, a_pred, phi_x, phi_xx, equation=EQUATION)
 		a_pred = a_pred.to('cpu').detach().numpy()
 		u_pred = u_pred.to('cpu').detach().numpy()
 		f_pred = f_pred.to('cpu').detach().numpy()
