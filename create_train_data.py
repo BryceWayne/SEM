@@ -140,18 +140,20 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 				iterations += 1
 			# print(f"Number of Iterations: {iterations}")
 			u = u_sol
+
 			# cummulative_error = 0
 			# for l in range(5):
-			# 	diffusion = -epsilon*(4*l+6)*(-1)*alphas[l+1]
-			# 	temp = 0.5*u**2*(lepolys[l] + a*lepolys[l+1] + b*lepolys[l+2])
+			# 	diffusion = -epsilon*(4*l+6)*(-1)*alphas[l]
+			# 	temp = 0.5*u**2*D@(lepolys[l] + a*lepolys[l+1] + b*lepolys[l+2])
 			# 	convection = np.sum(2*temp/(N*(N+1))/lepolys[N]**2)
-			# 	rhs = np.sum(2*f*(lepolys[l] + a*lepolys[l+1] + b*lepolys[l+2])/(N*(N+1))/(lepolys[N]**2))
+			# 	rhs = np.sum(2*force*(lepolys[l] + a*lepolys[l+1] + b*lepolys[l+2])/(N*(N+1))/(lepolys[N]**2))
 			# 	cummulative_error += np.abs(diffusion - convection - rhs)
 			# print(f"Cummulative Error: {cummulative_error}")
+			
 			# import matplotlib.pyplot as plt
 			# plt.figure(figsize=(10,6))
 			# plt.plot(x, u, label='$u$')
-			# plt.plot(x, f, label='$f$')
+			# plt.plot(x, f_, label='$f$')
 			# plt.legend(shadow=True)
 			# plt.xlim(-1, 1)
 			# plt.grid(alpha=0.618)
