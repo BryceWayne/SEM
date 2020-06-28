@@ -134,7 +134,7 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			u_pred = reconstruct(a_pred, phi)
 			assert u_pred.shape == u.shape
 			f_pred = None
-			# f_pred = ODE2(EPSILON, u_pred, a_pred, phi_x, phi_xx)
+			# f_pred = ODE2(EPSILON, u_pred, a_pred, phi_x, phi_xx, equation=EQUATION)
 			# assert f_pred.shape == f.shape
 			# LHS, RHS = weak_form1(EPSILON, SHAPE, f, u_pred, a_pred, lepolys, phi, phi_x)
 			LHS, RHS = weak_form2(EPSILON, SHAPE, f, u, a_pred, lepolys, phi, phi_x, equation=EQUATION)
