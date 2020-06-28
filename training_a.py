@@ -36,7 +36,7 @@ parser.add_argument("--model", type=str, default='NetA', choices=['ResNet', 'Net
 parser.add_argument("--equation", type=str, default='Burgers', choices=['Standard', 'Burgers'])
 parser.add_argument("--file", type=str, default='50000N31', help='Example: --file 2000N31')
 parser.add_argument("--batch", type=int, default=1000)
-parser.add_argument("--epochs", type=int, default=1)
+parser.add_argument("--epochs", type=int, default=10)
 parser.add_argument("--ks", type=int, default=5)
 parser.add_argument("--blocks", type=int, default=0)
 parser.add_argument("--filters", type=int, default=32)
@@ -165,16 +165,16 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 	else:
 		losses['loss_f'].append(loss_f.item()/BATCH)
 	losses['loss_wf'].append(loss_wf.item()/BATCH)
-	losses['loss_train'].append(loss_train.item()/BATCH)
-	losses['loss_validate'].append(loss_validate.item()/BATCH)
+	losses['loss_train'].append(loss_train.item())
+	losses['loss_validate'].append(loss_validate.item())
 
 	if EPOCHS >= 10 and epoch % int(.1*EPOCHS) == 0:
-		print(f"\tLoss: {np.round(np.array(loss_train)/BATCH, 6)}")
+		print(f"\tLoss: {np.round(np.array(loss_train), 6)}")
 		f_pred = ODE2(EPSILON, u_pred, a_pred, phi_x, phi_xx, equation=EQUATION)
 		plotter(xx, sample_batch, epoch, a=a_pred, u=u_pred, DE=f_pred, title=args.model, ks=KERNEL_SIZE, path=PATH)
 	if loss_train < BEST_LOSS:
 		torch.save(model.state_dict(), PATH + '/model.pt')
-		BEST_LOSS = loss_train/BATCH
+		BEST_LOSS = loss_train
 	if np.isnan(loss_train):
 		gc.collect()
 		torch.cuda.empty_cache()
