@@ -113,13 +113,13 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 			iterations = 0
 			# print(u_old.shape, force.shape, D.shape)
 			while error > tolerance:
-				f = force - u_old*(D@u_old)
+				f_ = force - u_old*(D@u_old)
 				# print(f.shape)
 				g = np.zeros((N+1,))
 				for i in range(1,N+1):
 					k = i-1
-					g[k] = (2*k+1)/(N*(N+1))*np.sum(f*(lepolys[k])/(lepolys[N]**2))
-				g[N-1] = 1/(N+1)*np.sum(f/lepolys[N])
+					g[k] = (2*k+1)/(N*(N+1))*np.sum(f_*(lepolys[k])/(lepolys[N]**2))
+				g[N-1] = 1/(N+1)*np.sum(f_/lepolys[N])
 
 				bar_f = np.zeros((N-1,))
 				for i in range(1,N):
@@ -151,13 +151,12 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 			# import matplotlib.pyplot as plt
 			# plt.figure(figsize=(10,6))
 			# plt.plot(x, u, label='$u$')
-			# plt.plot(np.linspace(-1,1, len(f), endpoint=True), f, label='$f$')
+			# plt.plot(x, f, label='$f$')
 			# plt.legend(shadow=True)
 			# plt.xlim(-1, 1)
 			# plt.grid(alpha=0.618)
 			# plt.show()
-			# if cummulative_error == np.inf or type(cummulative_error) != float:
-			# 	exit()
+			# exit()
 			return u, f, alphas, params
 
 	def loop(N, epsilon, size, lepolys, eps_flag, equation):

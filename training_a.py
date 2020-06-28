@@ -1,19 +1,22 @@
 #training.py
 import random
 import torch
+import time
+import datetime
+import subprocess
+import os
+import LG_1d
+import argparse
+import gc
 import torch.nn as nn
 from torch.autograd import Variable
 from torchvision import transforms
-import numpy as np
 import matplotlib.pyplot as plt
-from tqdm import tqdm
-import LG_1d
-import argparse
-import scipy as sp
 from scipy.sparse import diags
+from tqdm import tqdm
+import numpy as np
+import scipy as sp
 import pandas as pd
-import time, datetime
-import subprocess, os, gc
 from net.data_loader import *
 from net.network import *
 from sem.sem import *
@@ -29,13 +32,13 @@ torch.cuda.empty_cache()
 
 # ARGS
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--model", type=str, default='ResNet', choices=['ResNet', 'NetA']) #ResNet or NetA
+parser.add_argument("--model", type=str, default='NetA', choices=['ResNet', 'NetA']) #ResNet or NetA
 parser.add_argument("--equation", type=str, default='Burgers', choices=['Standard', 'Burgers'])
-parser.add_argument("--file", type=str, default='20000N31', help='Example: --file 2000N31')
-parser.add_argument("--batch", type=int, default=5000)
-parser.add_argument("--epochs", type=int, default=10000)
+parser.add_argument("--file", type=str, default='50000N31', help='Example: --file 2000N31')
+parser.add_argument("--batch", type=int, default=1000)
+parser.add_argument("--epochs", type=int, default=1)
 parser.add_argument("--ks", type=int, default=5)
-parser.add_argument("--blocks", type=int, default=1)
+parser.add_argument("--blocks", type=int, default=0)
 parser.add_argument("--filters", type=int, default=32)
 parser.add_argument("--data", type=bool, default=True)
 args = parser.parse_args()
