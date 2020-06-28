@@ -29,20 +29,23 @@ torch.cuda.empty_cache()
 
 # ARGS
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--model", type=object, default=NetA) #ResNet or NetA
+parser.add_argument("--model", type=str, default='ResNet', choices=['ResNet', 'NetA']) #ResNet or NetA
 parser.add_argument("--equation", type=str, default='Burgers', choices=['Standard', 'Burgers'])
-parser.add_argument("--file", type=str, default='2000N31', help='Example: --file 2000N31')
-parser.add_argument("--batch", type=int, default=2000)
-parser.add_argument("--epochs", type=int, default=50000)
+parser.add_argument("--file", type=str, default='20000N31', help='Example: --file 2000N31')
+parser.add_argument("--batch", type=int, default=5000)
+parser.add_argument("--epochs", type=int, default=10000)
 parser.add_argument("--ks", type=int, default=5)
-parser.add_argument("--blocks", type=int, default=0)
+parser.add_argument("--blocks", type=int, default=1)
 parser.add_argument("--filters", type=int, default=32)
 parser.add_argument("--data", type=bool, default=True)
 args = parser.parse_args()
 
 
 # VARIABLES
-MODEL = args.model
+if args.model == 'ResNet':
+	MODEL = ResNet
+elif args.model == 'NetA':
+	MODEL = NetA
 EQUATION = args.equation
 DATA = args.data
 KERNEL_SIZE = args.ks
@@ -51,7 +54,7 @@ FILE = args.file
 BATCH = int(args.file.split('N')[0])
 SHAPE = int(args.file.split('N')[1]) + 1
 FILTERS = args.filters
-N, D_in, Filters, D_out = BATCH, 1, FILTERS, SHAPE
+N, D_in, Filters, D_out = args.batch, 1, FILTERS, SHAPE
 EPOCHS = args.epochs
 cur_time = str(datetime.datetime.now()).replace(' ', 'T')
 cur_time = cur_time.replace(':','').split('.')[0].replace('-','')
@@ -165,7 +168,7 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 	if EPOCHS >= 10 and epoch % int(.1*EPOCHS) == 0:
 		print(f"\tLoss: {np.round(np.array(loss_train)/BATCH, 6)}")
 		f_pred = ODE2(EPSILON, u_pred, a_pred, phi_x, phi_xx, equation=EQUATION)
-		plotter(xx, sample_batch, epoch, a=a_pred, u=u_pred, DE=f_pred, title=MODEL, ks=KERNEL_SIZE, path=PATH)
+		plotter(xx, sample_batch, epoch, a=a_pred, u=u_pred, DE=f_pred, title=args.model, ks=KERNEL_SIZE, path=PATH)
 	if loss_train < BEST_LOSS:
 		torch.save(model.state_dict(), PATH + '/model.pt')
 		BEST_LOSS = loss_train/BATCH

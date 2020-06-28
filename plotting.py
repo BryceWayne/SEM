@@ -29,7 +29,8 @@ def plotter(xx, sample, epoch, a=None, u=None, DE=None, title='alpha', ks=7, pat
 		l2_error_a = relative_l2(ahat, aa)
 		linf_error_a = relative_linf(ahat, aa)
 		plt.figure(1, figsize=(10,6))
-		plt.title(f'$\\alpha$ Example Epoch {epoch}\n'\
+		plt.title(f'Model: {title}\n'\
+				  f'$\\alpha$ Example Epoch {epoch}\n'\
 			      f'$\\alpha$ MAE Error: {np.round(mae_error_a, 6)}\n'\
 			      f'$\\alpha$ Rel. $L_2$ Error: {np.round(float(l2_error_a), 6)}\n'\
 			      f'$\\alpha$ Rel. $L_\\infty$ Error: {np.round(float(linf_error_a), 6)}')
@@ -59,7 +60,8 @@ def plotter(xx, sample, epoch, a=None, u=None, DE=None, title='alpha', ks=7, pat
 		l2_error_u = relative_l2(uhat, uu)
 		linf_error_u = relative_linf(uhat, uu)
 		plt.figure(2, figsize=(10,6))
-		plt.title(f'$u$ Example Epoch {epoch}\n'\
+		plt.title(f'Model: {title}\n'\
+				  f'$u$ Example Epoch {epoch}\n'\
 			      f'$u$ MAE Error: {np.round(mae_error_u, 6)}\n'\
 			      f'$u$ Rel. $L_2$ Error: {np.round(float(l2_error_u), 6)}\n'\
 			      f'$u$ Rel. $L_\\infty$ Error: {np.round(float(linf_error_u), 6)}')
@@ -90,7 +92,8 @@ def plotter(xx, sample, epoch, a=None, u=None, DE=None, title='alpha', ks=7, pat
 		mae_error_de = mae(de, ff)
 		l2_error_de = relative_l2(de, ff)
 		linf_error_de = relative_linf(de, ff)
-		plt.title(f'$f$ Example Epoch {epoch}\n'\
+		plt.title(f'Model: {title}\n'\
+				  f'$f$ Example Epoch {epoch}\n'\
 			      f'$f$ MAE Error: {np.round(mae_error_de, 6)}\n'\
 			      f'$f$ Rel. $L_2$ Error: {np.round(float(l2_error_de), 6)}\n'\
 			      f'$f$ Rel. $L_\\infty$ Error: {np.round(float(linf_error_de), 6)}')
@@ -123,13 +126,13 @@ def loss_plot(losses, file, epoch, shape, ks, best_loss, path):
 	loss_f = losses['loss_f']
 	loss_wf = losses['loss_wf']
 	loss_train = losses['loss_train']
-	loss_validate = losses['loss_validate'] 
+	loss_validate = losses['loss_validate']
 	N = int(file.split('N')[0])
 
 	plt.figure(1, figsize=(10,6))
 	x = list(range(1, len(loss_a)+1))
-	plt.semilogy(x, np.array(loss_train)/N, label='Train')
-	plt.semilogy(x, np.array(loss_validate)/1000, label='Validate')
+	plt.semilogy(x, np.array(loss_train), label='Train')
+	plt.semilogy(x, np.array(loss_validate), label='Validate')
 	plt.xlabel('Epoch')
 	plt.xlim(1, epoch)
 	plt.grid(alpha=0.618)
@@ -141,10 +144,10 @@ def loss_plot(losses, file, epoch, shape, ks, best_loss, path):
 	plt.close(1)
 	plt.figure(2, figsize=(10,6))
 	x = list(range(1, len(loss_a)+1))
-	plt.semilogy(x, np.array(loss_a)/N, label='$\\hat{\\alpha}$')
-	plt.semilogy(x, np.array(loss_u)/N, label='$\\hat{u}$')
+	plt.semilogy(x, np.array(loss_a), label='$\\hat{\\alpha}$')
+	plt.semilogy(x, np.array(loss_u), label='$\\hat{u}$')
 	# plt.semilogy(x, loss_f, label='$\\hat{f}$')
-	plt.semilogy(x, np.array(loss_wf)/N, label='Weak Form')
+	plt.semilogy(x, np.array(loss_wf), label='Weak Form')
 	plt.xlabel('Epoch')
 	plt.xlim(1, epoch)
 	plt.grid(alpha=0.618)
@@ -159,6 +162,7 @@ def loss_plot(losses, file, epoch, shape, ks, best_loss, path):
 def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path):
 	PATH = path
 	SHAPE = shape
+	EQUATION = equation
 	xx = legslbndm(SHAPE-2)
 	ahat = a_pred[0,0,:]
 	ff = sample_batch['f'][0,0,:].to('cpu').detach().numpy()

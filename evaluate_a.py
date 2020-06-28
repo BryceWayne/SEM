@@ -51,12 +51,13 @@ def validate(equation, model, optim, epsilon, shape, filters, criterion_a, crite
 			return np.round(float(loss.to('cpu').detach()), 8)
 		loss += closure(f, a, u)
 	optim.zero_grad()
-	return loss
+	return loss/1000
 
 
 def model_metrics(equation, input_model, file_name, ks, path, epsilon, filters, blocks):
 	device = get_device()
 	EQUATION = equation
+	EPSILON = epsilon
 	INPUT = file_name
 	FILE = '1000N' + INPUT.split('N')[1]
 	PATH = path
@@ -76,7 +77,7 @@ def model_metrics(equation, input_model, file_name, ks, path, epsilon, filters, 
 
 	if FILE.split('N')[1] != INPUT.split('N')[1]:
 		FILE = '1000N' + INPUT.split('N')[1]
-	test_data = get_data(EQUATION, FILE, SHAPE, BATCH, D_out, epsilon)
+	test_data = get_data(EQUATION, FILE, SHAPE, BATCH, D_out, EPSILON)
 	testloader = torch.utils.data.DataLoader(test_data, batch_size=N, shuffle=False)
 
 	running_MAE_a, running_MAE_u, running_MSE_a, running_MSE_u, running_MinfE_a, running_MinfE_u = 0, 0, 0, 0, 0, 0
@@ -86,7 +87,7 @@ def model_metrics(equation, input_model, file_name, ks, path, epsilon, filters, 
 		a = Variable(sample_batch['a']).to(device)
 		a_pred = model(f)
 		u_pred = reconstruct(a_pred, phi)
-		f_pred = ODE2(epsilon, u_pred, a_pred, phi_x, phi_xx, equation=EQUATION)
+		f_pred = ODE2(EPSILON, u_pred, a_pred, phi_x, phi_xx, equation=EQUATION)
 		a_pred = a_pred.to('cpu').detach().numpy()
 		u_pred = u_pred.to('cpu').detach().numpy()
 		f_pred = f_pred.to('cpu').detach().numpy()
