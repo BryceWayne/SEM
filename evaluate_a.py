@@ -41,7 +41,7 @@ def validate(equation, model, optim, epsilon, shape, filters, criterion_a, crite
 			u_pred = reconstruct(a_pred, phi)
 			# f_pred = ODE2(epsilon, u_pred, a_pred, phi_x, phi_xx)
 			# LHS, RHS = weak_form1(epsilon, shape, f, u_pred, a_pred, lepolys, phi, phi_x)
-			LHS, RHS = weak_form2(epsilon, shape, f, u, a_pred, lepolys, phi, phi_x)
+			LHS, RHS = weak_form2(epsilon, shape, f, u, a_pred, lepolys, phi, phi_x, equation=EQUATION)
 			loss_a = criterion_a(a_pred, a)
 			loss_u = criterion_u(u_pred, u)
 			# lossf = criterion_f(f_pred, f)
