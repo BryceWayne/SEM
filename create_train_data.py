@@ -159,7 +159,7 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 			# plt.grid(alpha=0.618)
 			# plt.show()
 			# exit()
-			return u, f_, alphas, params
+			return u, f, alphas, params
 
 	def loop(N, epsilon, size, lepolys, eps_flag, equation):
 		if eps_flag == True:
