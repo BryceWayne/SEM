@@ -32,11 +32,11 @@ torch.cuda.empty_cache()
 
 # ARGS
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--model", type=str, default='NetA', choices=['ResNet', 'NetA']) #ResNet or NetA
+parser.add_argument("--model", type=str, default='ResNet', choices=['ResNet', 'NetA']) #ResNet or NetA
 parser.add_argument("--equation", type=str, default='Burgers', choices=['Standard', 'Burgers'])
 parser.add_argument("--file", type=str, default='200N31', help='Example: --file 2000N31')
 parser.add_argument("--batch", type=int, default=200)
-parser.add_argument("--epochs", type=int, default=10000)
+parser.add_argument("--epochs", type=int, default=1000)
 parser.add_argument("--ks", type=int, default=5)
 parser.add_argument("--blocks", type=int, default=0)
 parser.add_argument("--filters", type=int, default=32)
@@ -143,7 +143,8 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			loss_u = criterion_u(u_pred, u)
 			loss_f = 0
 			# loss_f = 1E-6*criterion_f(f_pred, f)
-			loss_wf = 1E1*criterion_wf(LHS, RHS)
+			# loss_wf = 1E1*criterion_wf(LHS, RHS)
+			loss_wf = 0
 			loss = loss_a + loss_u + loss_f + loss_wf	
 			if loss.requires_grad:
 				loss.backward()
@@ -155,7 +156,8 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 		loss_u += np.round(float(loss_u.to('cpu').detach()), 8)
 		if loss_f != 0:
 			loss_f += np.round(float(loss_f.to('cpu').detach()), 8)
-		loss_wf += np.round(float(loss_wf.to('cpu').detach()), 8)
+		if loss_wf != 0:
+			loss_wf += np.round(float(loss_wf.to('cpu').detach()), 8)
 		loss_train += np.round(float(loss.to('cpu').detach()), 8)
 	loss_validate = validate(EQUATION, model, optimizer, EPSILON, SHAPE, FILTERS, criterion_a, criterion_u, criterion_f, criterion_wf, lepolys, phi, phi_x, phi_xx)
 	losses['loss_a'].append(loss_a.item()/BATCH)
@@ -164,13 +166,17 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 		losses['loss_f'].append(loss_f/BATCH) 
 	else:
 		losses['loss_f'].append(loss_f.item()/BATCH)
-	losses['loss_wf'].append(loss_wf.item()/BATCH)
+	if type(loss_wf) == int:
+		losses['loss_wf'].append(loss_wf/BATCH) 
+	else:
+		losses['loss_wf'].append(loss_f.item()/BATCH)
 	losses['loss_train'].append(loss_train.item()/BATCH)
 	losses['loss_validate'].append(loss_validate.item()/1000)
 
 	if EPOCHS >= 10 and epoch % int(.1*EPOCHS) == 0:
 		print(f"\tLoss: {np.round(np.array(loss_train), 6)}")
-		f_pred = ODE2(EPSILON, u_pred, a_pred, phi_x, phi_xx, equation=EQUATION)
+		# f_pred = ODE2(EPSILON, u_pred, a_pred, phi_x, phi_xx, equation=EQUATION)
+		f_pred=None
 		plotter(xx, sample_batch, epoch, a=a_pred, u=u_pred, DE=f_pred, title=args.model, ks=KERNEL_SIZE, path=PATH)
 	if loss_train < BEST_LOSS:
 		torch.save(model.state_dict(), PATH + '/model.pt')

@@ -147,7 +147,7 @@ def loss_plot(losses, file, epoch, shape, ks, best_loss, path):
 	plt.semilogy(x, np.array(loss_a), label='$\\hat{\\alpha}$')
 	plt.semilogy(x, np.array(loss_u), label='$\\hat{u}$')
 	# plt.semilogy(x, loss_f, label='$\\hat{f}$')
-	plt.semilogy(x, np.array(loss_wf), label='Weak Form')
+	# plt.semilogy(x, np.array(loss_wf), label='Weak Form')
 	plt.xlabel('Epoch')
 	plt.xlim(1, epoch)
 	plt.grid(alpha=0.618)
