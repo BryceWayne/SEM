@@ -33,10 +33,10 @@ torch.cuda.empty_cache()
 # ARGS
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--model", type=str, default='ResNet', choices=['ResNet', 'NetA']) #ResNet or NetA
-parser.add_argument("--equation", type=str, default='Burgers', choices=['Standard', 'Burgers'])
+parser.add_argument("--equation", type=str, default='Standard', choices=['Standard', 'Burgers'])
 parser.add_argument("--file", type=str, default='200N31', help='Example: --file 2000N31')
 parser.add_argument("--batch", type=int, default=200)
-parser.add_argument("--epochs", type=int, default=1000)
+parser.add_argument("--epochs", type=int, default=10000)
 parser.add_argument("--ks", type=int, default=5)
 parser.add_argument("--blocks", type=int, default=0)
 parser.add_argument("--filters", type=int, default=32)
