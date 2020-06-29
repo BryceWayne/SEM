@@ -32,11 +32,11 @@ torch.cuda.empty_cache()
 
 # ARGS
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--model", type=str, default='ResNet', choices=['ResNet', 'NetA']) #ResNet or NetA
+parser.add_argument("--model", type=str, default='NetA', choices=['ResNet', 'NetA']) #ResNet or NetA
 parser.add_argument("--equation", type=str, default='Burgers', choices=['Standard', 'Burgers'])
-parser.add_argument("--file", type=str, default='700N31', help='Example: --file 2000N31')
-parser.add_argument("--batch", type=int, default=700)
-parser.add_argument("--epochs", type=int, default=10)
+parser.add_argument("--file", type=str, default='200N31', help='Example: --file 2000N31')
+parser.add_argument("--batch", type=int, default=200)
+parser.add_argument("--epochs", type=int, default=10000)
 parser.add_argument("--ks", type=int, default=5)
 parser.add_argument("--blocks", type=int, default=0)
 parser.add_argument("--filters", type=int, default=32)
@@ -166,7 +166,7 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 		losses['loss_f'].append(loss_f.item()/BATCH)
 	losses['loss_wf'].append(loss_wf.item()/BATCH)
 	losses['loss_train'].append(loss_train.item()/BATCH)
-	losses['loss_validate'].append(loss_validate.item())
+	losses['loss_validate'].append(loss_validate.item()/1000)
 
 	if EPOCHS >= 10 and epoch % int(.1*EPOCHS) == 0:
 		print(f"\tLoss: {np.round(np.array(loss_train), 6)}")

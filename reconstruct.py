@@ -89,7 +89,7 @@ def ODE2(eps, u, alphas, phi_x, phi_xx, equation='Standard'):
 	if equation == 'Standard':
 		DE = reconstruct(alphas, -eps*phi_xx - phi_x)
 	elif equation == 'Burgers':
-		DE = reconstruct(alphas, -eps*phi_xx + u*phi_x)
+		DE = reconstruct(alphas, -eps*phi_xx - u*phi_x)
 	return DE
 
 
@@ -117,6 +117,6 @@ def weak_form2(eps, N, f, u, alphas, lepolys, phi, phi_x, equation='Standard'):
 		RHS = torch.sum(3*f*phi[:,0]/(N*(N+1))/denom, axis=2)
 	elif equation == 'Burgers':
 		convection = torch.sum(u**2*phi_x[:,0]/(N*(N+1))/denom, axis=2)
-		LHS = torch.abs(diffusion - convection)
+		LHS = torch.abs(diffusion - convection) #  
 		RHS = torch.sum(2*f*phi[:,0]/(N*(N+1))/denom, axis=2)
 	return LHS, RHS

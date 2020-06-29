@@ -51,7 +51,7 @@ def validate(equation, model, optim, epsilon, shape, filters, criterion_a, crite
 			return np.round(float(loss.to('cpu').detach()), 8)
 		loss += closure(f, a, u)
 	optim.zero_grad()
-	return loss/1000
+	return loss
 
 
 def model_metrics(equation, input_model, file_name, ks, path, epsilon, filters, blocks):
