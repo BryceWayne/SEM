@@ -201,7 +201,7 @@ params = {
 	'LOSS': BEST_LOSS,
 	'AVG_ITER': AVG_ITER,
 	'LOSSES': losses,
-	'LOSS_TYPE': LOSS_TYPE
+	'LOSS TYPE': LOSS_TYPE
 }
 
 log_data(**params)
