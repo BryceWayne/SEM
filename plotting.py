@@ -171,7 +171,9 @@ def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path):
 	l2_error_a = relative_l2(ahat, aa)
 	linf_error_a = relative_linf(ahat, aa)
 	plt.figure(1, figsize=(10,6))
-	plt.title(f'Out of Sample Example\nMAE Error: {np.round(float(mae_error_a), 6)}\nRel. $L_2$ Error: {np.round(float(l2_error_a), 6)}\nRel. $L_\\infty$ Error: {np.round(float(linf_error_a), 6)}')
+	plt.title(f'Out of Sample Example\nMAE Error: {np.round(float(mae_error_a), 6)}\n'\
+			  f'Rel. $L_2$ Error: {np.round(float(l2_error_a), 6)}\n'\
+			  f'Rel. $L_\\infty$ Error: {np.round(float(linf_error_a), 6)}')
 	plt.plot(xx, aa, 'ro-', label='$\\alpha$')
 	plt.plot(xx, ahat, 'bo', mfc='none', label='$\\hat{\\alpha}$')
 	xx_ = np.linspace(-1,1, len(xx)+2, endpoint=True)
@@ -205,7 +207,10 @@ def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path):
 	linf_error_u = relative_linf(uhat, uu)
 	xx = legslbndm(SHAPE)
 	plt.figure(2, figsize=(10,6))
-	plt.title(f'Out of Sample Example\nMAE Error: {np.round(float(mae_error_u), 6)}\nRel. $L_2$ Error: {np.round(float(l2_error_u), 6)}\nRel. $L_\\infty$ Error: {np.round(float(linf_error_u), 6)}')
+	plt.title(f'Out of Sample Example\n'\
+			  f'MAE Error: {np.round(float(mae_error_u), 6)}\n'\
+			  f'Rel. $L_2$ Error: {np.round(float(l2_error_u), 6)}\n'\
+			  f'Rel. $L_\\infty$ Error: {np.round(float(linf_error_u), 6)}')
 	plt.plot(xx, uu, 'ro-', label='$u$')
 	plt.plot(xx, uhat, 'bo', mfc='none', label='$\\hat{u}$')
 	plt.xlim(-1,1)
@@ -233,7 +238,10 @@ def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path):
 	mae_error_f = mae(f_pred, ff)
 	l2_error_f = relative_l2(f_pred, ff)
 	linf_error_f = relative_linf(f_pred, ff)
-	plt.title(f'Out of Sample Example\nMAE Error: {np.round(float(mae_error_f), 6)}\nRel. $L_2$ Error: {np.round(float(l2_error_f), 6)}\nRel. $L_\\infty$ Error: {np.round(float(linf_error_f), 6)}')
+	plt.title(f'Out of Sample Example\n'\
+			  f'MAE Error: {np.round(float(mae_error_f), 6)}\n'\
+			  f'Rel. $L_2$ Error: {np.round(float(l2_error_f), 6)}\n'\
+			  f'Rel. $L_\\infty$ Error: {np.round(float(linf_error_f), 6)}')
 	plt.plot(xx, ff, 'ro-', label='$f$')
 	plt.plot(xx, f_pred, 'bo', mfc='none', label='ODE')
 	plt.xlim(-1,1)
