@@ -105,13 +105,13 @@ model.to(device)
 
 
 # Construct our loss function and an Optimizer.
-# criterion_a = torch.nn.L1Loss()
-criterion_a = torch.nn.MSELoss(reduction="sum")
-# criterion_u = torch.nn.L1Loss()
-criterion_u = torch.nn.MSELoss(reduction="sum")
+criterion_a = torch.nn.L1Loss()
+# criterion_a = torch.nn.MSELoss(reduction="sum")
+criterion_u = torch.nn.L1Loss()
+# criterion_u = torch.nn.MSELoss(reduction="sum")
 criterion_f = torch.nn.MSELoss(reduction="sum")
-# criterion_wf = torch.nn.L1Loss()
-criterion_wf = torch.nn.MSELoss(reduction="sum")
+criterion_wf = torch.nn.L1Loss()
+# criterion_wf = torch.nn.MSELoss(reduction="sum")
 optimizer = torch.optim.LBFGS(model.parameters(), history_size=10, tolerance_grad=1e-15, tolerance_change=1e-15, max_eval=10)
 # optimizer = torch.optim.SGD(model.parameters(), lr=1E-8)
 
@@ -143,8 +143,8 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			loss_u = criterion_u(u_pred, u)
 			loss_f = 0
 			# loss_f = 1E-6*criterion_f(f_pred, f)
-			# loss_wf = 1E1*criterion_wf(LHS, RHS)
-			loss_wf = 0
+			loss_wf = 1E1*criterion_wf(LHS, RHS)
+			# loss_wf = 0
 			loss = loss_a + loss_u + loss_f + loss_wf	
 			if loss.requires_grad:
 				loss.backward()
@@ -169,14 +169,14 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 	if type(loss_wf) == int:
 		losses['loss_wf'].append(loss_wf/BATCH) 
 	else:
-		losses['loss_wf'].append(loss_f.item()/BATCH)
+		losses['loss_wf'].append(loss_wf.item()/BATCH)
 	losses['loss_train'].append(loss_train.item()/BATCH)
 	losses['loss_validate'].append(loss_validate.item()/1000)
 
 	if EPOCHS >= 10 and epoch % int(.1*EPOCHS) == 0:
-		print(f"\tLoss: {np.round(np.array(loss_train), 6)}")
-		# f_pred = ODE2(EPSILON, u_pred, a_pred, phi_x, phi_xx, equation=EQUATION)
-		f_pred=None
+		print(f"\tT. Loss: {np.round(losses['loss_train'][-1], 6)}, V. Loss: {np.round(losses['loss_validate'][-1], 6)}")
+		f_pred = ODE2(EPSILON, u_pred, a_pred, phi_x, phi_xx, equation=EQUATION)
+		# f_pred=None
 		plotter(xx, sample_batch, epoch, a=a_pred, u=u_pred, DE=f_pred, title=args.model, ks=KERNEL_SIZE, path=PATH)
 	if loss_train < BEST_LOSS:
 		torch.save(model.state_dict(), PATH + '/model.pt')
