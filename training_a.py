@@ -33,13 +33,13 @@ torch.cuda.empty_cache()
 
 # ARGS
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--model", type=str, default='ResNet', choices=['ResNet', 'NetA']) #ResNet or NetA
+parser.add_argument("--model", type=str, default='NetA', choices=['ResNet', 'NetA']) #ResNet or NetA
 parser.add_argument("--equation", type=str, default='Burgers', choices=['Standard', 'Burgers'])
 parser.add_argument("--file", type=str, default='5000N31', help='Example: --file 2000N31')
 parser.add_argument("--batch", type=int, default=5000)
 parser.add_argument("--epochs", type=int, default=1000)
 parser.add_argument("--ks", type=int, default=5)
-parser.add_argument("--blocks", type=int, default=1)
+parser.add_argument("--blocks", type=int, default=0)
 parser.add_argument("--filters", type=int, default=32)
 parser.add_argument("--data", type=bool, default=True)
 args = parser.parse_args()
@@ -142,7 +142,7 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			# assert f_pred.shape == f.shape
 			loss_f = 0
 			# LHS, RHS = weak_form1(EPSILON, SHAPE, f, u_pred, a_pred, lepolys, phi, phi_x)
-			LHS, RHS = weak_form2(EPSILON, SHAPE, f, u_pred, a_pred, lepolys, phi, phi_x, equation=EQUATION)
+			LHS, RHS = weak_form2(EPSILON, SHAPE, f, u, a_pred, lepolys, phi, phi_x, equation=EQUATION)
 			loss_wf = 1E1*criterion_wf(LHS, RHS)
 			# loss_wf = 0
 			loss = loss_a + loss_u + loss_f + loss_wf	
