@@ -112,7 +112,7 @@ criterion_u = torch.nn.MSELoss(reduction="sum")
 criterion_f = torch.nn.MSELoss(reduction="sum")
 # criterion_wf = torch.nn.L1Loss()
 criterion_wf = torch.nn.MSELoss(reduction="sum")
-optimizer = torch.optim.LBFGS(model.parameters(), history_size=10, tolerance_grad=1e-14, tolerance_change=1e-14, max_eval=10)
+optimizer = torch.optim.LBFGS(model.parameters(), history_size=10, tolerance_grad=1e-15, tolerance_change=1e-15, max_eval=10)
 # optimizer = torch.optim.SGD(model.parameters(), lr=1E-8)
 
 
