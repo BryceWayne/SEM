@@ -18,7 +18,7 @@ def log_data(EQUATION, MODEL, KERNEL_SIZE, FILE, PATH, BLOCKS, EPSILON, FILTERS,
 	data['BLOCKS'] = BLOCKS
 	data['FILTERS'] = FILTERS
 
-	COLS = ['EQUATION', 'MODEL', 'LOSS TYPE', 'TIMESTAMP', 'DATASET', 'FOLDER', 'SHAPE', 'BLOCKS', 'K.SIZE', 'FILTERS', 'BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']
+	COLS = ['EQUATION', 'MODEL', 'LOSS_TYPE', 'TIMESTAMP', 'DATASET', 'FOLDER', 'SHAPE', 'BLOCKS', 'K.SIZE', 'FILTERS', 'BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']
 	try:
 		df = pd.read_excel('temp.xlsx', ignore_index=True)
 	except:
