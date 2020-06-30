@@ -169,7 +169,7 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 	losses['loss_validate'].append(loss_validate.item()/1000)
 
 	if EPOCHS >= 10 and epoch % int(.05*EPOCHS) == 0:
-		print(f"\nT. Loss: {np.round(losses['loss_train'][-1], 6)}, "\
+		print(f"T. Loss: {np.round(losses['loss_train'][-1], 6)}, "\
 			  f"V. Loss: {np.round(losses['loss_validate'][-1], 6)}")
 		f_pred = ODE2(EPSILON, u_pred, a_pred, phi_x, phi_xx, equation=EQUATION)
 		plotter(xx, sample_batch, epoch, a=a_pred, u=u_pred, DE=f_pred, title=args.model, ks=KERNEL_SIZE, path=PATH)
