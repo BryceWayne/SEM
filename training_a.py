@@ -30,15 +30,16 @@ from evaluate_a import *
 gc.collect()
 torch.cuda.empty_cache()
 
+
 # ARGS
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--model", type=str, default='ResNet', choices=['ResNet', 'NetA']) #ResNet or NetA
-parser.add_argument("--equation", type=str, default='Standard', choices=['Standard', 'Burgers'])
-parser.add_argument("--file", type=str, default='200N31', help='Example: --file 2000N31')
-parser.add_argument("--batch", type=int, default=200)
-parser.add_argument("--epochs", type=int, default=10000)
+parser.add_argument("--equation", type=str, default='Burgers', choices=['Standard', 'Burgers'])
+parser.add_argument("--file", type=str, default='5000N31', help='Example: --file 2000N31')
+parser.add_argument("--batch", type=int, default=5000)
+parser.add_argument("--epochs", type=int, default=1000)
 parser.add_argument("--ks", type=int, default=5)
-parser.add_argument("--blocks", type=int, default=0)
+parser.add_argument("--blocks", type=int, default=1)
 parser.add_argument("--filters", type=int, default=32)
 parser.add_argument("--data", type=bool, default=True)
 args = parser.parse_args()
@@ -131,18 +132,17 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			# ablation study **
 			# f -> u
 			assert a_pred.shape == a.shape
+			loss_a = criterion_a(a_pred, a)
 			u_pred = reconstruct(a_pred, phi)
 			assert u_pred.shape == u.shape
+			loss_u = criterion_u(u_pred, u)
 			f_pred = None
 			# f_pred = ODE2(EPSILON, u_pred, a_pred, phi_x, phi_xx, equation=EQUATION)
-			# assert f_pred.shape == f.shape
-			# LHS, RHS = weak_form1(EPSILON, SHAPE, f, u_pred, a_pred, lepolys, phi, phi_x)
-			LHS, RHS = weak_form2(EPSILON, SHAPE, f, u, a_pred, lepolys, phi, phi_x, equation=EQUATION)
-			loss_a = criterion_a(a_pred, a)
-			# loss_a = 0
-			loss_u = criterion_u(u_pred, u)
-			loss_f = 0
 			# loss_f = 1E-6*criterion_f(f_pred, f)
+			# assert f_pred.shape == f.shape
+			loss_f = 0
+			# LHS, RHS = weak_form1(EPSILON, SHAPE, f, u_pred, a_pred, lepolys, phi, phi_x)
+			LHS, RHS = weak_form2(EPSILON, SHAPE, f, u_pred, a_pred, lepolys, phi, phi_x, equation=EQUATION)
 			loss_wf = 1E1*criterion_wf(LHS, RHS)
 			# loss_wf = 0
 			loss = loss_a + loss_u + loss_f + loss_wf	
@@ -174,7 +174,8 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 	losses['loss_validate'].append(loss_validate.item()/1000)
 
 	if EPOCHS >= 10 and epoch % int(.1*EPOCHS) == 0:
-		print(f"\tT. Loss: {np.round(losses['loss_train'][-1], 6)}, V. Loss: {np.round(losses['loss_validate'][-1], 6)}")
+		print(f"\tT. Loss: {np.round(losses['loss_train'][-1], 6)}, "\
+			  f"V. Loss: {np.round(losses['loss_validate'][-1], 6)}")
 		f_pred = ODE2(EPSILON, u_pred, a_pred, phi_x, phi_xx, equation=EQUATION)
 		# f_pred=None
 		plotter(xx, sample_batch, epoch, a=a_pred, u=u_pred, DE=f_pred, title=args.model, ks=KERNEL_SIZE, path=PATH)
