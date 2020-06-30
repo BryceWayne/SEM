@@ -108,6 +108,7 @@ def model_metrics(equation, input_model, file_name, ks, path, epsilon, filters, 
 	data['EQUATION'] = equation
 	data['TIMESTAMP'] = datetime.datetime.now()
 	data['FOLDER'] = PATH[len(INPUT)+1:]
+	data['FOLDER'] = data['FOLDER'].split('/')[1]
 	data['DATASET'] = INPUT
 	data['SHAPE'] = SHAPE
 	data['K.SIZE'] = KERNEL_SIZE
