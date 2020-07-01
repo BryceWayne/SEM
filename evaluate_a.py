@@ -43,7 +43,7 @@ def validate(equation, model, optim, epsilon, shape, filters, criterion_a, crite
 			loss_u = criterion_u(u_pred, u)
 			# f_pred = ODE2(epsilon, u_pred, a_pred, phi_x, phi_xx)
 			# LHS, RHS = weak_form1(epsilon, shape, f, u_pred, a_pred, lepolys, phi, phi_x)
-			LHS, RHS = weak_form2(epsilon, shape, f, u_pred, a_pred, lepolys, phi, phi_x, equation=EQUATION)
+			LHS, RHS = weak_form2(epsilon, shape, f, u, a_pred, lepolys, phi, phi_x, equation=EQUATION)
 			# lossf = criterion_f(f_pred, f)
 			loss_f = 0
 			loss_wf = 1E1*criterion_wf(LHS, RHS)
@@ -108,7 +108,10 @@ def model_metrics(equation, input_model, file_name, ks, path, epsilon, filters, 
 	data['EQUATION'] = equation
 	data['TIMESTAMP'] = datetime.datetime.now()
 	data['FOLDER'] = PATH[len(INPUT)+1:]
-	data['FOLDER'] = data['FOLDER'].split('/')[1]
+	try:
+		data['FOLDER'] = data['FOLDER'].split('/')[1]
+	except:
+		data['FOLDER'] = data['FOLDER'].split('\\')[1]
 	data['DATASET'] = INPUT
 	data['SHAPE'] = SHAPE
 	data['K.SIZE'] = KERNEL_SIZE

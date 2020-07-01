@@ -36,8 +36,8 @@ parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--model", type=str, default='ResNet', choices=['ResNet', 'NetA']) 
 parser.add_argument("--equation", type=str, default='Standard', choices=['Standard', 'Burgers'])
 parser.add_argument("--loss", type=str, default='MSE', choices=['MAE', 'MSE'])
-parser.add_argument("--file", type=str, default='500N31', help='Example: --file 2000N31')
-parser.add_argument("--batch", type=int, default=500)
+parser.add_argument("--file", type=str, default='50N31', help='Example: --file 2000N31')
+parser.add_argument("--batch", type=int, default=50)
 parser.add_argument("--epochs", type=int, default=1000)
 parser.add_argument("--ks", type=int, default=5)
 parser.add_argument("--blocks", type=int, default=0)
@@ -68,16 +68,15 @@ EPSILON = 5E-1
 
 
 # #CREATE PATHING
-try:
-	os.mkdir(FILE)
-except:
-	pass
-try:
-	os.mkdir(os.path.join(FILE, EQUATION))
-except:
-	pass
-os.mkdir(PATH)
-os.mkdir(os.path.join(PATH,'pics'))
+# if os.path.isdir(FILE) == False:
+# 	os.makedir(FILE)
+# try:
+# 	os.mkdir(os.path.join(FILE, EQUATION))
+# except:
+# 	pass
+if os.path.isdir(os.path.join(FILE, EQUATION)) == False:
+	os.makedirs(os.path.join(FILE, EQUATION))
+os.makedirs(os.path.join(PATH,'pics'))
 
 #CREATE BASIS VECTORS
 xx, lepolys, lepoly_x, lepoly_xx, phi, phi_x, phi_xx = basis_vectors(D_out)
@@ -138,7 +137,7 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			assert u_pred.shape == u.shape
 			loss_u = criterion_u(u_pred, u)
 			f_pred, loss_f = None, 0
-			LHS, RHS = weak_form2(EPSILON, SHAPE, f, u_pred, a_pred, lepolys, phi, phi_x, equation=EQUATION)
+			LHS, RHS = weak_form2(EPSILON, SHAPE, f, u, a_pred, lepolys, phi, phi_x, equation=EQUATION)
 			loss_wf = 1E1*criterion_wf(LHS, RHS)
 			loss = loss_a + loss_u + loss_f + loss_wf	
 			if loss.requires_grad:
@@ -168,9 +167,9 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 	losses['loss_train'].append(loss_train.item()/BATCH)
 	losses['loss_validate'].append(loss_validate.item()/1000)
 
-	if EPOCHS >= 10 and epoch % int(.05*EPOCHS) == 0:
-		print(f"T. Loss: {np.round(losses['loss_train'][-1], 6)}, "\
-			  f"V. Loss: {np.round(losses['loss_validate'][-1], 6)}")
+	if EPOCHS > 10 and epoch % int(.05*EPOCHS) == 0:
+		print(f"T. Loss: {np.round(losses['loss_train'][-1], 8)}, "\
+			  f"V. Loss: {np.round(losses['loss_validate'][-1], 8)}")
 		f_pred = ODE2(EPSILON, u_pred, a_pred, phi_x, phi_xx, equation=EQUATION)
 		plotter(xx, sample_batch, epoch, a=a_pred, u=u_pred, DE=f_pred, title=args.model, ks=KERNEL_SIZE, path=PATH)
 	if loss_train < BEST_LOSS:
