@@ -120,7 +120,7 @@ def plotter(xx, sample, epoch, a=None, u=None, DE=None, title='alpha', ks=7, pat
 		plt.close(3)
 
 
-def loss_plot(losses, file, epoch, shape, ks, best_loss, path):
+def loss_plot(losses, file, epoch, shape, ks, best_loss, path, title='alpha'):
 	loss_a = losses['loss_a']
 	loss_u = losses['loss_u']
 	loss_f = losses['loss_f']
@@ -138,7 +138,7 @@ def loss_plot(losses, file, epoch, shape, ks, best_loss, path):
 	plt.grid(alpha=0.618)
 	plt.ylabel('Loss')
 	plt.legend(shadow=True)
-	plt.title(f'Loss vs. Epoch,$\\quad$Best Loss: {best_loss}\nFile: {file},$\\quad$Shape: {shape},$\\quad$Kernel: {ks}')
+	plt.title(f'Loss vs. Epoch\nModel: {title}\nBest Loss: {best_loss}\nFile: {file},$\\quad$Shape: {shape},$\\quad$Kernel: {ks}')
 	plt.savefig(f'{path}/loss.png', bbox_inches='tight')
 	# plt.show()
 	plt.close(1)
@@ -146,20 +146,20 @@ def loss_plot(losses, file, epoch, shape, ks, best_loss, path):
 	x = list(range(1, len(loss_a)+1))
 	plt.semilogy(x, np.array(loss_a), label='$\\hat{\\alpha}$')
 	plt.semilogy(x, np.array(loss_u), label='$\\hat{u}$')
-	# plt.semilogy(x, loss_f, label='$\\hat{f}$')
+	plt.semilogy(x, np.array(loss_f), label='$\\hat{f}$')
 	plt.semilogy(x, np.array(loss_wf), label='Weak Form')
 	plt.xlabel('Epoch')
 	plt.xlim(1, epoch)
 	plt.grid(alpha=0.618)
 	plt.ylabel('Loss')
 	plt.legend(shadow=True)
-	plt.title(f'Loss vs. Epoch\nFile: {file},$\\quad$Shape: {shape},$\\quad$Kernel: {ks}')
+	plt.title(f'Loss vs. Epoch: Model: {title}\nFile: {file},$\\quad$Shape: {shape},$\\quad$Kernel: {ks}')
 	plt.savefig(f'{path}/loss_individual.png', bbox_inches='tight')
 	# plt.show()
 	plt.close(2)
 
 
-def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path):
+def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path, title='alpha'):
 	PATH = path
 	SHAPE = shape
 	EQUATION = equation
@@ -171,7 +171,7 @@ def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path):
 	l2_error_a = relative_l2(ahat, aa)
 	linf_error_a = relative_linf(ahat, aa)
 	plt.figure(1, figsize=(10,6))
-	plt.title(f'Out of Sample Example\nMAE Error: {np.round(float(mae_error_a), 6)}\n'\
+	plt.title(f'Out of Sample Example\nModel: {title}\nMAE Error: {np.round(float(mae_error_a), 6)}\n'\
 			  f'Rel. $L_2$ Error: {np.round(float(l2_error_a), 6)}\n'\
 			  f'Rel. $L_\\infty$ Error: {np.round(float(linf_error_a), 6)}')
 	plt.plot(xx, aa, 'ro-', label='$\\alpha$')
@@ -207,7 +207,7 @@ def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path):
 	linf_error_u = relative_linf(uhat, uu)
 	xx = legslbndm(SHAPE)
 	plt.figure(2, figsize=(10,6))
-	plt.title(f'Out of Sample Example\n'\
+	plt.title(f'Out of Sample Example\nModel: {title}\n'\
 			  f'MAE Error: {np.round(float(mae_error_u), 6)}\n'\
 			  f'Rel. $L_2$ Error: {np.round(float(l2_error_u), 6)}\n'\
 			  f'Rel. $L_\\infty$ Error: {np.round(float(linf_error_u), 6)}')
@@ -238,7 +238,7 @@ def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path):
 	mae_error_f = mae(f_pred, ff)
 	l2_error_f = relative_l2(f_pred, ff)
 	linf_error_f = relative_linf(f_pred, ff)
-	plt.title(f'Out of Sample Example\n'\
+	plt.title(f'Out of Sample Example\nModel: {title}\n'\
 			  f'MAE Error: {np.round(float(mae_error_f), 6)}\n'\
 			  f'Rel. $L_2$ Error: {np.round(float(l2_error_f), 6)}\n'\
 			  f'Rel. $L_\\infty$ Error: {np.round(float(linf_error_f), 6)}')

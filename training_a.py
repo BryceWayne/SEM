@@ -33,14 +33,15 @@ torch.cuda.empty_cache()
 
 # ARGS
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--model", type=str, default='ResNet', choices=['ResNet', 'NetA']) 
+parser.add_argument("--model", type=str, default='NetA', choices=['ResNet', 'NetA']) 
 parser.add_argument("--equation", type=str, default='Burgers', choices=['Standard', 'Burgers'])
-parser.add_argument("--loss", type=str, default='MSE', choices=['MAE', 'MSE'])
-parser.add_argument("--file", type=str, default='500N31', help='Example: --file 2000N31')
-parser.add_argument("--batch", type=int, default=500)
-parser.add_argument("--epochs", type=int, default=1000)
+parser.add_argument('--eps', type=float, default=1E-1)
+parser.add_argument("--loss", type=str, default='MAE', choices=['MAE', 'MSE'])
+parser.add_argument("--file", type=str, default='100000N31', help='Example: --file 2000N31')
+parser.add_argument("--batch", type=int, default=10000)
+parser.add_argument("--epochs", type=int, default=10)
 parser.add_argument("--ks", type=int, default=5)
-parser.add_argument("--blocks", type=int, default=0)
+parser.add_argument("--blocks", type=int, default=3)
 parser.add_argument("--filters", type=int, default=32)
 args = parser.parse_args()
 
@@ -51,20 +52,21 @@ if args.model == 'ResNet':
 elif args.model == 'NetA':
 	MODEL = NetA
 
+
 EQUATION = args.equation
-KERNEL_SIZE = args.ks
-PADDING = (args.ks - 1)//2
 FILE = args.file
 BATCH = int(args.file.split('N')[0])
 SHAPE = int(args.file.split('N')[1]) + 1
 FILTERS = args.filters
-N, D_in, Filters, D_out = args.batch, 1, FILTERS, SHAPE
+KERNEL_SIZE = args.ks
+PADDING = (args.ks - 1)//2
 EPOCHS = args.epochs
+N, D_in, Filters, D_out = args.batch, 1, FILTERS, SHAPE
 cur_time = str(datetime.datetime.now()).replace(' ', 'T')
 cur_time = cur_time.replace(':','').split('.')[0].replace('-','')
 PATH = os.path.join(FILE, f"{EQUATION}", cur_time)
 BLOCKS = args.blocks
-EPSILON = 5E-1
+EPSILON = args.eps
 
 
 # #CREATE PATHING
@@ -138,8 +140,8 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			loss_u = criterion_u(u_pred, u)
 			f_pred, loss_f = None, 0
 			LHS, RHS = weak_form2(EPSILON, SHAPE, f, u, a_pred, lepolys, phi, phi_x, equation=EQUATION)
-			# loss_wf = 1E1*criterion_wf(LHS, RHS)
-			loss_wf = 0
+			loss_wf = 1E1*criterion_wf(LHS, RHS)
+			# loss_wf = 0
 			loss = loss_a + loss_u + loss_f + loss_wf	
 			if loss.requires_grad:
 				loss.backward()
@@ -169,8 +171,8 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 	losses['loss_validate'].append(loss_validate.item()/1000)
 
 	if EPOCHS > 10 and epoch % int(.05*EPOCHS) == 0:
-		print(f"T. Loss: {np.round(losses['loss_train'][-1], 8)}, "\
-			  f"V. Loss: {np.round(losses['loss_validate'][-1], 8)}")
+		print(f"T. Loss: {np.round(losses['loss_train'][-1], 9)}, "\
+			  f"V. Loss: {np.round(losses['loss_validate'][-1], 9)}")
 		f_pred = ODE2(EPSILON, u_pred, a_pred, phi_x, phi_xx, equation=EQUATION)
 		plotter(xx, sample_batch, epoch, a=a_pred, u=u_pred, DE=f_pred, title=args.model, ks=KERNEL_SIZE, path=PATH)
 	if loss_train < BEST_LOSS:
@@ -183,7 +185,7 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 
 
 time1 = time.time()
-loss_plot(losses, FILE, EPOCHS, SHAPE, KERNEL_SIZE, BEST_LOSS, PATH)
+loss_plot(losses, FILE, EPOCHS, SHAPE, KERNEL_SIZE, BEST_LOSS, PATH, title=args.model)
 dt = time1 - time0
 AVG_ITER = np.round(dt/EPOCHS, 6)
 

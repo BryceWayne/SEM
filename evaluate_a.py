@@ -46,8 +46,8 @@ def validate(equation, model, optim, epsilon, shape, filters, criterion_a, crite
 			LHS, RHS = weak_form2(epsilon, shape, f, u, a_pred, lepolys, phi, phi_x, equation=EQUATION)
 			# lossf = criterion_f(f_pred, f)
 			loss_f = 0
-			# loss_wf = 1E1*criterion_wf(LHS, RHS)
-			loss_wf = 0
+			loss_wf = 1E1*criterion_wf(LHS, RHS)
+			# loss_wf = 0
 			loss = loss_a + loss_u + loss_f + loss_wf
 			return np.round(float(loss.to('cpu').detach()), 8)
 		loss += closure(f, a, u)
@@ -69,6 +69,12 @@ def model_metrics(equation, input_model, file_name, ks, path, epsilon, filters, 
 	FILTERS = filters
 	N, D_in, Filters, D_out = BATCH, 1, FILTERS, SHAPE
 	BLOCKS = blocks
+	data = {}
+	if input_model == ResNet:
+		data['MODEL'] = 'ResNet'
+	elif input_model == NetA:
+		data['MODEL'] = 'NetA'
+	title = data['MODEL']
 
 	xx, lepolys, lepoly_x, lepoly_xx, phi, phi_x, phi_xx = basis_vectors(D_out)
 	# LOAD MODEL
@@ -102,9 +108,8 @@ def model_metrics(equation, input_model, file_name, ks, path, epsilon, filters, 
 			running_MSE_u += relative_l2(u_pred[i,0,:], u[i,0,:])
 			running_MinfE_u += relative_linf(u_pred[i,0,:], u[i,0,:])
 
-	out_of_sample(EQUATION, SHAPE, a_pred, u_pred, f_pred, sample_batch, PATH)
+	out_of_sample(EQUATION, SHAPE, a_pred, u_pred, f_pred, sample_batch, PATH, title)
 	
-	data = {}
 	data['EQUATION'] = equation
 	data['TIMESTAMP'] = datetime.datetime.now()
 	data['FOLDER'] = PATH[len(INPUT)+1:]
