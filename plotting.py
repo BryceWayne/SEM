@@ -17,7 +17,7 @@ def mae(measured, theoretical):
 	return np.linalg.norm(measured-theoretical, ord=1)/len(theoretical)
 
 
-def plotter(xx, sample, epoch, a=None, u=None, DE=None, title='alpha', ks=7, path='.'):
+def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=7, path='.'):
 	aa = sample['a'][0,0,:].to('cpu').detach().numpy()
 	uu = sample['u'][0,0,:].to('cpu').detach().numpy()
 	ff = sample['f'][0,0,:].to('cpu').detach().numpy()
@@ -86,19 +86,19 @@ def plotter(xx, sample, epoch, a=None, u=None, DE=None, title='alpha', ks=7, pat
 		plt.legend(shadow=True)
 		plt.savefig(f'{path}/pics/epoch{str(epoch).zfill(5)}_u_pwe.png', bbox_inches='tight')
 		plt.close(2)
-	if DE is not None:
-		de = DE[0,0,:].to('cpu').detach().numpy()
+	if f is not None:
+		f = f[0,0,:].to('cpu').detach().numpy()
 		plt.figure(3, figsize=(10,6))
-		mae_error_de = mae(de, ff)
-		l2_error_de = relative_l2(de, ff)
-		linf_error_de = relative_linf(de, ff)
+		mae_error_de = mae(f, ff)
+		l2_error_de = relative_l2(f, ff)
+		linf_error_de = relative_linf(f, ff)
 		plt.title(f'Model: {title}\n'\
 				  f'$f$ Example Epoch {epoch}\n'\
 			      f'$f$ MAE Error: {np.round(mae_error_de, 6)}\n'\
 			      f'$f$ Rel. $L_2$ Error: {np.round(float(l2_error_de), 6)}\n'\
 			      f'$f$ Rel. $L_\\infty$ Error: {np.round(float(linf_error_de), 6)}')
 		plt.plot(xx, ff, 'ro-', label='$f$')
-		plt.plot(xx, de, 'bo', mfc='none', label='ODE')
+		plt.plot(xx, f, 'bo', mfc='none', label='$\\hat{f}$')
 		plt.xlim(-1,1)
 		plt.grid(alpha=0.618)
 		plt.xlabel('$x$')
@@ -109,8 +109,8 @@ def plotter(xx, sample, epoch, a=None, u=None, DE=None, title='alpha', ks=7, pat
 		plt.close(3)
 		plt.figure(3, figsize=(10,6))
 		plt.title(f'$f$ Example Epoch {epoch}\n'\
-			      f'$f$ Point-Wise Error: {np.round(np.sum(np.abs(ff-de))/len(xxx), 6)}')
-		plt.plot(xx, np.abs(ff-de), 'ro-', mfc='none', label='Error')
+			      f'$f$ Point-Wise Error: {np.round(np.sum(np.abs(ff-f))/len(xx), 6)}')
+		plt.plot(xx, np.abs(ff-f), 'ro-', mfc='none', label='Error')
 		plt.xlim(-1,1)
 		plt.grid(alpha=0.618)
 		plt.xlabel('$x$')

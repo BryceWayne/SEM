@@ -174,8 +174,9 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 	if EPOCHS > 10 and epoch % int(.05*EPOCHS) == 0:
 		print(f"T. Loss: {np.round(losses['loss_train'][-1], 9)}, "\
 			  f"V. Loss: {np.round(losses['loss_validate'][-1], 9)}")
-		f_pred = ODE2(EPSILON, u, a_pred, phi_x, phi_xx, equation=EQUATION)
-		plotter(xx, sample_batch, epoch, a=a_pred, u=u_pred, DE=f_pred, title=args.model, ks=KERNEL_SIZE, path=PATH)
+		# f_pred = ODE2(EPSILON, u, a_pred, phi_x, phi_xx, equation=EQUATION)
+		f_pred = None
+		plotter(xx, sample_batch, epoch, a=a_pred, u=u_pred, f=f_pred, title=args.model, ks=KERNEL_SIZE, path=PATH)
 	if loss_train < BEST_LOSS:
 		torch.save(model.state_dict(), PATH + '/model.pt')
 		BEST_LOSS = loss_train
