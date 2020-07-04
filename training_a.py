@@ -36,11 +36,11 @@ parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--model", type=str, default='NetA', choices=['ResNet', 'NetA']) 
 parser.add_argument("--equation", type=str, default='Burgers', choices=['Standard', 'Burgers'])
 parser.add_argument("--loss", type=str, default='MAE', choices=['MAE', 'MSE'])
-parser.add_argument("--file", type=str, default='100000N31', help='Example: --file 2000N31')
+parser.add_argument("--file", type=str, default='10000N31', help='Example: --file 2000N31')
 parser.add_argument("--batch", type=int, default=10000)
-parser.add_argument("--epochs", type=int, default=10)
+parser.add_argument("--epochs", type=int, default=1000)
 parser.add_argument("--ks", type=int, default=5)
-parser.add_argument("--blocks", type=int, default=3)
+parser.add_argument("--blocks", type=int, default=2)
 parser.add_argument("--filters", type=int, default=32)
 args = parser.parse_args()
 
@@ -48,9 +48,12 @@ args = parser.parse_args()
 # VARIABLES
 if args.model == 'ResNet':
 	MODEL = ResNet
-	EPSILON = 1E-1
 elif args.model == 'NetA':
 	MODEL = NetA
+
+if args.equation == 'Standard':
+	EPSILON = 1E-1
+elif ars.equation == 'Burgers':
 	EPSILON = 5E-1
 
 
@@ -143,7 +146,7 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			LHS, RHS = weak_form2(EPSILON, SHAPE, f, u, a_pred, lepolys, phi, phi_x, equation=EQUATION)
 			loss_wf = 1E2*criterion_wf(LHS, RHS)
 			# loss_wf = 0
-			loss = loss_a + loss_u + loss_f + loss_wf	
+			loss = loss_a + loss_u + loss_f + loss_wf
 			if loss.requires_grad:
 				loss.backward()
 			return a_pred, u_pred, f_pred, loss_a, loss_u, loss_f, loss_wf, loss
