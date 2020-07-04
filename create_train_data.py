@@ -21,6 +21,7 @@ N = args.N
 EPSILON = args.eps
 EPS_FLAG = args.rand_eps
 
+
 def save_obj(obj, name, equation):
 	cwd = os.getcwd()
 	path = os.path.join(cwd,'data', equation)
@@ -43,7 +44,7 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 	def func(x: np.ndarray) -> np.ndarray:
 		# Random force: mean=0, sd=1
 		m = np.random.randn(4)
-		f = m[0]*np.sin(2*m[1]*np.pi*x) + m[2]*np.cos(2*m[3]*np.pi*x)
+		f = m[0]*np.sin(m[1]*np.pi*x) + m[2]*np.cos(m[3]*np.pi*x)
 		return f, m
 
 	def gen_lepolys(N, x):
@@ -107,12 +108,10 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 				s_diag[k] = -(4*k+6)*b
 			S = s_diag*np.eye(N-1)
 			Mass = epsilon*S
-			error, tolerance, u_old, force = 1, 1E-14, 0*f.copy(), f.copy()
+			error, tolerance, u_old, force = 1, 1E-12, 0*f.copy(), f.copy()
 			iterations = 0
-			# print(u_old.shape, force.shape, D.shape)
 			while error > tolerance:
 				f_ = force - u_old*(D@u_old)
-				# print(f.shape)
 				g = np.zeros((N+1,))
 				for i in range(1,N+1):
 					k = i-1
@@ -126,38 +125,14 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 
 				alphas = np.linalg.solve(Mass, bar_f)
 				u_sol = np.zeros((N+1, 1))
-				# print(alphas.shape, u_sol.shape)
 				for ij in range(1, N):
 					i_ind = ij - 1
 					u_sol += alphas[i_ind]*(lepolys[i_ind] + a*lepolys[i_ind+1] + b*lepolys[i_ind+2])
 
 				error = np.max(u_sol - u_old)
-				# print("Error:", error)
-				# print("Tolerance:", tolerance)
 				u_old = u_sol
 				iterations += 1
-			# print(f"Number of Iterations: {iterations}")
-			u = u_sol
-
-			# cummulative_error = 0
-			# for l in range(5):
-			# 	diffusion = -epsilon*(4*l+6)*(-1)*alphas[l]
-			# 	temp = 0.5*u**2*D@(lepolys[l] + a*lepolys[l+1] + b*lepolys[l+2])
-			# 	convection = np.sum(2*temp/(N*(N+1))/lepolys[N]**2)
-			# 	rhs = np.sum(2*force*(lepolys[l] + a*lepolys[l+1] + b*lepolys[l+2])/(N*(N+1))/(lepolys[N]**2))
-			# 	cummulative_error += np.abs(diffusion - convection - rhs)
-			# print(f"Cummulative Error: {cummulative_error}")
-			
-			# import matplotlib.pyplot as plt
-			# plt.figure(figsize=(10,6))
-			# plt.plot(x, u, label='$u$')
-			# plt.plot(x, f_, label='$f$')
-			# plt.legend(shadow=True)
-			# plt.xlim(-1, 1)
-			# plt.grid(alpha=0.618)
-			# plt.show()
-			# exit()
-			return u, f, alphas, params
+			return u_sol, f, alphas, params
 			
 		elif equation == 'Helmholtz':
 			ku = 3.5
