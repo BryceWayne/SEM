@@ -35,7 +35,6 @@ torch.cuda.empty_cache()
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--model", type=str, default='NetA', choices=['ResNet', 'NetA']) 
 parser.add_argument("--equation", type=str, default='Burgers', choices=['Standard', 'Burgers'])
-parser.add_argument('--eps', type=float, default=1E-1)
 parser.add_argument("--loss", type=str, default='MAE', choices=['MAE', 'MSE'])
 parser.add_argument("--file", type=str, default='100000N31', help='Example: --file 2000N31')
 parser.add_argument("--batch", type=int, default=10000)
@@ -49,8 +48,10 @@ args = parser.parse_args()
 # VARIABLES
 if args.model == 'ResNet':
 	MODEL = ResNet
+	EPSILON = 1E-1
 elif args.model == 'NetA':
 	MODEL = NetA
+	EPSILON = 5E-1
 
 
 EQUATION = args.equation
@@ -66,16 +67,10 @@ cur_time = str(datetime.datetime.now()).replace(' ', 'T')
 cur_time = cur_time.replace(':','').split('.')[0].replace('-','')
 PATH = os.path.join(FILE, f"{EQUATION}", cur_time)
 BLOCKS = args.blocks
-EPSILON = args.eps
+
 
 
 # #CREATE PATHING
-# if os.path.isdir(FILE) == False:
-# 	os.makedir(FILE)
-# try:
-# 	os.mkdir(os.path.join(FILE, EQUATION))
-# except:
-# 	pass
 if os.path.isdir(os.path.join(FILE, EQUATION)) == False:
 	os.makedirs(os.path.join(FILE, EQUATION))
 os.makedirs(os.path.join(PATH,'pics'))
@@ -136,15 +131,17 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			if torch.is_grad_enabled():
 				optimizer.zero_grad()
 			a_pred = model(f)
+			# is a_pred an initialization for
 			assert a_pred.shape == a.shape
 			loss_a = criterion_a(a_pred, a)
+			# loss_a = 0
 			u_pred = reconstruct(a_pred, phi)
 			assert u_pred.shape == u.shape
 			loss_u = criterion_u(u_pred, u)
 			f_pred, loss_f = None, 0
-			LHS, RHS, loss_wf = 0, 0, 0
-			# LHS, RHS = weak_form2(EPSILON, SHAPE, f, u, a_pred, lepolys, phi, phi_x, equation=EQUATION)
-			# loss_wf = 1E1*criterion_wf(LHS, RHS)
+			# LHS, RHS, loss_wf = 0, 0, 0
+			LHS, RHS = weak_form2(EPSILON, SHAPE, f, u, a_pred, lepolys, phi, phi_x, equation=EQUATION)
+			loss_wf = 1E2*criterion_wf(LHS, RHS)
 			# loss_wf = 0
 			loss = loss_a + loss_u + loss_f + loss_wf	
 			if loss.requires_grad:
