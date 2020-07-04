@@ -139,8 +139,9 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			assert u_pred.shape == u.shape
 			loss_u = criterion_u(u_pred, u)
 			f_pred, loss_f = None, 0
-			LHS, RHS = weak_form2(EPSILON, SHAPE, f, u, a_pred, lepolys, phi, phi_x, equation=EQUATION)
-			loss_wf = 1E1*criterion_wf(LHS, RHS)
+			LHS, RHS, loss_wf = 0
+			# LHS, RHS = weak_form2(EPSILON, SHAPE, f, u, a_pred, lepolys, phi, phi_x, equation=EQUATION)
+			# loss_wf = 1E1*criterion_wf(LHS, RHS)
 			# loss_wf = 0
 			loss = loss_a + loss_u + loss_f + loss_wf	
 			if loss.requires_grad:
@@ -173,7 +174,7 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 	if EPOCHS > 10 and epoch % int(.05*EPOCHS) == 0:
 		print(f"T. Loss: {np.round(losses['loss_train'][-1], 9)}, "\
 			  f"V. Loss: {np.round(losses['loss_validate'][-1], 9)}")
-		f_pred = ODE2(EPSILON, u_pred, a_pred, phi_x, phi_xx, equation=EQUATION)
+		f_pred = ODE2(EPSILON, u, a_pred, phi_x, phi_xx, equation=EQUATION)
 		plotter(xx, sample_batch, epoch, a=a_pred, u=u_pred, DE=f_pred, title=args.model, ks=KERNEL_SIZE, path=PATH)
 	if loss_train < BEST_LOSS:
 		torch.save(model.state_dict(), PATH + '/model.pt')
