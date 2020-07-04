@@ -44,7 +44,7 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 	def func(x: np.ndarray) -> np.ndarray:
 		# Random force: mean=0, sd=1
 		m = np.random.randn(4)
-		f = m[0]*np.sin(m[1]*np.pi*x) + m[2]*np.cos(m[3]*np.pi*x)
+		f = 0.5*m[0]*np.sin(m[1]*np.pi*x) + 0.5*m[2]*np.cos(m[3]*np.pi*x)
 		return f, m
 
 	def gen_lepolys(N, x):

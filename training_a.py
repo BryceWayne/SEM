@@ -33,8 +33,8 @@ torch.cuda.empty_cache()
 
 # ARGS
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--model", type=str, default='ResNet', choices=['ResNet', 'NetA']) 
-parser.add_argument("--equation", type=str, default='Standard', choices=['Standard', 'Burgers'])
+parser.add_argument("--model", type=str, default='NetA', choices=['ResNet', 'NetA']) 
+parser.add_argument("--equation", type=str, default='Burgers', choices=['Standard', 'Burgers'])
 parser.add_argument("--loss", type=str, default='MAE', choices=['MAE', 'MSE'])
 parser.add_argument("--file", type=str, default='10000N31', help='Example: --file 2000N31')
 parser.add_argument("--batch", type=int, default=10000)
@@ -134,7 +134,6 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			if torch.is_grad_enabled():
 				optimizer.zero_grad()
 			a_pred = model(f)
-			# is a_pred an initialization for
 			assert a_pred.shape == a.shape
 			loss_a = criterion_a(a_pred, a)
 			# loss_a = 0
