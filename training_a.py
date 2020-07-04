@@ -139,7 +139,7 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			assert u_pred.shape == u.shape
 			loss_u = criterion_u(u_pred, u)
 			f_pred, loss_f = None, 0
-			LHS, RHS, loss_wf = 0
+			LHS, RHS, loss_wf = 0, 0, 0
 			# LHS, RHS = weak_form2(EPSILON, SHAPE, f, u, a_pred, lepolys, phi, phi_x, equation=EQUATION)
 			# loss_wf = 1E1*criterion_wf(LHS, RHS)
 			# loss_wf = 0
