@@ -31,7 +31,7 @@ def validate(equation, model, optim, epsilon, shape, filters, criterion_a, crite
 	loss = 0
 	optim.zero_grad()
 	for batch_idx, sample_batch in enumerate(testloader):
-		f = Variable(sample_batch['f']).to(device)
+		f = sample_batch['f'].to(device)
 		a = sample_batch['a'].to(device)
 		u = sample_batch['u'].to(device)
 		def closure(f, a, u):
@@ -43,11 +43,11 @@ def validate(equation, model, optim, epsilon, shape, filters, criterion_a, crite
 			loss_u = criterion_u(u_pred, u)
 			# f_pred = ODE2(epsilon, u_pred, a_pred, phi_x, phi_xx)
 			# LHS, RHS = weak_form1(epsilon, shape, f, u_pred, a_pred, lepolys, phi, phi_x)
-			# LHS, RHS = weak_form2(epsilon, shape, f, u, a_pred, lepolys, phi, phi_x, equation=EQUATION)
+			LHS, RHS = weak_form2(epsilon, shape, f, u, a_pred, lepolys, phi, phi_x, equation=EQUATION)
 			# lossf = criterion_f(f_pred, f)
 			loss_f = 0
-			# loss_wf = 1E1*criterion_wf(LHS, RHS)
-			loss_wf = 0
+			loss_wf = 1E1*criterion_wf(LHS, RHS)
+			# loss_wf = 0
 			loss = loss_a + loss_u + loss_f + loss_wf
 			return np.round(float(loss.to('cpu').detach()), 8)
 		loss += closure(f, a, u)
