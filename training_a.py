@@ -38,7 +38,7 @@ parser.add_argument("--equation", type=str, default='Burgers', choices=['Standar
 parser.add_argument("--loss", type=str, default='MAE', choices=['MAE', 'MSE'])
 parser.add_argument("--file", type=str, default='10000N31', help='Example: --file 2000N31')
 parser.add_argument("--batch", type=int, default=10000)
-parser.add_argument("--epochs", type=int, default=1000)
+parser.add_argument("--epochs", type=int, default=10)
 parser.add_argument("--ks", type=int, default=5)
 parser.add_argument("--blocks", type=int, default=2)
 parser.add_argument("--filters", type=int, default=32)
@@ -53,7 +53,7 @@ elif args.model == 'NetA':
 
 if args.equation == 'Standard':
 	EPSILON = 1E-1
-elif ars.equation == 'Burgers':
+elif args.equation == 'Burgers':
 	EPSILON = 5E-1
 
 

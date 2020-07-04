@@ -110,10 +110,10 @@ def weak_form2(eps, N, f, u, alphas, lepolys, phi, phi_x, equation='Standard'):
 	diffusion = 6*eps*alphas[:,:,0]
 	if equation == 'Standard':
 		u_x = reconstruct(alphas, phi_x)
-		ux_phi = u_x*phi[:,0]
+		ux_phi = u_x*phi[:,0] #sum(phi)
 		convection = torch.sum(ux_phi*2/(N*(N+1))/denom, axis=2)
 		LHS = diffusion - convection
-		RHS = torch.sum(2*f*phi[:,0]/(N*(N+1))/denom, axis=2)
+		RHS = torch.sum(2*f*phi[:,0]/(N*(N+1))/denom, axis=2) #f*sum(phi)
 	elif equation == 'Burgers':
 		phi_x = torch.transpose(phi_x, 0, 1)
 		convection = torch.sum(u**2*phi_x[:,0]/(N*(N+1))/denom, axis=2)
