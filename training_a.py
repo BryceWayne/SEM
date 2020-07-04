@@ -120,7 +120,10 @@ elif args.loss == 'MSE':
 optimizer = torch.optim.LBFGS(model.parameters(), history_size=20, tolerance_grad=1e-15, tolerance_change=1e-15, max_eval=20)
 # optimizer = torch.optim.SGD(model.parameters(), lr=1E-8)
 
-
+"""
+	(*) AMORITIZATION
+	(*) Dropout, L2 Regularization on FC (Remedy for overfitting)
+"""
 BEST_LOSS, losses = float('inf'), {'loss_a':[], 'loss_u':[], 'loss_f': [], 'loss_wf':[], 'loss_train':[], 'loss_validate':[]}
 time0 = time.time()
 for epoch in tqdm(range(1, EPOCHS+1)):
