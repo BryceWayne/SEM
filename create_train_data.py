@@ -136,11 +136,6 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 			
 		elif equation == 'Helmholtz':
 			ku = 3.5
-			a, b = np.zeros((N+1, 1)), np.zeros((N+1, 1))
-			for i in range(1, N+2):
-				k = i-1
-				b[i] = -k*(k+1)/((k+2)*(k+3))
-
 			s_diag = np.zeros((N-1,1))
 			M = np.zeros((N-1,N-1))
 			for ii in range(1, N):
@@ -202,7 +197,13 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 	x = sem.legslbndm(N+1)
 	D = sem.legslbdiff(N+1, x)
 	lepolys = gen_lepolys(N, x)
-	a, b = 0, -1
+	if equation == 'Helmholtz':
+		a, b = np.zeros((N+1, 1)), np.zeros((N+1, 1))
+		for i in range(1, N+2):
+			k = i-1
+			b[i] = -k*(k+1)/((k+2)*(k+3))
+	else:
+		a, b = 0, -1
 	return loop(N, epsilon, size, lepolys, eps_flag, equation)
 
 

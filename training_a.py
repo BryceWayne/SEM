@@ -35,12 +35,12 @@ torch.cuda.empty_cache()
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--model", type=str, default='NetA', choices=['ResNet', 'NetA']) 
 parser.add_argument("--equation", type=str, default='Burgers', choices=['Standard', 'Burgers'])
-parser.add_argument("--loss", type=str, default='MAE', choices=['MAE', 'MSE'])
-parser.add_argument("--file", type=str, default='10000N31', help='Example: --file 2000N31')
-parser.add_argument("--batch", type=int, default=10000)
-parser.add_argument("--epochs", type=int, default=10)
+parser.add_argument("--loss", type=str, default='MSE', choices=['MAE', 'MSE'])
+parser.add_argument("--file", type=str, default='500N63', help='Example: --file 2000N31')
+parser.add_argument("--batch", type=int, default=500)
+parser.add_argument("--epochs", type=int, default=1000)
 parser.add_argument("--ks", type=int, default=5)
-parser.add_argument("--blocks", type=int, default=1)
+parser.add_argument("--blocks", type=int, default=2)
 parser.add_argument("--filters", type=int, default=32)
 args = parser.parse_args()
 
@@ -122,6 +122,7 @@ optimizer = torch.optim.LBFGS(model.parameters(), history_size=20, tolerance_gra
 	(*) AMORITIZATION
 	(*) Dropout, L2 Regularization on FC (Remedy for overfitting)
 """
+A, U, WF = 1E4, 1E2, 1E3
 BEST_LOSS, losses = float('inf'), {'loss_a':[], 'loss_u':[], 'loss_f': [], 'loss_wf':[], 'loss_train':[], 'loss_validate':[]}
 time0 = time.time()
 for epoch in tqdm(range(1, EPOCHS+1)):
@@ -135,17 +136,17 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 				optimizer.zero_grad()
 			a_pred = model(f)
 			assert a_pred.shape == a.shape
-			loss_a = criterion_a(a_pred, a)
+			loss_a = A*criterion_a(a_pred, a)
 			# loss_a = 0
 			u_pred = reconstruct(a_pred, phi)
 			# assert u_pred.shape == u.shape
-			loss_u = criterion_u(u_pred, u)
+			loss_u = U*criterion_u(u_pred, u)
 			# u_pred, loss_u = None, 0
 			f_pred, loss_f = None, 0
 			# LHS, RHS, loss_wf = 0, 0, 0
-			# LHS, RHS = weak_form2(EPSILON, SHAPE, f, u, a_pred, lepolys, phi, phi_x, equation=EQUATION)
-			# loss_wf = criterion_wf(LHS, RHS)
-			loss_wf = 0
+			LHS, RHS = weak_form2(EPSILON, SHAPE, f, u_pred, a_pred, lepolys, phi, phi_x, equation=EQUATION)
+			loss_wf = WF*criterion_wf(LHS, RHS)
+			# loss_wf = 0
 			loss = loss_a + loss_u + loss_f + loss_wf
 			if loss.requires_grad:
 				loss.backward()
@@ -153,20 +154,24 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 		a_pred, u_pred, f_pred, loss_a, loss_u, loss_f, loss_wf, loss = closure(f, a, u)
 		optimizer.step(loss.item)
 		if loss_a != 0:
-			loss_a += np.round(float(loss_a.to('cpu').detach()), 8)
+			loss_a += np.round(float(loss_a.to('cpu').detach()), 9)
 		if loss_u != 0:
-			loss_u += np.round(float(loss_u.to('cpu').detach()), 8)
+			loss_u += np.round(float(loss_u.to('cpu').detach()), 9)
 		if loss_f != 0:
-			loss_f += np.round(float(loss_f.to('cpu').detach()), 8)
+			loss_f += np.round(float(loss_f.to('cpu').detach()), 9)
 		if loss_wf != 0:
-			loss_wf += np.round(float(loss_wf.to('cpu').detach()), 8)
-		loss_train += np.round(float(loss.to('cpu').detach()), 8)
+			loss_wf += np.round(float(loss_wf.to('cpu').detach()), 9)
+		loss_train += np.round(float(loss.to('cpu').detach()), 9)
 	
+	if np.isnan(loss_train):
+		gc.collect()
+		torch.cuda.empty_cache()
+		raise Exception("Model diverged!")
 	if loss_train/BATCH < BEST_LOSS:
 		torch.save(model.state_dict(), PATH + '/model.pt')
 		BEST_LOSS = loss_train/BATCH
 
-	loss_validate = validate(EQUATION, model, optimizer, EPSILON, SHAPE, FILTERS, criterion_a, criterion_u, criterion_f, criterion_wf, lepolys, phi, phi_x, phi_xx)
+	loss_validate = validate(EQUATION, model, optimizer, EPSILON, SHAPE, FILTERS, criterion_a, criterion_u, criterion_f, criterion_wf, lepolys, phi, phi_x, phi_xx, A, U, WF)
 	losses['loss_a'].append(loss_a.item()/BATCH)
 	if loss_u != 0:
 		losses['loss_u'].append(loss_u.item()/BATCH)
@@ -186,13 +191,9 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 	if EPOCHS > 10 and epoch % int(.05*EPOCHS) == 0:
 		print(f"T. Loss: {np.round(losses['loss_train'][-1], 9)}, "\
 			  f"V. Loss: {np.round(losses['loss_validate'][-1], 9)}")
-		# f_pred = ODE2(EPSILON, u, a_pred, phi_x, phi_xx, equation=EQUATION)
+		f_pred = ODE2(EPSILON, u_pred, a_pred, phi_x, phi_xx, equation=EQUATION)
 		# f_pred = None
 		plotter(xx, sample_batch, epoch, a=a_pred, u=u_pred, f=f_pred, title=args.model, ks=KERNEL_SIZE, path=PATH)
-	if np.isnan(loss_train):
-		gc.collect()
-		torch.cuda.empty_cache()
-		raise Exception("Model diverged!")
 
 
 time1 = time.time()

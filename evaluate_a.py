@@ -21,7 +21,7 @@ def get_device():
 		dev = "cpu"
 	return torch.device(dev)
 
-def validate(equation, model, optim, epsilon, shape, filters, criterion_a, criterion_u, criterion_f, criterion_wf, lepolys, phi, phi_x, phi_xx):
+def validate(equation, model, optim, epsilon, shape, filters, criterion_a, criterion_u, criterion_f, criterion_wf, lepolys, phi, phi_x, phi_xx, A, U, WF):
 	device = get_device()
 	FILE, EQUATION, SHAPE, BATCH = f'1000N{shape-1}', equation, shape, 1000
 	N, D_in, Filters, D_out = BATCH, 1, filters, shape
@@ -38,18 +38,16 @@ def validate(equation, model, optim, epsilon, shape, filters, criterion_a, crite
 			if torch.is_grad_enabled():
 				optim.zero_grad()
 			a_pred = model(f)
-			loss_a = criterion_a(a_pred, a)
-			# loss_a = 0
+			loss_a = A*criterion_a(a_pred, a)
 			u_pred = reconstruct(a_pred, phi)
-			loss_u = criterion_u(u_pred, u)
-			loss_u = 0
+			loss_u = U*criterion_u(u_pred, u)
 			# f_pred = ODE2(epsilon, u_pred, a_pred, phi_x, phi_xx)
 			# loss_f = criterion_f(f_pred, f)
 			loss_f = 0
 			# LHS, RHS = weak_form1(epsilon, shape, f, u_pred, a_pred, lepolys, phi, phi_x)
-			# LHS, RHS = weak_form2(epsilon, shape, f, u_pred, a_pred, lepolys, phi, phi_x, equation=EQUATION)
-			# loss_wf = criterion_wf(LHS, RHS)
-			loss_wf = 0
+			LHS, RHS = weak_form2(epsilon, shape, f, u_pred, a_pred, lepolys, phi, phi_x, equation=EQUATION)
+			loss_wf = WF*criterion_wf(LHS, RHS)
+			# loss_wf = 0
 			loss = loss_a + loss_u + loss_f + loss_wf
 			return np.round(float(loss.to('cpu').detach()), 8)
 		loss += closure(f, a, u)
@@ -93,12 +91,12 @@ def model_metrics(equation, input_model, file_name, ks, path, epsilon, filters, 
 
 	running_MAE_a, running_MAE_u, running_MSE_a, running_MSE_u, running_MinfE_a, running_MinfE_u = 0, 0, 0, 0, 0, 0
 	for batch_idx, sample_batch in enumerate(testloader):
-		f = Variable(sample_batch['f']).to(device)
-		u = Variable(sample_batch['u']).to(device)
-		a = Variable(sample_batch['a']).to(device)
+		f = sample_batch['f'].to(device)
+		u = sample_batch['u'].to(device)
+		a = sample_batch['a'].to(device)
 		a_pred = model(f)
 		u_pred = reconstruct(a_pred, phi)
-		f_pred = ODE2(EPSILON, u, a_pred, phi_x, phi_xx, equation=EQUATION)
+		f_pred = ODE2(EPSILON, u_pred, a_pred, phi_x, phi_xx, equation=EQUATION)
 		a_pred = a_pred.to('cpu').detach().numpy()
 		u_pred = u_pred.to('cpu').detach().numpy()
 		f_pred = f_pred.to('cpu').detach().numpy()

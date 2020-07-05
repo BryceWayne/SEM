@@ -85,11 +85,13 @@ def reconstruct(alphas, phi):
 	return T
 
 
-def ODE2(eps, u, alphas, phi_x, phi_xx, equation='Standard'):
+def ODE2(eps, u, alphas, phi_x, phi_xx, equation='Standard', ku=3.5):
 	if equation == 'Standard':
 		DE = reconstruct(alphas, -eps*phi_xx - phi_x)
 	elif equation == 'Burgers':
-		DE = reconstruct(alphas, -eps*phi_xx + u*phi_x)
+		DE = -eps*reconstruct(alphas, phi_xx) + u*reconstruct(alphas, phi_x)
+	elif equation == 'Helmholtz':
+		DE = -eps*reconstruct(alphas, phi_xx) + ku*reconstruct(alphas, phi)
 	return DE
 
 

@@ -29,10 +29,7 @@ def log_data(EQUATION, MODEL, KERNEL_SIZE, FILE, PATH, BLOCKS, EPSILON, FILTERS,
 	_ = ['SHAPE', 'BLOCKS', 'K.SIZE', 'BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']
 	for obj in _:
 		df[obj] = df[obj].astype(float)
-	df.to_excel('temp.xlsx')
-
-	df = pd.DataFrame(LOSSES)
-	df.to_excel(PATH + '/losses.xlsx')
+	df.to_excel('log_data.xlsx')
 	
 
 def loss_log(params, losses):
