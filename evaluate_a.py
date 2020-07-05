@@ -38,18 +38,18 @@ def validate(equation, model, optim, epsilon, shape, filters, criterion_a, crite
 			if torch.is_grad_enabled():
 				optim.zero_grad()
 			a_pred = model(f)
-			# loss_a = criterion_a(a_pred, a)
-			loss_a = 0
+			loss_a = criterion_a(a_pred, a)
+			# loss_a = 0
 			u_pred = reconstruct(a_pred, phi)
-			# loss_u = criterion_u(u_pred, u)
+			loss_u = criterion_u(u_pred, u)
 			loss_u = 0
 			# f_pred = ODE2(epsilon, u_pred, a_pred, phi_x, phi_xx)
 			# loss_f = criterion_f(f_pred, f)
 			loss_f = 0
 			# LHS, RHS = weak_form1(epsilon, shape, f, u_pred, a_pred, lepolys, phi, phi_x)
-			LHS, RHS = weak_form2(epsilon, shape, f, u_pred, a_pred, lepolys, phi, phi_x, equation=EQUATION)
-			loss_wf = criterion_wf(LHS, RHS)
-			# loss_wf = 0
+			# LHS, RHS = weak_form2(epsilon, shape, f, u_pred, a_pred, lepolys, phi, phi_x, equation=EQUATION)
+			# loss_wf = criterion_wf(LHS, RHS)
+			loss_wf = 0
 			loss = loss_a + loss_u + loss_f + loss_wf
 			return np.round(float(loss.to('cpu').detach()), 8)
 		loss += closure(f, a, u)
@@ -59,6 +59,7 @@ def validate(equation, model, optim, epsilon, shape, filters, criterion_a, crite
 
 def model_metrics(equation, input_model, file_name, ks, path, epsilon, filters, blocks):
 	device = get_device()
+	
 	EQUATION = equation
 	EPSILON = epsilon
 	INPUT = file_name
@@ -71,6 +72,7 @@ def model_metrics(equation, input_model, file_name, ks, path, epsilon, filters, 
 	FILTERS = filters
 	N, D_in, Filters, D_out = BATCH, 1, FILTERS, SHAPE
 	BLOCKS = blocks
+
 	data = {}
 	if input_model == ResNet:
 		data['MODEL'] = 'ResNet'

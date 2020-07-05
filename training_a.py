@@ -38,9 +38,9 @@ parser.add_argument("--equation", type=str, default='Burgers', choices=['Standar
 parser.add_argument("--loss", type=str, default='MAE', choices=['MAE', 'MSE'])
 parser.add_argument("--file", type=str, default='10000N31', help='Example: --file 2000N31')
 parser.add_argument("--batch", type=int, default=10000)
-parser.add_argument("--epochs", type=int, default=1000)
+parser.add_argument("--epochs", type=int, default=10)
 parser.add_argument("--ks", type=int, default=5)
-parser.add_argument("--blocks", type=int, default=0)
+parser.add_argument("--blocks", type=int, default=1)
 parser.add_argument("--filters", type=int, default=32)
 args = parser.parse_args()
 
@@ -137,10 +137,10 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			assert a_pred.shape == a.shape
 			loss_a = criterion_a(a_pred, a)
 			# loss_a = 0
-			# u_pred = reconstruct(a_pred, phi)
+			u_pred = reconstruct(a_pred, phi)
 			# assert u_pred.shape == u.shape
-			# loss_u = criterion_u(u_pred, u)
-			u_pred, loss_u = None, 0
+			loss_u = criterion_u(u_pred, u)
+			# u_pred, loss_u = None, 0
 			f_pred, loss_f = None, 0
 			# LHS, RHS, loss_wf = 0, 0, 0
 			# LHS, RHS = weak_form2(EPSILON, SHAPE, f, u, a_pred, lepolys, phi, phi_x, equation=EQUATION)
@@ -161,12 +161,17 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 		if loss_wf != 0:
 			loss_wf += np.round(float(loss_wf.to('cpu').detach()), 8)
 		loss_train += np.round(float(loss.to('cpu').detach()), 8)
+	
+	if loss_train/BATCH < BEST_LOSS:
+		torch.save(model.state_dict(), PATH + '/model.pt')
+		BEST_LOSS = loss_train/BATCH
+
 	loss_validate = validate(EQUATION, model, optimizer, EPSILON, SHAPE, FILTERS, criterion_a, criterion_u, criterion_f, criterion_wf, lepolys, phi, phi_x, phi_xx)
 	losses['loss_a'].append(loss_a.item()/BATCH)
 	if loss_u != 0:
 		losses['loss_u'].append(loss_u.item()/BATCH)
 	else:
-		losses['loss_u'].append(0)
+		losses['loss_u'].append(loss_u/BATCH)
 	if type(loss_f) == int:
 		losses['loss_f'].append(loss_f/BATCH) 
 	else:
@@ -184,9 +189,6 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 		# f_pred = ODE2(EPSILON, u, a_pred, phi_x, phi_xx, equation=EQUATION)
 		# f_pred = None
 		plotter(xx, sample_batch, epoch, a=a_pred, u=u_pred, f=f_pred, title=args.model, ks=KERNEL_SIZE, path=PATH)
-	if loss_train < BEST_LOSS:
-		torch.save(model.state_dict(), PATH + '/model.pt')
-		BEST_LOSS = loss_train
 	if np.isnan(loss_train):
 		gc.collect()
 		torch.cuda.empty_cache()
