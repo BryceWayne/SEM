@@ -45,9 +45,11 @@ def validate(equation, model, optim, epsilon, shape, filters, criterion_a, crite
 			# loss_f = criterion_f(f_pred, f)
 			loss_f = 0
 			# LHS, RHS = weak_form1(epsilon, shape, f, u_pred, a_pred, lepolys, phi, phi_x)
-			LHS, RHS = weak_form2(epsilon, shape, f, u_pred, a_pred, lepolys, phi, phi_x, equation=EQUATION)
-			loss_wf = WF*criterion_wf(LHS, RHS)
-			# loss_wf = 0
+			if EQUATION == 'Standard':
+				LHS, RHS = weak_form2(EPSILON, SHAPE, f, u, a_pred, lepolys, phi, phi_x, equation=EQUATION)
+				loss_wf = WF*criterion_wf(LHS, RHS)
+			elif EQUATION == 'Burgers':
+				loss_wf = 0
 			loss = loss_a + loss_u + loss_f + loss_wf
 			return np.round(float(loss.to('cpu').detach()), 8)
 		loss += closure(f, a, u)

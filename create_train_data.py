@@ -108,7 +108,7 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 				s_diag[k] = -(4*k+6)*b
 			S = s_diag*np.eye(N-1)
 			Mass = epsilon*S
-			error, tolerance, u_old, force = 1, 1E-12, 0*f.copy(), f.copy()
+			error, tolerance, u_old, force = 1, 1E-14, 0*f.copy(), f.copy()
 			iterations = 0
 			while error > tolerance:
 				f_ = force - u_old*(D@u_old)

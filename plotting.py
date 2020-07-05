@@ -97,8 +97,8 @@ def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=7, path
 			      f'$f$ MAE Error: {np.round(mae_error_de, 6)}\n'\
 			      f'$f$ Rel. $L_2$ Error: {np.round(float(l2_error_de), 6)}\n'\
 			      f'$f$ Rel. $L_\\infty$ Error: {np.round(float(linf_error_de), 6)}')
-		plt.plot(xx, ff, 'ro-', label='$f$')
-		plt.plot(xx, f, 'bo', mfc='none', label='$\\hat{f}$')
+		plt.plot(xx[1:-1], ff[1:-1], 'ro-', label='$f$')
+		plt.plot(xx[1:-1], f[1:-1], 'bo', mfc='none', label='$\\hat{f}$')
 		plt.xlim(-1,1)
 		plt.grid(alpha=0.618)
 		plt.xlabel('$x$')
@@ -244,8 +244,8 @@ def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path, t
 			  f'MAE Error: {np.round(float(mae_error_f), 6)}\n'\
 			  f'Rel. $L_2$ Error: {np.round(float(l2_error_f), 6)}\n'\
 			  f'Rel. $L_\\infty$ Error: {np.round(float(linf_error_f), 6)}')
-	plt.plot(xx, ff, 'ro-', label='$f$')
-	plt.plot(xx, f_pred, 'bo', mfc='none', label='ODE')
+	plt.plot(xx[1:-1], ff[1:-1], 'ro-', label='$f$')
+	plt.plot(xx[1:-1], f_pred[1:-1], 'bo', mfc='none', label='ODE')
 	plt.xlim(-1,1)
 	plt.grid(alpha=0.618)
 	plt.xlabel('$x$')
