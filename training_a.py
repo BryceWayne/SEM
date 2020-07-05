@@ -35,7 +35,7 @@ torch.cuda.empty_cache()
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--model", type=str, default='NetA', choices=['ResNet', 'NetA']) 
 parser.add_argument("--equation", type=str, default='Burgers', choices=['Standard', 'Burgers'])
-parser.add_argument("--loss", type=str, default='MSE', choices=['MAE', 'MSE'])
+parser.add_argument("--loss", type=str, default='MAE', choices=['MAE', 'MSE'])
 parser.add_argument("--file", type=str, default='500N63', help='Example: --file 2000N31')
 parser.add_argument("--batch", type=int, default=500)
 parser.add_argument("--epochs", type=int, default=1000)
@@ -93,7 +93,7 @@ def weights_init(m):
         torch.nn.init.kaiming_normal_(m.weight.data)
         torch.nn.init.zeros_(m.bias)
 
-# model.apply(weights_init)
+model.apply(weights_init)
 
 # Check if CUDA is available and then use it.
 device = get_device()
@@ -122,7 +122,7 @@ optimizer = torch.optim.LBFGS(model.parameters(), history_size=20, tolerance_gra
 	(*) AMORITIZATION
 	(*) Dropout, L2 Regularization on FC (Remedy for overfitting)
 """
-A, U, WF = 1E4, 1E2, 1E3
+A, U, WF = 1E4, 1E3, 1E2
 BEST_LOSS, losses = float('inf'), {'loss_a':[], 'loss_u':[], 'loss_f': [], 'loss_wf':[], 'loss_train':[], 'loss_validate':[]}
 time0 = time.time()
 for epoch in tqdm(range(1, EPOCHS+1)):
