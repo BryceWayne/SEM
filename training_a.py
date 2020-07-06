@@ -36,9 +36,9 @@ parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--model", type=str, default='NetA', choices=['ResNet', 'NetA']) 
 parser.add_argument("--equation", type=str, default='Burgers', choices=['Standard', 'Burgers'])
 parser.add_argument("--loss", type=str, default='MSE', choices=['MAE', 'MSE'])
-parser.add_argument("--file", type=str, default='500N63', help='Example: --file 2000N31')
-parser.add_argument("--batch", type=int, default=500)
-parser.add_argument("--epochs", type=int, default=1000)
+parser.add_argument("--file", type=str, default='750N63', help='Example: --file 2000N31')
+parser.add_argument("--batch", type=int, default=750)
+parser.add_argument("--epochs", type=int, default=50000)
 parser.add_argument("--ks", type=int, default=5)
 parser.add_argument("--blocks", type=int, default=2)
 parser.add_argument("--filters", type=int, default=32)
@@ -115,7 +115,7 @@ elif args.loss == 'MSE':
 	criterion_f = torch.nn.MSELoss(reduction="sum")
 	criterion_wf = torch.nn.MSELoss(reduction="sum")
 
-optimizer = torch.optim.LBFGS(model.parameters(), history_size=20, tolerance_grad=1e-14, tolerance_change=1e-14, max_eval=20)
+optimizer = torch.optim.LBFGS(model.parameters(), history_size=20, tolerance_grad=1e-15, tolerance_change=1e-15, max_eval=20)
 # optimizer = torch.optim.SGD(model.parameters(), lr=1E-8)
 
 """
@@ -145,7 +145,7 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			f_pred, loss_f = None, 0
 			# LHS, RHS, loss_wf = 0, 0, 0
 			if EQUATION == 'Standard':
-				LHS, RHS = weak_form2(EPSILON, SHAPE, f, u, a_pred, lepolys, phi, phi_x, equation=EQUATION)
+				LHS, RHS = weak_form2(EPSILON, SHAPE, f, u_pred, a_pred, lepolys, phi, phi_x, equation=EQUATION)
 				loss_wf = WF*criterion_wf(LHS, RHS)
 			elif EQUATION == 'Burgers':
 				loss_wf = 0

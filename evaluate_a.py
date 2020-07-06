@@ -46,7 +46,7 @@ def validate(equation, model, optim, epsilon, shape, filters, criterion_a, crite
 			loss_f = 0
 			# LHS, RHS = weak_form1(epsilon, shape, f, u_pred, a_pred, lepolys, phi, phi_x)
 			if EQUATION == 'Standard':
-				LHS, RHS = weak_form2(EPSILON, SHAPE, f, u, a_pred, lepolys, phi, phi_x, equation=EQUATION)
+				LHS, RHS = weak_form2(EPSILON, SHAPE, f, u_pred, a_pred, lepolys, phi, phi_x, equation=EQUATION)
 				loss_wf = WF*criterion_wf(LHS, RHS)
 			elif EQUATION == 'Burgers':
 				loss_wf = 0
@@ -60,17 +60,13 @@ def validate(equation, model, optim, epsilon, shape, filters, criterion_a, crite
 def model_metrics(equation, input_model, file_name, ks, path, epsilon, filters, blocks):
 	device = get_device()
 	
-	EQUATION = equation
-	EPSILON = epsilon
-	INPUT = file_name
+	EQUATION, EPSILON, INPUT = equation, epsilon, file_name
 	FILE = '1000N' + INPUT.split('N')[1]
 	PATH = path
 	KERNEL_SIZE = ks
 	PADDING = (ks - 1)//2
-	SHAPE = int(FILE.split('N')[1]) + 1
-	BATCH = 1000
-	FILTERS = filters
-	N, D_in, Filters, D_out = BATCH, 1, FILTERS, SHAPE
+	SHAPE, BATCH = int(FILE.split('N')[1]) + 1, 1000
+	N, D_in, Filters, D_out = BATCH, 1, filters, SHAPE
 	BLOCKS = blocks
 
 	data = {}

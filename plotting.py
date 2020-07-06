@@ -155,7 +155,7 @@ def loss_plot(losses, file, epoch, shape, ks, best_loss, path, title='alpha'):
 	plt.grid(alpha=0.618)
 	plt.ylabel('Loss')
 	plt.legend(shadow=True)
-	plt.title(f'Loss vs. Epoch: Model: {title}\nFile: {file},$\\quad$Shape: {shape},$\\quad$Kernel: {ks}')
+	plt.title(f'Loss vs. Epoch\nModel: {title}\nFile: {file},$\\quad$Shape: {shape},$\\quad$Kernel: {ks}')
 	plt.savefig(f'{path}/loss_individual.png', bbox_inches='tight')
 	# plt.show()
 	plt.close(2)
