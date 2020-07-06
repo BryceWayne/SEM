@@ -14,24 +14,24 @@ def load_obj(name):
     return data
 
 
-def get_data(EQUATION, FILE, SHAPE, BATCH, D_out, EPSILON):
+def get_data(EQUATION, FILE, SHAPE, BATCH, D_out, EPSILON, kind='train'):
     try:
-        data = LGDataset(equation=EQUATION, pickle_file=FILE, shape=SHAPE)
+        data = LGDataset(equation=EQUATION, pickle_file=FILE, shape=SHAPE, kind=kind)
     except:
-        subprocess.call(f'python create_train_data.py --equation {EQUATION} --size {BATCH} --N {SHAPE - 1} --eps {EPSILON}', shell=True)
-        data = LGDataset(equation=EQUATION, pickle_file=FILE, shape=SHAPE)
+        subprocess.call(f'python create_train_data.py --equation {EQUATION} --size {BATCH} --N {SHAPE - 1} --eps {EPSILON} --kind {kind}', shell=True)
+        data = LGDataset(equation=EQUATION, pickle_file=FILE, shape=SHAPE, kind=kind)
     return data
 
 
 class LGDataset():
     """Legendre-Galerkin Dataset."""
-    def __init__(self, equation, pickle_file, shape=64, transform_f=None, transform_a=None):
+    def __init__(self, equation, pickle_file, shape=64, transform_f=None, transform_a=None, kind='train'):
         """
         Args:
             pickle_file (string): Path to the pkl file with annotations.
             root_dir (string): Directory with all the images.
         """
-        with open(f'./data/{equation}/' + pickle_file + '.pkl', 'rb') as f:
+        with open(f'./data/{equation}/{kind}/' + pickle_file + '.pkl', 'rb') as f:
             self.data = pickle.load(f)
             self.data = self.data[:,:]
         self.transform_f = transform_f

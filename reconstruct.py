@@ -5,11 +5,14 @@ from sem.sem import legslbndm, lepoly, legslbdiff
 # import pdb
 
 # Check if CUDA is available and then use it.
-if torch.cuda.is_available():  
-  dev = "cuda:0" 
-else:  
-  dev = "cpu"
-device = torch.device(dev)  
+def get_device():
+	if torch.cuda.is_available():  
+		dev = "cuda:0" 
+	else:  
+		dev = "cpu"
+	return torch.device(dev)
+
+device = get_device()
 
 ###
 def gen_lepolys(N, x):
@@ -91,7 +94,7 @@ def ODE2(eps, u, alphas, phi_x, phi_xx, equation='Standard', ku=3.5):
 	elif equation == 'Burgers':
 		DE = -eps*reconstruct(alphas, phi_xx) + u*reconstruct(alphas, phi_x)
 	elif equation == 'Helmholtz':
-		DE = -eps*reconstruct(alphas, phi_xx) + ku*reconstruct(alphas, phi)
+		DE = reconstruct(alphas, phi_xx) + ku*u
 	return DE
 
 
@@ -117,6 +120,11 @@ def weak_form2(eps, N, f, u, alphas, lepolys, phi, phi_x, equation='Standard'):
 		LHS = diffusion - convection
 		RHS = torch.sum(2*f*phi[:,0]/(N*(N+1))/denom, axis=2) #f*sum(phi)
 	elif equation == 'Burgers':
+		phi_x = torch.transpose(phi_x, 0, 1)
+		convection = torch.sum(u**2*phi_x[:,0]/(N*(N+1))/denom, axis=2)
+		LHS = torch.abs(diffusion - convection) #  
+		RHS = torch.sum(2*f*phi[:,0]/(N*(N+1))/denom, axis=2)
+	elif equation == 'Helmholtz':
 		phi_x = torch.transpose(phi_x, 0, 1)
 		convection = torch.sum(u**2*phi_x[:,0]/(N*(N+1))/denom, axis=2)
 		LHS = torch.abs(diffusion - convection) #  

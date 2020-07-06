@@ -3,7 +3,7 @@ import pandas as pd
 import pickle
 import subprocess
 import numpy as np
-from evaluate_a import *
+from evaluate import *
 
 def log_data(EQUATION, MODEL, KERNEL_SIZE, FILE, PATH, BLOCKS, EPSILON, FILTERS, EPOCHS, N, LOSS, AVG_ITER, LOSSES, LOSS_TYPE):
 	data = model_metrics(EQUATION, MODEL, FILE, KERNEL_SIZE, PATH, EPSILON, FILTERS, BLOCKS)
