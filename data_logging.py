@@ -5,6 +5,11 @@ import subprocess
 import numpy as np
 from evaluate import *
 
+
+def global_parameters():
+	return None
+
+	
 def log_data(EQUATION, MODEL, KERNEL_SIZE, FILE, PATH, BLOCKS, EPSILON, FILTERS, EPOCHS, N, LOSS, AVG_ITER, LOSSES, LOSS_TYPE):
 	data = model_metrics(EQUATION, MODEL, FILE, KERNEL_SIZE, PATH, EPSILON, FILTERS, BLOCKS)
 	data['AVG IT/S'] = np.round(AVG_ITER, 1)
@@ -30,9 +35,9 @@ def log_data(EQUATION, MODEL, KERNEL_SIZE, FILE, PATH, BLOCKS, EPSILON, FILTERS,
 	for obj in _:
 		df[obj] = df[obj].astype(float)
 	df.to_excel('log_data.xlsx')
-	
+	return df
 
-def loss_log(params, losses):
+def loss_log(params, losses, df):
 	try:
 		with open('./losses.pkl', 'rb') as f:
 			data = pickle.load(f)
@@ -50,6 +55,9 @@ def loss_log(params, losses):
 	entry['FILTERS'] = params['FILTERS']
 	entry['EPSILON'] = params['EPSILON']
 	entry['LOSS_TYPE'] = params['LOSS_TYPE']
+	for _ in ['MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']:
+		val = df[_].tolist()
+		entry[_] = val[-1]
 	data[params['PATH']] = entry
 
 	with open(f'./losses.pkl', 'wb') as f:

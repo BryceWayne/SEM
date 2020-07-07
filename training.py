@@ -11,12 +11,8 @@ import gc
 import torch.nn as nn
 from torch.autograd import Variable
 from torchvision import transforms
-import matplotlib.pyplot as plt
-from scipy.sparse import diags
 from tqdm import tqdm
 import numpy as np
-import scipy as sp
-import pandas as pd
 from net.data_loader import *
 from net.network import *
 from sem.sem import *
@@ -41,7 +37,7 @@ parser.add_argument("--file", type=str, default='2000N63', help='Example: --file
 parser.add_argument("--batch", type=int, default=2000)
 parser.add_argument("--epochs", type=int, default=1000)
 parser.add_argument("--ks", type=int, default=5)
-parser.add_argument("--blocks", type=int, default=2)
+parser.add_argument("--blocks", type=int, default=3)
 parser.add_argument("--filters", type=int, default=32)
 args = parser.parse_args()
 
@@ -61,6 +57,7 @@ elif args.equation == 'Helmholtz':
 
 
 #CREATE GLOBAL PARAMS
+global_params = {}
 EQUATION = args.equation
 FILE = args.file
 BATCH = int(args.file.split('N')[0])
@@ -145,7 +142,7 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			else:
 				u_pred, loss_u = None, 0
 			if F != 0:
-				f_pred = ODE2(EPSILON, u_pred, a_pred, phi_x, phi_xx)
+				f_pred = ODE2(EPSILON, u_pred, a_pred, phi_x, phi_xx, equation=EQUATION)
 				loss_f = F*criterion_f(f_pred, f)
 			else:
 				f_pred, loss_f = None, 0
@@ -154,7 +151,6 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 				loss_wf = WF*criterion_wf(LHS, RHS)
 			elif EQUATION in ('Burgers', 'Helmholtz'):
 				loss_wf = 0
-			# LHS, RHS, loss_wf = 0, 0, 0
 			loss = loss_a + loss_u + loss_f + loss_wf
 			if loss.requires_grad:
 				loss.backward()
@@ -209,6 +205,7 @@ loss_plot(losses, FILE, EPOCHS, SHAPE, KERNEL_SIZE, BEST_LOSS, PATH, title=args.
 dt = time1 - time0
 AVG_ITER = np.round(dt/EPOCHS, 6)
 
+
 params = {
 	'EQUATION': EQUATION,
 	'MODEL': MODEL,
@@ -226,8 +223,8 @@ params = {
 	'LOSS_TYPE': LOSS_TYPE
 }
 
-log_data(**params)
-loss_log(params, losses)
+df = log_data(**params)
+loss_log(params, losses, df)
 
 # EVERYONE APRECIATES A CLEAN WORKSPACE
 gc.collect()

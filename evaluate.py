@@ -32,14 +32,16 @@ def validate(equation, model, optim, epsilon, shape, filters, criterion_a, crite
 				optim.zero_grad()
 			a_pred = model(f)
 			loss_a = A*criterion_a(a_pred, a)
-			u_pred = reconstruct(a_pred, phi)
-			loss_u = U*criterion_u(u_pred, u)
-			f_pred = ODE2(epsilon, u_pred, a_pred, phi_x, phi_xx)
-			loss_f = F*criterion_f(f_pred, f)
-			# loss_f = 0
-			# LHS, RHS = weak_form1(epsilon, shape, f, u_pred, a_pred, lepolys, phi, phi_x)
-			# if EQUATION == 'Standard':
-			# elif EQUATION in ('Burgers', 'Helmholtz'):
+			if U != 0:
+				u_pred = reconstruct(a_pred, phi)
+				loss_u = U*criterion_u(u_pred, u)
+			else:
+				u_pred, loss_u = None, 0
+			if F != 0:
+				f_pred = ODE2(epsilon, u_pred, a_pred, phi_x, phi_xx, equation=EQUATION)
+				loss_f = F*criterion_f(f_pred, f)
+			else:
+				f_pred, loss_f = None, 0
 			loss_wf = 0
 			# LHS, RHS = weak_form2(epsilon, SHAPE, f, u_pred, a_pred, lepolys, phi, phi_x, equation=EQUATION)
 			# loss_wf = WF*criterion_wf(LHS, RHS)
