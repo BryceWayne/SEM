@@ -22,16 +22,21 @@ def gen_lepolys(N, x):
 	return lepolys
 
 
-def basis(N, lepolys):
+def basis(N, lepolys, equation='Standard'):
 	phi = torch.zeros((N-2,N))
-	for i in range(N-2):
-		phi[i,:] = torch.from_numpy(lepolys[i] - lepolys[i+2]).reshape(1,N)
+	if equation in ('Standard', 'Burgers'):
+		for i in range(N-2):
+			phi[i,:] = torch.from_numpy(lepolys[i] - lepolys[i+2]).reshape(1,N)
+	elif equation == 'Helmholtz':
+		for i in range(N-2):
+			coeff = -i*(i+1)/((i+2)*(i+3))
+			phi[i,:] = torch.from_numpy(lepolys[i] - coeff*lepolys[i+2]).reshape(1,N)
 	return phi.to(device)
 
 ###
 def dx(N, x, lepolys):
 	def gen_diff_lepoly(N, n, x,lepolys):
-		lepoly_x = np.zeros((N,1))
+		lepoly_x = np.zeros((N, 1))
 		for i in range(n):
 			if ((i+n) % 2) != 0:
 				lepoly_x += (2*i+1)*lepolys[i]
@@ -42,10 +47,15 @@ def dx(N, x, lepolys):
 	return Dx
 
 
-def basis_x(N, phi, Dx):
+def basis_x(N, phi, Dx, equation='Standard'):
 	phi_x = phi.clone()
-	for i in range(N-2):
-		phi_x[i,:] = torch.from_numpy(Dx[i] - Dx[i+2])
+	if equation in ('Standard', 'Burgers'):
+		for i in range(N-2):
+			phi_x[i,:] = torch.from_numpy(Dx[i] - Dx[i+2])
+	elif equation == 'Helmholtz':
+		for i in range(N-2):
+			coeff = -i*(i+1)/((i+2)*(i+3))
+			phi_x[i,:] = torch.from_numpy(Dx[i] - coeff*Dx[i+2])
 	return phi_x.to(device)
 
 ###
@@ -62,21 +72,26 @@ def dxx(N, x, lepolys):
 	return Dxx
 
 
-def basis_xx(N, phi, Dxx):
+def basis_xx(N, phi, Dxx, equation='Standard'):
 	phi_xx = phi.clone()
-	for i in range(N-2):
-		phi_xx[i,:] = torch.from_numpy(Dxx[i] - Dxx[i+2])
+	if equation in ('Syandard', 'Burgers'):
+		for i in range(N-2):
+			phi_xx[i,:] = torch.from_numpy(Dxx[i] - Dxx[i+2])
+	elif equation == 'Helmholtz':
+		for i in range(N-2):
+			coeff = -i*(i+1)/((i+2)*(i+3))
+			phi_xx[i,:] = torch.from_numpy(Dxx[i] - coeff*Dxx[i+2])
 	return phi_xx.to(device)
 
 
-def basis_vectors(D_out):
-	xx = legslbndm(D_out)
-	lepolys = gen_lepolys(D_out, xx)
-	lepoly_x = dx(D_out, xx, lepolys)
-	lepoly_xx = dxx(D_out, xx, lepolys)
-	phi = basis(D_out, lepolys)
-	phi_x = basis_x(D_out, phi, lepoly_x)
-	phi_xx = basis_xx(D_out, phi_x, lepoly_xx)
+def basis_vectors(N, equation='Standard'):
+	xx = legslbndm(N)
+	lepolys = gen_lepolys(N, xx)
+	lepoly_x = dx(N, xx, lepolys)
+	lepoly_xx = dxx(N, xx, lepolys)
+	phi = basis(N, lepolys, equation)
+	phi_x = basis_x(N, phi, lepoly_x, equation)
+	phi_xx = basis_xx(N, phi_x, lepoly_xx, equation)
 	return xx, lepolys, lepoly_x, lepoly_xx, phi, phi_x, phi_xx
 
 
@@ -115,10 +130,10 @@ def weak_form2(eps, N, f, u, alphas, lepolys, phi, phi_x, equation='Standard'):
 	diffusion = 6*eps*alphas[:,:,0]
 	if equation == 'Standard':
 		u_x = reconstruct(alphas, phi_x)
-		ux_phi = u_x*phi[:,0] #sum(phi)
+		ux_phi = u_x*phi[:,0] 
 		convection = torch.sum(ux_phi*2/(N*(N+1))/denom, axis=2)
 		LHS = diffusion - convection
-		RHS = torch.sum(2*f*phi[:,0]/(N*(N+1))/denom, axis=2) #f*sum(phi)
+		RHS = torch.sum(2*f*phi[:,0]/(N*(N+1))/denom, axis=2) 
 	elif equation == 'Burgers':
 		phi_x = torch.transpose(phi_x, 0, 1)
 		convection = torch.sum(u**2*phi_x[:,0]/(N*(N+1))/denom, axis=2)

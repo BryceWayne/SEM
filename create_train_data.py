@@ -142,11 +142,11 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 			for ii in range(1, N):
 				k = ii - 1
 				s_diag[k] = -(4*k+6)*b[k]
-				phi_k_M = lepolys[k] + a[ii]*lepolys[k+1] + b[ii]*lepolys[k+2]
+				phi_k_M = lepolys[k] + a[k]*lepolys[k+1] + b[k]*lepolys[k+2]
 				for jj in range(1,N):
 					if np.abs(ii-jj) <= 2:
 						l = jj-1
-						psi_l_M = lepolys[l] + a[jj]*lepolys[l+1] + b[jj]*lepolys[l+2]
+						psi_l_M = lepolys[l] + a[l]*lepolys[l+1] + b[l]*lepolys[l+2]
 						M[jj-1,ii-1] = np.sum((psi_l_M*phi_k_M)*2/(N*(N+1))/(lepolys[N]**2))
 
 			S = s_diag*np.eye(N-1)
@@ -190,10 +190,9 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 		a, b = np.zeros((N+1, 1)), np.zeros((N+1, 1))
 		for i in range(1, N+2):
 			k = i-1
-			b[k] = -k*(k+1)/((k+2)*(k+3))
+			b[i-1] = -k*(k+1)/((k+2)*(k+3))
 	else:
 		a, b = 0, -1
-	print(f"EQUATION: {EQUATION}")
 	return loop(N, epsilon, size, lepolys, eps_flag, equation)
 
 
