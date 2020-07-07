@@ -125,7 +125,7 @@ optimizer = torch.optim.LBFGS(model.parameters(), history_size=20, tolerance_gra
 	(*) AMORITIZATION
 	(*) Dropout, L2 Regularization on FC (Remedy for overfitting)
 """
-A, U, F, WF = 1E0, 1E0, 1E-4, 1E0
+A, U, F, WF = 1E0, 1E0, 0E0, 1E0
 BEST_LOSS, losses = float('inf'), {'loss_a':[], 'loss_u':[], 'loss_f': [], 'loss_wf':[], 'loss_train':[], 'loss_validate':[]}
 time0 = time.time()
 for epoch in tqdm(range(1, EPOCHS+1)):
@@ -138,16 +138,17 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			if torch.is_grad_enabled():
 				optimizer.zero_grad()
 			a_pred = model(f)
-			assert a_pred.shape == a.shape
 			loss_a = A*criterion_a(a_pred, a)
-			# loss_a = 0
-			u_pred = reconstruct(a_pred, phi)
-			# assert u_pred.shape == u.shape
-			loss_u = U*criterion_u(u_pred, u)
-			# u_pred, loss_u = None, 0
-			f_pred = ODE2(EPSILON, u_pred, a_pred, phi_x, phi_xx)
-			loss_f = F*criterion_f(f_pred, f)
-			# f_pred, loss_f = None, 0
+			if U != 0:
+				u_pred = reconstruct(a_pred, phi)
+				loss_u = U*criterion_u(u_pred, u)
+			else:
+				u_pred, loss_u = None, 0
+			if F != 0:
+				f_pred = ODE2(EPSILON, u_pred, a_pred, phi_x, phi_xx)
+				loss_f = F*criterion_f(f_pred, f)
+			else:
+				f_pred, loss_f = None, 0
 			if EQUATION == 'Standard':
 				LHS, RHS = weak_form2(EPSILON, SHAPE, f, u_pred, a_pred, lepolys, phi, phi_x, equation=EQUATION)
 				loss_wf = WF*criterion_wf(LHS, RHS)
