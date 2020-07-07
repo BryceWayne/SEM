@@ -30,7 +30,7 @@ def basis(N, lepolys, equation='Standard'):
 	elif equation == 'Helmholtz':
 		for i in range(N-2):
 			coeff = -i*(i+1)/((i+2)*(i+3))
-			phi[i,:] = torch.from_numpy(lepolys[i] - coeff*lepolys[i+2]).reshape(1,N)
+			phi[i,:] = torch.from_numpy(lepolys[i] + coeff*lepolys[i+2]).reshape(1,N)
 	return phi.to(device)
 
 ###
@@ -55,7 +55,7 @@ def basis_x(N, phi, Dx, equation='Standard'):
 	elif equation == 'Helmholtz':
 		for i in range(N-2):
 			coeff = -i*(i+1)/((i+2)*(i+3))
-			phi_x[i,:] = torch.from_numpy(Dx[i] - coeff*Dx[i+2])
+			phi_x[i,:] = torch.from_numpy(Dx[i] + coeff*Dx[i+2])
 	return phi_x.to(device)
 
 ###
@@ -80,7 +80,7 @@ def basis_xx(N, phi, Dxx, equation='Standard'):
 	elif equation == 'Helmholtz':
 		for i in range(N-2):
 			coeff = -i*(i+1)/((i+2)*(i+3))
-			phi_xx[i,:] = torch.from_numpy(Dxx[i] - coeff*Dxx[i+2])
+			phi_xx[i,:] = torch.from_numpy(Dxx[i] + coeff*Dxx[i+2])
 	return phi_xx.to(device)
 
 
@@ -116,8 +116,8 @@ def ODE2(eps, u, alphas, phi_x, phi_xx, equation='Standard', ku=3.5):
 def weak_form1(eps, N, f, u, alphas, lepolys, phi, phi_x):
 	denom = torch.square(torch.from_numpy(lepolys[N-1]).to(device).float())
 	u_x = reconstruct(alphas, phi_x)
-	LHS = eps*torch.sum(torch.square(u_x)*2/(N*(N+1))/denom)
-	RHS = torch.sum(f*u*2/(N*(N+1))/denom)
+	LHS = eps*torch.sum(torch.square(u_x)*2/(N*(N+1))/denom, axis=2)
+	RHS = torch.sum(f*u*2/(N*(N+1))/denom, axis=2)
 	return LHS, RHS
 
 
@@ -133,15 +133,19 @@ def weak_form2(eps, N, f, u, alphas, lepolys, phi, phi_x, equation='Standard'):
 		ux_phi = u_x*phi[:,0] 
 		convection = torch.sum(ux_phi*2/(N*(N+1))/denom, axis=2)
 		LHS = diffusion - convection
-		RHS = torch.sum(2*f*phi[:,0]/(N*(N+1))/denom, axis=2) 
+		# RHS = torch.sum(2*f*phi[:,0]/(N*(N+1))/denom, axis=2) 
 	elif equation == 'Burgers':
 		phi_x = torch.transpose(phi_x, 0, 1)
 		convection = torch.sum(u**2*phi_x[:,0]/(N*(N+1))/denom, axis=2)
-		LHS = torch.abs(diffusion - convection) #  
-		RHS = torch.sum(2*f*phi[:,0]/(N*(N+1))/denom, axis=2)
+		LHS = diffusion - convection
+		# RHS = torch.sum(2*f*phi[:,0]/(N*(N+1))/denom, axis=2)
 	elif equation == 'Helmholtz':
+		ku = 3.5
+		D = legslbdiff(N+1, x)
+		coeff = -i*(i+1)/((i+2)*(i+3))
 		phi_x = torch.transpose(phi_x, 0, 1)
-		convection = torch.sum(u**2*phi_x[:,0]/(N*(N+1))/denom, axis=2)
-		LHS = torch.abs(diffusion - convection) #  
-		RHS = torch.sum(2*f*phi[:,0]/(N*(N+1))/denom, axis=2)
+		diffusion = torch.sum(D*u*phi_x[:,0]/(N*(N+1))/denom, axis=2)
+		reaction = ku*torch.sum(2*u*phi[:,0]/(N*(N+1))/denom, axis=2)
+		LHS = diffusion + reaction 
+	RHS = torch.sum(2*f*phi[:,0]/(N*(N+1))/denom, axis=2)
 	return LHS, RHS

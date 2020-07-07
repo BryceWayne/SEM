@@ -36,10 +36,10 @@ device = get_device()
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--model", type=str, default='NetA', choices=['ResNet', 'NetA']) 
 parser.add_argument("--equation", type=str, default='Helmholtz', choices=['Standard', 'Burgers', 'Helmholtz'])
-parser.add_argument("--loss", type=str, default='MSE', choices=['MAE', 'MSE'])
-parser.add_argument("--file", type=str, default='1000N63', help='Example: --file 2000N31')
-parser.add_argument("--batch", type=int, default=1000)
-parser.add_argument("--epochs", type=int, default=50000)
+parser.add_argument("--loss", type=str, default='MAE', choices=['MAE', 'MSE'])
+parser.add_argument("--file", type=str, default='2000N63', help='Example: --file 2000N31')
+parser.add_argument("--batch", type=int, default=2000)
+parser.add_argument("--epochs", type=int, default=1000)
 parser.add_argument("--ks", type=int, default=5)
 parser.add_argument("--blocks", type=int, default=2)
 parser.add_argument("--filters", type=int, default=32)
@@ -125,7 +125,7 @@ optimizer = torch.optim.LBFGS(model.parameters(), history_size=20, tolerance_gra
 	(*) AMORITIZATION
 	(*) Dropout, L2 Regularization on FC (Remedy for overfitting)
 """
-A, U, WF = 1E0, 1E0, 1E0
+A, U, F, WF = 1E0, 1E0, 1E-4, 1E0
 BEST_LOSS, losses = float('inf'), {'loss_a':[], 'loss_u':[], 'loss_f': [], 'loss_wf':[], 'loss_train':[], 'loss_validate':[]}
 time0 = time.time()
 for epoch in tqdm(range(1, EPOCHS+1)):
@@ -145,18 +145,15 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			# assert u_pred.shape == u.shape
 			loss_u = U*criterion_u(u_pred, u)
 			# u_pred, loss_u = None, 0
-			f_pred, loss_f = None, 0
-			# LHS, RHS, loss_wf = 0, 0, 0
+			f_pred = ODE2(EPSILON, u_pred, a_pred, phi_x, phi_xx)
+			loss_f = F*criterion_f(f_pred, f)
+			# f_pred, loss_f = None, 0
 			if EQUATION == 'Standard':
 				LHS, RHS = weak_form2(EPSILON, SHAPE, f, u_pred, a_pred, lepolys, phi, phi_x, equation=EQUATION)
 				loss_wf = WF*criterion_wf(LHS, RHS)
 			elif EQUATION in ('Burgers', 'Helmholtz'):
 				loss_wf = 0
-			# if epoch > int(0.5*EPOCHS):
-			# 	LHS, RHS = weak_form2(EPSILON, SHAPE, f, u_pred, a_pred, lepolys, phi, phi_x, equation=EQUATION)
-			# 	loss_wf = WF*criterion_wf(LHS, RHS)
-			# else:
-			# 	loss_wf = 0
+			# LHS, RHS, loss_wf = 0, 0, 0
 			loss = loss_a + loss_u + loss_f + loss_wf
 			if loss.requires_grad:
 				loss.backward()
@@ -181,7 +178,7 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 		torch.save(model.state_dict(), PATH + '/model.pt')
 		BEST_LOSS = loss_train/BATCH
 
-	loss_validate = validate(EQUATION, model, optimizer, EPSILON, SHAPE, FILTERS, criterion_a, criterion_u, criterion_f, criterion_wf, lepolys, phi, phi_x, phi_xx, A, U, WF)
+	loss_validate = validate(EQUATION, model, optimizer, EPSILON, SHAPE, FILTERS, criterion_a, criterion_u, criterion_f, criterion_wf, lepolys, phi, phi_x, phi_xx, A, U, F, WF)
 	losses['loss_a'].append(loss_a.item()/BATCH)
 	if loss_u != 0:
 		losses['loss_u'].append(loss_u.item()/BATCH)

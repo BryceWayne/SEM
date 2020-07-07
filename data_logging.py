@@ -41,9 +41,13 @@ def loss_log(params, losses):
 
 	entry = {'losses': losses}
 	entry['EQUATION'] = params['EQUATION']
-	entry['MODEL'] = params['MODEL']
+	if params['MODEL'] == NetA:
+		entry['MODEL'] = 'NetA'
+	elif params['MODEL'] == ResNet:
+		entry['MODEL'] = 'ResNet'
 	entry['KERNEL_SIZE'] = params['KERNEL_SIZE']
 	entry['BLOCKS'] = params['BLOCKS']
+	entry['FILTERS'] = params['FILTERS']
 	entry['EPSILON'] = params['EPSILON']
 	entry['LOSS_TYPE'] = params['LOSS_TYPE']
 	data[params['PATH']] = entry

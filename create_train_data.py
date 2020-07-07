@@ -190,7 +190,7 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 		a, b = np.zeros((N+1, 1)), np.zeros((N+1, 1))
 		for i in range(1, N+2):
 			k = i-1
-			b[i-1] = -k*(k+1)/((k+2)*(k+3))
+			b[k] = -k*(k+1)/((k+2)*(k+3))
 	else:
 		a, b = 0, -1
 	return loop(N, epsilon, size, lepolys, eps_flag, equation)

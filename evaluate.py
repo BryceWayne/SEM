@@ -14,7 +14,7 @@ import pandas as pd
 import datetime
 
 
-def validate(equation, model, optim, epsilon, shape, filters, criterion_a, criterion_u, criterion_f, criterion_wf, lepolys, phi, phi_x, phi_xx, A, U, WF):
+def validate(equation, model, optim, epsilon, shape, filters, criterion_a, criterion_u, criterion_f, criterion_wf, lepolys, phi, phi_x, phi_xx, A, U, F, WF):
 	device = get_device()
 	FILE, EQUATION, SHAPE, BATCH = f'1000N{shape-1}', equation, shape, 1000
 	N, D_in, Filters, D_out = BATCH, 1, filters, shape
@@ -34,9 +34,9 @@ def validate(equation, model, optim, epsilon, shape, filters, criterion_a, crite
 			loss_a = A*criterion_a(a_pred, a)
 			u_pred = reconstruct(a_pred, phi)
 			loss_u = U*criterion_u(u_pred, u)
-			loss_f = 0
-			# f_pred = ODE2(epsilon, u_pred, a_pred, phi_x, phi_xx)
-			# loss_f = criterion_f(f_pred, f)
+			f_pred = ODE2(epsilon, u_pred, a_pred, phi_x, phi_xx)
+			loss_f = F*criterion_f(f_pred, f)
+			# loss_f = 0
 			# LHS, RHS = weak_form1(epsilon, shape, f, u_pred, a_pred, lepolys, phi, phi_x)
 			# if EQUATION == 'Standard':
 			# elif EQUATION in ('Burgers', 'Helmholtz'):
@@ -108,7 +108,7 @@ def model_metrics(equation, input_model, file_name, ks, path, epsilon, filters, 
 	data['FOLDER'] = PATH[len(INPUT)+1:]
 	try:
 		data['FOLDER'] = data['FOLDER'].split('/')[1]
-	except:
+	except:	
 		data['FOLDER'] = data['FOLDER'].split('\\')[1]
 	data['DATASET'] = INPUT
 	data['SHAPE'] = SHAPE
