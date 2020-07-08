@@ -31,7 +31,10 @@ def validate(equation, model, optim, epsilon, shape, filters, criterion_a, crite
 			if torch.is_grad_enabled():
 				optim.zero_grad()
 			a_pred = model(f)
-			loss_a = A*criterion_a(a_pred, a)
+			if A != 0:
+				loss_a = A*criterion_a(a_pred, a)
+			else:
+				loss_a = 0
 			if U != 0:
 				u_pred = reconstruct(a_pred, phi)
 				loss_u = U*criterion_u(u_pred, u)
@@ -42,7 +45,11 @@ def validate(equation, model, optim, epsilon, shape, filters, criterion_a, crite
 				loss_f = F*criterion_f(f_pred, f)
 			else:
 				f_pred, loss_f = None, 0
-			loss_wf = 0
+			if EQUATION in ('Standard', 'Helmholtz') and WF != 0:
+				LHS, RHS = weak_form2(epsilon, SHAPE, f, u_pred, a_pred, lepolys, phi, phi_x, equation=EQUATION)
+				loss_wf = WF*criterion_wf(LHS, RHS)
+			elif EQUATION in ('Burgers', 0):
+				loss_wf = 0
 			# LHS, RHS = weak_form2(epsilon, SHAPE, f, u_pred, a_pred, lepolys, phi, phi_x, equation=EQUATION)
 			# loss_wf = WF*criterion_wf(LHS, RHS)
 			loss = loss_a + loss_u + loss_f + loss_wf

@@ -74,7 +74,7 @@ def dxx(N, x, lepolys):
 
 def basis_xx(N, phi, Dxx, equation='Standard'):
 	phi_xx = phi.clone()
-	if equation in ('Syandard', 'Burgers'):
+	if equation in ('Standard', 'Burgers'):
 		for i in range(N-2):
 			phi_xx[i,:] = torch.from_numpy(Dxx[i] - Dxx[i+2])
 	elif equation == 'Helmholtz':
@@ -142,10 +142,19 @@ def weak_form2(eps, N, f, u, alphas, lepolys, phi, phi_x, equation='Standard'):
 		# RHS = torch.sum(2*f*phi[:,0]/(N*(N+1))/denom, axis=2)
 	elif equation == 'Helmholtz':
 		ku = 3.5
-		D = legslbdiff(N+1, x)
-		coeff = -i*(i+1)/((i+2)*(i+3))
+		x = legslbndm(N+1)
+		D_ = torch.from_numpy(legslbdiff(N+1, x)).to(device).float()
+		D = torch.zeros((B, N+1, N+1)).to(device).float()
+		D[:,:,:] = D_
 		phi_x = torch.transpose(phi_x, 0, 1)
-		diffusion = torch.sum(D*u*phi_x[:,0]/(N*(N+1))/denom, axis=2)
+		# coeff = -i*(i+1)/((i+2)*(i+3))
+		# print(D_.shape)
+		# print(D.shape)
+		# print(u.shape)
+		u_ = torch.transpose(u, 1, 2)
+		temp = torch.bmm(D,u_)
+		temp = torch.transpose(temp, 1, 2)
+		diffusion = torch.sum(temp*phi_x[:,0]/(N*(N+1))/denom, axis=2)
 		reaction = ku*torch.sum(2*u*phi[:,0]/(N*(N+1))/denom, axis=2)
 		LHS = diffusion + reaction 
 	RHS = torch.sum(2*f*phi[:,0]/(N*(N+1))/denom, axis=2)

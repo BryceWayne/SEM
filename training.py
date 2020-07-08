@@ -32,7 +32,7 @@ device = get_device()
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--model", type=str, default='NetA', choices=['ResNet', 'NetA']) 
 parser.add_argument("--equation", type=str, default='Helmholtz', choices=['Standard', 'Burgers', 'Helmholtz'])
-parser.add_argument("--loss", type=str, default='MAE', choices=['MAE', 'MSE'])
+parser.add_argument("--loss", type=str, default='MSE', choices=['MAE', 'MSE'])
 parser.add_argument("--file", type=str, default='2000N63', help='Example: --file 2000N31')
 parser.add_argument("--batch", type=int, default=2000)
 parser.add_argument("--epochs", type=int, default=1000)
@@ -122,7 +122,7 @@ optimizer = torch.optim.LBFGS(model.parameters(), history_size=20, tolerance_gra
 	(*) AMORITIZATION
 	(*) Dropout, L2 Regularization on FC (Remedy for overfitting)
 """
-A, U, F, WF = 1E0, 1E0, 0E0, 1E0
+A, U, F, WF = 1E0, 1E0, 0E0, 1E1
 BEST_LOSS, losses = float('inf'), {'loss_a':[], 'loss_u':[], 'loss_f': [], 'loss_wf':[], 'loss_train':[], 'loss_validate':[]}
 time0 = time.time()
 for epoch in tqdm(range(1, EPOCHS+1)):
@@ -135,7 +135,10 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			if torch.is_grad_enabled():
 				optimizer.zero_grad()
 			a_pred = model(f)
-			loss_a = A*criterion_a(a_pred, a)
+			if A != 0:
+				loss_a = A*criterion_a(a_pred, a)
+			else:
+				loss_a = 0
 			if U != 0:
 				u_pred = reconstruct(a_pred, phi)
 				loss_u = U*criterion_u(u_pred, u)
@@ -146,10 +149,10 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 				loss_f = F*criterion_f(f_pred, f)
 			else:
 				f_pred, loss_f = None, 0
-			if EQUATION == 'Standard':
+			if EQUATION in ('Standard', 'Helmholtz') and WF != 0:
 				LHS, RHS = weak_form2(EPSILON, SHAPE, f, u_pred, a_pred, lepolys, phi, phi_x, equation=EQUATION)
 				loss_wf = WF*criterion_wf(LHS, RHS)
-			elif EQUATION in ('Burgers', 'Helmholtz'):
+			elif EQUATION in ('Burgers', 0):
 				loss_wf = 0
 			loss = loss_a + loss_u + loss_f + loss_wf
 			if loss.requires_grad:
@@ -176,7 +179,10 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 		BEST_LOSS = loss_train/BATCH
 
 	loss_validate = validate(EQUATION, model, optimizer, EPSILON, SHAPE, FILTERS, criterion_a, criterion_u, criterion_f, criterion_wf, lepolys, phi, phi_x, phi_xx, A, U, F, WF)
-	losses['loss_a'].append(loss_a.item()/BATCH)
+	if loss_a != 0:
+		losses['loss_a'].append(loss_a.item()/BATCH)
+	else:
+		losses['loss_a'].append(loss_a/BATCH)
 	if loss_u != 0:
 		losses['loss_u'].append(loss_u.item()/BATCH)
 	else:
