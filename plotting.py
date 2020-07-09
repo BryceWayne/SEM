@@ -18,7 +18,7 @@ def mae(measured, theoretical):
 	
 def color_scheme():
 	# http://tableaufriction.blogspot.com/2012/11/finally-you-can-use-tableau-data-colors.html
-	RED, BLUE, GREEN, PURPLE = '#D62728', '#1F77B4', '#2CA02C', '#9467BD'
+	RED, BLUE, GREEN, PURPLE = '#ff2626', '#2626ff', '#26ff26', '#9326ff'
 	return RED, BLUE, GREEN, PURPLE
 
 def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=7, path='.'):

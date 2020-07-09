@@ -112,7 +112,7 @@ def ODE2(eps, u, alphas, phi_x, phi_xx, equation):
 		DE = -eps*uxx + u*ux
 	elif equation == 'Helmholtz':
 		ku = 3.5
-		DE = -uxx + ku*u
+		DE = uxx + ku*u
 	return DE
 
 
