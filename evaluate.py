@@ -14,7 +14,7 @@ import pandas as pd
 import datetime
 
 
-def validate(equation, model, optim, epsilon, shape, filters, criterion_a, criterion_u, criterion_f, criterion_wf, lepolys, phi, phi_x, phi_xx, A, U, F, WF):
+def validate(equation, model, optim, epsilon, shape, filters, criterion_a, criterion_u, criterion_f, criterion_wf, lepolys, phi, phi_x, phi_xx, A, U, F, WF, nbfuncs):
 	device = get_device()
 	FILE, EQUATION, SHAPE, BATCH = f'1000N{shape-1}', equation, shape, 1000
 	N, D_in, Filters, D_out = BATCH, 1, filters, shape
@@ -45,13 +45,11 @@ def validate(equation, model, optim, epsilon, shape, filters, criterion_a, crite
 				loss_f = F*criterion_f(f_pred, f)
 			else:
 				f_pred, loss_f = None, 0
-			if EQUATION in ('Standard', 'Helmholtz') and WF != 0:
-				LHS, RHS = weak_form2(epsilon, SHAPE, f, u_pred, a_pred, lepolys, phi, phi_x, equation=EQUATION)
+			if WF != 0:
+				LHS, RHS = weak_form2(epsilon, SHAPE, f, u_pred, a_pred, lepolys, phi, phi_x, equation=EQUATION, nbfuncs=nbfuncs)
 				loss_wf = WF*criterion_wf(LHS, RHS)
-			elif EQUATION in ('Burgers', 0):
+			else:
 				loss_wf = 0
-			# LHS, RHS = weak_form2(epsilon, SHAPE, f, u_pred, a_pred, lepolys, phi, phi_x, equation=EQUATION)
-			# loss_wf = WF*criterion_wf(LHS, RHS)
 			loss = loss_a + loss_u + loss_f + loss_wf
 			return np.round(float(loss.to('cpu').detach()), 8)
 		loss += closure(f, a, u)
@@ -78,7 +76,7 @@ def model_metrics(equation, input_model, file_name, ks, path, epsilon, filters, 
 		data['MODEL'] = 'NetA'
 	title = data['MODEL']
 
-	xx, lepolys, lepoly_x, lepoly_xx, phi, phi_x, phi_xx = basis_vectors(D_out, equation=equation)
+	xx, lepolys, lepoly_x, lepoly_xx, phi, phi_x, phi_xx = basis_vectors(D_out, equation=EQUATION)
 	# LOAD MODEL
 	model = input_model(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING, blocks=BLOCKS).to(device)
 	model.load_state_dict(torch.load(PATH + '/model.pt'))

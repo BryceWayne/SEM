@@ -23,6 +23,7 @@ EPSILON = args.eps
 EPS_FLAG = args.rand_eps
 KIND = args.kind
 
+
 def save_obj(data, name, equation, kind):
 	cwd = os.getcwd()
 	path = os.path.join(cwd,'data', equation, kind)
