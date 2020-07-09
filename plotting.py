@@ -15,7 +15,7 @@ def relative_linf(measured, theoretical):
 	return np.linalg.norm(measured-theoretical, ord=np.inf)/np.linalg.norm(theoretical, ord=np.inf)
 def mae(measured, theoretical):
 	return np.linalg.norm(measured-theoretical, ord=1)/len(theoretical)
-	
+
 def color_scheme():
 	# http://tableaufriction.blogspot.com/2012/11/finally-you-can-use-tableau-data-colors.html
 	RED, BLUE, GREEN, PURPLE = '#ff2626', '#2626ff', '#26ff26', '#9326ff'
@@ -27,8 +27,8 @@ def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=7, path
 	# http://vis.stanford.edu/papers/semantically-resonant-colors
 	# https://medialab.github.io/iwanthue/
 	RED, BLUE, GREEN, PURPLE = color_scheme()
-	TEST  = {'color':RED, 'marker':'o', 'linestyle':'none', 'mfc':'none'}
-	VAL = {'color':BLUE, 'marker':'o', 'linestyle':'solid'}
+	TEST  = {'color':RED, 'marker':'o', 'linestyle':'none', 'markersize': 5}
+	VAL = {'color':BLUE, 'marker':'o', 'linestyle':'solid', 'mfc':'none'}
 	aa = sample['a'][0,0,:].to('cpu').detach().numpy()
 	uu = sample['u'][0,0,:].to('cpu').detach().numpy()
 	ff = sample['f'][0,0,:].to('cpu').detach().numpy()
@@ -39,6 +39,7 @@ def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=7, path
 		mae_error_a = mae(ahat, aa)
 		l2_error_a = relative_l2(ahat, aa)
 		linf_error_a = relative_linf(ahat, aa)
+		x_ = list(range(len(x_)))
 		plt.figure(1, figsize=(10,6))
 		plt.title(f'Model: {title}\n'\
 				  f'$\\alpha$ Example Epoch {epoch}\n'\
@@ -47,10 +48,10 @@ def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=7, path
 			      f'$\\alpha$ Rel. $L_\\infty$ Error: {np.round(float(linf_error_a), 6)}')
 		plt.plot(x_, aa, **VAL, label='$\\alpha$')
 		plt.plot(x_, ahat, **TEST, label='$\\hat{\\alpha}$')
-		plt.xlim(-1,1)
+		plt.xlim(x_[0], x_[-1])
 		plt.grid(alpha=0.618)
-		plt.xlabel('$x$')
-		plt.ylabel('$y$')
+		plt.xlabel('$i$')
+		plt.ylabel('$\\alpha_i$')
 		plt.legend(shadow=True)
 		plt.savefig(f'{path}/pics/epoch{str(epoch).zfill(5)}_a.png', bbox_inches='tight')
 		plt.close(1)
@@ -81,7 +82,7 @@ def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=7, path
 		plt.xlim(-1,1)
 		plt.grid(alpha=0.618)
 		plt.xlabel('$x$')
-		plt.ylabel('$y$')
+		plt.ylabel('$u(x)$')
 		plt.legend(shadow=True)
 		plt.savefig(f'{path}/pics/epoch{str(epoch).zfill(5)}_u.png', bbox_inches='tight')
 		# plt.show()
@@ -113,7 +114,7 @@ def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=7, path
 		plt.xlim(-1,1)
 		plt.grid(alpha=0.618)
 		plt.xlabel('$x$')
-		plt.ylabel('$y$')
+		plt.ylabel('$f(x)$')
 		plt.legend(shadow=True)
 		plt.savefig(f'{path}/pics/epoch{str(epoch).zfill(5)}_f.png', bbox_inches='tight')
 		# plt.show()
@@ -158,10 +159,14 @@ def loss_plot(losses, file, epoch, shape, ks, best_loss, path, title='alpha'):
 	plt.close(1)
 	plt.figure(2, figsize=(10,6))
 	x = list(range(1, len(loss_a)+1))
-	plt.semilogy(x, np.array(loss_a), color=RED, label='$\\hat{\\alpha}$')
-	plt.semilogy(x, np.array(loss_u), color=BLUE, label='$\\hat{u}$')
-	# plt.semilogy(x, np.array(loss_f), color=GREEN, label='$\\hat{f}$')
-	plt.semilogy(x, np.array(loss_wf), color=PURPLE, label='Weak Form')
+	if loss_a[-1] != 0:
+		plt.semilogy(x, np.array(loss_a), color=RED, label='$\\hat{\\alpha}$')
+	if loss_u[-1] != 0:
+		plt.semilogy(x, np.array(loss_u), color=BLUE, label='$\\hat{u}$')
+	if loss_f[-1] != 0:
+		plt.semilogy(x, np.array(loss_f), color=GREEN, label='$\\hat{f}$')
+	if loss_wf[-1] != 0:
+		plt.semilogy(x, np.array(loss_wf), color=PURPLE, label='Weak Form')
 	plt.xlabel('Epoch')
 	plt.xlim(1, epoch)
 	plt.grid(alpha=0.618)
@@ -175,8 +180,8 @@ def loss_plot(losses, file, epoch, shape, ks, best_loss, path, title='alpha'):
 
 def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path, title='alpha'):
 	RED, BLUE, GREEN, PURPLE = color_scheme()
-	TEST  = {'color':PURPLE, 'marker':'o', 'linestyle':'none', 'mfc':'none'}
-	VAL = {'color':GREEN, 'marker':'o', 'linestyle':'solid'}
+	TEST  = {'color':RED, 'marker':'o', 'linestyle':'none'}
+	VAL = {'color':BLUE, 'marker':'o', 'linestyle':'solid', 'mfc':'none'}
 	PATH = path
 	SHAPE = shape
 	EQUATION = equation
@@ -197,9 +202,9 @@ def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path, t
 		plt.xlim(-1,1)
 		plt.grid(alpha=0.618)
 		plt.xlabel('$x$')
-		plt.ylabel('$y$')
+		plt.ylabel('$u(x)$')
 		plt.legend(shadow=True)
-		plt.savefig(f'{PATH}/Out of Sample_0{picture}_sample_a.png', bbox_inches='tight')
+		plt.savefig(f'{PATH}/Out of Sample_0{picture}_a.png', bbox_inches='tight')
 		plt.close()
 		# plt.figure(1, figsize=(10,6))
 		# plt.title(f'$\\alpha$ Point-Wise Error: {np.round(np.sum(np.abs(aa-ahat))/len(xx), 6)}')
@@ -231,9 +236,9 @@ def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path, t
 		plt.xlim(-1,1)
 		plt.grid(alpha=0.618)
 		plt.xlabel('$x$')
-		plt.ylabel('$y$')
+		plt.ylabel('$u(x)$')
 		plt.legend(shadow=True)
-		plt.savefig(f'{PATH}/Out of Sample_0{picture}_sample_u.png', bbox_inches='tight')
+		plt.savefig(f'{PATH}/Out of Sample_0{picture}_u.png', bbox_inches='tight')
 		plt.close()
 		# plt.figure(2, figsize=(10,6))
 		# plt.title(f'$u$ Point-Wise Error: {np.round(np.sum(np.abs(uu-uhat))/len(xx), 6)}')
@@ -261,9 +266,9 @@ def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path, t
 		plt.xlim(-1,1)
 		plt.grid(alpha=0.618)
 		plt.xlabel('$x$')
-		plt.ylabel('$y$')
+		plt.ylabel('$u(x)$')
 		plt.legend(shadow=True)
-		plt.savefig(f'{PATH}/Out of Sample_0{picture}_sample_f.png', bbox_inches='tight')
+		plt.savefig(f'{PATH}/Out of Sample_0{picture}_f.png', bbox_inches='tight')
 		plt.close()
 		# plt.figure(3, figsize=(10,6))
 		# plt.title(f'$f$ Point-Wise Error: {np.round(np.sum(np.abs(ff-f_pred))/len(xx_), 6)}')

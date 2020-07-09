@@ -30,16 +30,16 @@ device = get_device()
 
 # ARGS
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--equation", type=str, default='Standard', choices=['Standard', 'Burgers', 'Helmholtz'])
-parser.add_argument("--model", type=str, default='ResNet', choices=['ResNet', 'NetA']) 
+parser.add_argument("--equation", type=str, default='Burgers', choices=['Standard', 'Burgers', 'Helmholtz'])
+parser.add_argument("--model", type=str, default='NetA', choices=['ResNet', 'NetA']) 
 parser.add_argument("--loss", type=str, default='MSE', choices=['MAE', 'MSE'])
 parser.add_argument("--file", type=str, default='500N63', help='Example: --file 2000N31')
 parser.add_argument("--batch", type=int, default=500)
 parser.add_argument("--epochs", type=int, default=10000)
-parser.add_argument("--blocks", type=int, default=0)
+parser.add_argument("--blocks", type=int, default=2)
 parser.add_argument("--ks", type=int, default=5)
 parser.add_argument("--filters", type=int, default=32)
-parser.add_argument("--nbfuncs", type=int, default=10)
+parser.add_argument("--nbfuncs", type=int, default=2)
 args = parser.parse_args()
 
 #EQUATION
@@ -91,13 +91,21 @@ EPOCHS = args.epochs
 N, D_in, Filters, D_out = args.batch, 1, FILTERS, SHAPE
 cur_time = str(datetime.datetime.now()).replace(' ', 'T')
 cur_time = cur_time.replace(':','').split('.')[0].replace('-','')
-PATH = os.path.join('training', f"{EQUATION}", FILE, cur_time)
+FOLDER = f'{args.model}_{args.loss}_epochs{args.epochs}_blocks{args.blocks}_nbfuncs{args.nbfuncs}'
+PATH = os.path.join('training', f"{EQUATION}", FILE, FOLDER)
 BLOCKS = args.blocks
 NBFUNCS = args.nbfuncs
 
 # #CREATE PATHING
-if os.path.isdir(os.path.join('training', EQUATION, FILE)) == False:
-	os.makedirs(os.path.join('training', EQUATION, FILE))
+if os.path.isdir(PATH) == False: os.makedirs(PATH)
+elif os.path.isdir(PATH) == True:
+	print("\n\nPATH ALREADY EXISTS!\n\n")
+	try:
+		PATH = os.path.join('training', f"{EQUATION}", FILE, FOLDER+'_duplicate')
+		os.makedirs(PATH)
+	except:
+		print("\n\nUNABLE TO CREATE PATH!\n\n")
+		exit()
 os.makedirs(os.path.join(PATH, 'pics'))
 
 #CREATE BASIS VECTORS
@@ -139,7 +147,7 @@ optimizer = torch.optim.LBFGS(model.parameters(), history_size=20, tolerance_gra
 	(*) AMORITIZATION
 	(*) Dropout, L2 Regularization on FC (Remedy for overfitting)
 """
-A, U, F, WF = 1E3, 1E3, 0E0, 1E3
+A, U, F, WF = 0E3, 1E3, 0E0, 1E3
 BEST_LOSS, losses = float('inf'), {'loss_a':[], 'loss_u':[], 'loss_f': [], 'loss_wf':[], 'loss_train':[], 'loss_validate':[]}
 time0 = time.time()
 for epoch in tqdm(range(1, EPOCHS+1)):
@@ -215,7 +223,7 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 	losses['loss_train'].append(loss_train.item()/BATCH)
 	losses['loss_validate'].append(loss_validate.item()/1000)
 
-	if EPOCHS > 10 and epoch % int(.05*EPOCHS) == 0:
+	if int(.05*EPOCHS) > 0 and EPOCHS > 10 and epoch % int(.05*EPOCHS) == 0:
 		print(f"\nT. Loss: {np.round(losses['loss_train'][-1], 9)}, "\
 			  f"V. Loss: {np.round(losses['loss_validate'][-1], 9)}")
 		f_pred = ODE2(EPSILON, u_pred, a_pred, phi_x, phi_xx, equation=EQUATION)
