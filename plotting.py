@@ -27,7 +27,7 @@ def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=5, path
 	# http://vis.stanford.edu/papers/semantically-resonant-colors
 	# https://medialab.github.io/iwanthue/
 	RED, BLUE, GREEN, PURPLE = color_scheme()
-	TEST  = {'color':RED, 'marker':'o', 'linestyle':'none', 'markersize': 5}
+	TEST  = {'color':RED, 'marker':'o', 'linestyle':'none', 'markersize': 3}
 	VAL = {'color':BLUE, 'marker':'o', 'linestyle':'solid', 'mfc':'none'}
 	aa = sample['a'][0,0,:].to('cpu').detach().numpy()
 	uu = sample['u'][0,0,:].to('cpu').detach().numpy()
@@ -180,7 +180,7 @@ def loss_plot(losses, file, epoch, shape, ks, best_loss, path, title='alpha'):
 
 def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path, title='alpha'):
 	RED, BLUE, GREEN, PURPLE = color_scheme()
-	TEST  = {'color':RED, 'marker':'o', 'linestyle':'none'}
+	TEST  = {'color':RED, 'marker':'o', 'linestyle':'none', 'markersize': 3}
 	VAL = {'color':BLUE, 'marker':'o', 'linestyle':'solid', 'mfc':'none'}
 	PATH = path
 	SHAPE = shape

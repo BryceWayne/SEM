@@ -35,11 +35,13 @@ parser.add_argument("--model", type=str, default='NetA', choices=['ResNet', 'Net
 parser.add_argument("--loss", type=str, default='MSE', choices=['MAE', 'MSE'])
 parser.add_argument("--file", type=str, default='5000N63', help='Example: --file 2000N31')
 parser.add_argument("--batch", type=int, default=5000)
-parser.add_argument("--epochs", type=int, default=10000)
+parser.add_argument("--epochs", type=int, default=20000)
 parser.add_argument("--blocks", type=int, default=2)
 parser.add_argument("--ks", type=int, default=5)
 parser.add_argument("--filters", type=int, default=32)
 parser.add_argument("--nbfuncs", type=int, default=10)
+parser.add_argument("--A", type=float, default=1E3)
+parser.add_argument("--transfer", type=str, default=None)
 args = parser.parse_args()
 
 #EQUATION
@@ -100,12 +102,7 @@ NBFUNCS = args.nbfuncs
 if os.path.isdir(PATH) == False: os.makedirs(PATH)
 elif os.path.isdir(PATH) == True:
 	print("\n\nPATH ALREADY EXISTS!\n\n")
-	try:
-		PATH = os.path.join('training', f"{EQUATION}", FILE, FOLDER+'_duplicate')
-		os.makedirs(PATH)
-	except:
-		print("\n\nUNABLE TO CREATE PATH!\n\n")
-		exit()
+	exit()
 os.makedirs(os.path.join(PATH, 'pics'))
 
 #CREATE BASIS VECTORS
@@ -113,7 +110,10 @@ xx, lepolys, lepoly_x, lepoly_xx, phi, phi_x, phi_xx = basis_vectors(D_out, equa
 
 lg_dataset = get_data(EQUATION, FILE, SHAPE, BATCH, SHAPE, EPSILON, kind='train')
 trainloader = torch.utils.data.DataLoader(lg_dataset, batch_size=N, shuffle=True)
-model = MODEL(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING, blocks=BLOCKS)
+	model = MODEL(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING, blocks=BLOCKS)
+if args.transfer is not None:
+	model.load_state_dict(torch.load(f'{args.transfer}/model.pt'))
+	model.train()
 
 # KAIMING INITIALIZATION
 def weights_init(m):
