@@ -144,10 +144,21 @@ optimizer = torch.optim.LBFGS(model.parameters(), history_size=20, tolerance_gra
 # optimizer = torch.optim.SGD(model.parameters(), lr=1E-8)
 
 """
+	ABLATION
+	In the context of machine learning, we can define ablation study as,
+	“a scientific examination of a machine learning system by removing its
+		building blocks in order to gain insight on their effects on its overall 
+		performance”. 
+	Dataset features and model components are notable examples of these building blocks
+	(hence we use their corresponding terms of feature ablation and model ablation), 
+	but any design choice or module of the system may be included in an ablation study.
+	SOURCE: https://www.quora.com/In-the-context-of-deep-learning-what-is-an-ablation-study
+"""
+"""
 	(*) AMORITIZATION
 	(*) Dropout, L2 Regularization on FC (Remedy for overfitting)
 """
-A, U, F, WF = 0E3, 1E3, 0E0, 1E3
+A, U, F, WF = 1E3, 1E3, 0E0, 1E3
 BEST_LOSS, losses = float('inf'), {'loss_a':[], 'loss_u':[], 'loss_f': [], 'loss_wf':[], 'loss_train':[], 'loss_validate':[]}
 time0 = time.time()
 for epoch in tqdm(range(1, EPOCHS+1)):
