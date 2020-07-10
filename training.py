@@ -110,7 +110,7 @@ xx, lepolys, lepoly_x, lepoly_xx, phi, phi_x, phi_xx = basis_vectors(D_out, equa
 
 lg_dataset = get_data(EQUATION, FILE, SHAPE, BATCH, SHAPE, EPSILON, kind='train')
 trainloader = torch.utils.data.DataLoader(lg_dataset, batch_size=N, shuffle=True)
-	model = MODEL(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING, blocks=BLOCKS)
+model = MODEL(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING, blocks=BLOCKS)
 if args.transfer is not None:
 	model.load_state_dict(torch.load(f'{args.transfer}/model.pt'))
 	model.train()
@@ -158,7 +158,7 @@ optimizer = torch.optim.LBFGS(model.parameters(), history_size=20, tolerance_gra
 	(*) AMORITIZATION
 	(*) Dropout, L2 Regularization on FC (Remedy for overfitting)
 """
-A, U, F, WF = 1E3, 1E3, 0E0, 1E3
+A, U, F, WF = args.A, 1E3, 0E0, 1E3
 BEST_LOSS, losses = float('inf'), {'loss_a':[], 'loss_u':[], 'loss_f': [], 'loss_wf':[], 'loss_train':[], 'loss_validate':[]}
 time0 = time.time()
 for epoch in tqdm(range(1, EPOCHS+1)):
