@@ -21,7 +21,7 @@ def color_scheme():
 	RED, BLUE, GREEN, PURPLE = '#ff2626', '#2626ff', '#26ff26', '#9326ff'
 	return RED, BLUE, GREEN, PURPLE
 
-def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=7, path='.'):
+def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=5, path='.'):
 	# https://www.colorhexa.com/
 	# https://colorbrewer2.org/#type=diverging&scheme=RdBu&n=4
 	# http://vis.stanford.edu/papers/semantically-resonant-colors
