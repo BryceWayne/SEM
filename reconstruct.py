@@ -149,21 +149,6 @@ def weak_form2(eps, N, f, u, alphas, lepolys, phi, phi_x, equation, nbfuncs):
 		convection = torch.sum(0.5*u**2*phi_x[:,0]/(N*(N+1))/denom, axis=2)
 		LHS = diffusion - convection
 		RHS = torch.sum(2*f*phi[:,0]/(N*(N+1))/denom, axis=2)
-		""" MATLAB CODE LG_1d_Burgers.m
-		% Important: "Use only 1 test function here!!!!!!"
-		for l=0:0
-		    temp = 0;
-		    diffusion = -ep*(4*l+6)*(-1)*u(l+1);
-
-		    
-		    temp = 1/2*(u_sol.^2).*(lepolyx(l,x) - lepolyx(l+2,x));
-
-		    convection = sum(temp*2/(N*(N+1))./(lepoly(N,x).^2));
-		    rhs = sum(force'.*(lepoly(l,x) - lepoly(l+2,x))*2/(N*(N+1))./(lepoly(N,x).^2));
-		    cumulative_error = cumulative_error + abs(diffusion - convection - rhs);
-		end
-		"""
-
 		if nbfuncs > 0:
 			for i in range(1, nbfuncs+1):
 				diffusion = -eps*(4*i+6)*(-1)*alphas[:,:,i]
@@ -188,6 +173,6 @@ def weak_form2(eps, N, f, u, alphas, lepolys, phi, phi_x, equation, nbfuncs):
 			for i in range(1, nbfuncs+1):
 				diffusion = torch.sum(2*temp*phi_x[:,i]/(N*(N+1))/denom, axis=2)
 				reaction = ku*torch.sum(2*u*phi[:,i]/(N*(N+1))/denom, axis=2)
-				LHS += - diffusion + reaction 
+				LHS += -diffusion + reaction 
 				RHS += torch.sum(2*f*phi[:,i]/(N*(N+1))/denom, axis=2)
 	return LHS, RHS

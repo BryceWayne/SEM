@@ -25,23 +25,26 @@ from evaluate import *
 # EVERYONE APRECIATES A CLEAN WORKSPACE
 gc.collect()
 torch.cuda.empty_cache()
-# Check if CUDA is available and then use it.
-device = get_device()
 
 # ARGS
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--equation", type=str, default='Burgers', choices=['Standard', 'Burgers', 'Helmholtz'])
-parser.add_argument("--model", type=str, default='NetA', choices=['ResNet', 'NetA']) 
-parser.add_argument("--loss", type=str, default='MSE', choices=['MAE', 'MSE'])
-parser.add_argument("--file", type=str, default='5000N63', help='Example: --file 2000N31')
-parser.add_argument("--batch", type=int, default=5000)
-parser.add_argument("--epochs", type=int, default=20000)
+parser.add_argument("--equation", type=str, default='Standard', choices=['Standard', 'Burgers', 'Helmholtz'])
+parser.add_argument("--model", type=str, default='ResNet', choices=['ResNet', 'NetA']) 
 parser.add_argument("--blocks", type=int, default=2)
+parser.add_argument("--loss", type=str, default='MSE', choices=['MAE', 'MSE'])
+parser.add_argument("--file", type=str, default='500N63', help='Example: --file 2000N31')
+parser.add_argument("--batch", type=int, default=500)
+parser.add_argument("--epochs", type=int, default=100)
 parser.add_argument("--ks", type=int, default=5)
 parser.add_argument("--filters", type=int, default=32)
-parser.add_argument("--nbfuncs", type=int, default=10)
-parser.add_argument("--A", type=float, default=1E3)
+parser.add_argument("--nbfuncs", type=int, default=10, help='Number of basis functions to use in loss_wf')
+parser.add_argument("--A", type=float, default=0)
 parser.add_argument("--transfer", type=str, default=None)
+"""
+Parabolic - Hyperbolic - Elliptic
+MULTI-TASK LEARNING - learn generic feature extractor
+MAML - model agnostic model learning 
+"""
 args = parser.parse_args()
 
 #EQUATION
@@ -100,9 +103,7 @@ NBFUNCS = args.nbfuncs
 
 # #CREATE PATHING
 if os.path.isdir(PATH) == False: os.makedirs(PATH)
-elif os.path.isdir(PATH) == True:
-	print("\n\nPATH ALREADY EXISTS!\n\n")
-	exit()
+elif os.path.isdir(PATH) == True: print("\n\nPATH ALREADY EXISTS!\n\n"); exit()
 os.makedirs(os.path.join(PATH, 'pics'))
 
 #CREATE BASIS VECTORS
@@ -112,17 +113,14 @@ lg_dataset = get_data(EQUATION, FILE, SHAPE, BATCH, SHAPE, EPSILON, kind='train'
 trainloader = torch.utils.data.DataLoader(lg_dataset, batch_size=N, shuffle=True)
 model = MODEL(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING, blocks=BLOCKS)
 if args.transfer is not None:
-	model.load_state_dict(torch.load(f'{args.transfer}/model.pt'))
+	model.load_state_dict(torch.load(f'./{args.transfer}.pt'))
 	model.train()
 
-# KAIMING INITIALIZATION
-def weights_init(m):
-    if isinstance(m, nn.Conv1d):
-        # torch.nn.init.xavier_uniform_(m.weight)
-        torch.nn.init.kaiming_normal_(m.weight.data)
-        torch.nn.init.zeros_(m.bias)
-
-model.apply(weights_init)
+#KAIMING HE INIT
+if args.transfer is None:
+	model.apply(weights_init)
+# Check if CUDA is available and then use it.
+device = get_device()
 # SEND TO GPU (or CPU)
 model.to(device)
 
@@ -141,7 +139,6 @@ elif args.loss == 'MSE':
 	criterion_wf = torch.nn.MSELoss(reduction="sum")
 
 optimizer = torch.optim.LBFGS(model.parameters(), history_size=20, tolerance_grad=1e-15, tolerance_change=1e-15, max_eval=20)
-# optimizer = torch.optim.SGD(model.parameters(), lr=1E-8)
 
 """
 	ABLATION

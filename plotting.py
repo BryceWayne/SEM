@@ -41,11 +41,8 @@ def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=5, path
 		linf_error_a = relative_linf(ahat, aa)
 		x_ = list(range(len(x_)))
 		plt.figure(1, figsize=(10,6))
-		plt.title(f'Model: {title}\n'\
-				  f'$\\alpha$ Example Epoch {epoch}\n'\
-			      f'$\\alpha$ MAE Error: {np.round(mae_error_a, 6)}\n'\
-			      f'$\\alpha$ Rel. $L_2$ Error: {np.round(float(l2_error_a), 6)}\n'\
-			      f'$\\alpha$ Rel. $L_\\infty$ Error: {np.round(float(linf_error_a), 6)}')
+		plt.title(f'Model: {title},\t$\\alpha$ Example Epoch {epoch}\n'\
+			      f'$\\alpha$ MAE Error: {np.round(mae_error_a, 6)},\t$\\alpha$ Rel. $L_2$ Error: {np.round(float(l2_error_a), 6)},\t$\\alpha$ Rel. $L_\\infty$ Error: {np.round(float(linf_error_a), 6)}')
 		plt.plot(x_, aa, **VAL, label='$\\alpha$')
 		plt.plot(x_, ahat, **TEST, label='$\\hat{\\alpha}$')
 		plt.xlim(x_[0], x_[-1])
@@ -72,11 +69,8 @@ def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=5, path
 		l2_error_u = relative_l2(uhat, uu)
 		linf_error_u = relative_linf(uhat, uu)
 		plt.figure(2, figsize=(10,6))
-		plt.title(f'Model: {title}\n'\
-				  f'$u$ Example Epoch {epoch}\n'\
-			      f'$u$ MAE Error: {np.round(mae_error_u, 6)}\n'\
-			      f'$u$ Rel. $L_2$ Error: {np.round(float(l2_error_u), 6)}\n'\
-			      f'$u$ Rel. $L_\\infty$ Error: {np.round(float(linf_error_u), 6)}')
+		plt.title(f'Model: {title},\t$u$ Example Epoch {epoch}\n'\
+			      f'$u$ MAE Error: {np.round(mae_error_u, 6)},\t$u$ Rel. $L_2$ Error: {np.round(float(l2_error_u), 6)},\t$u$ Rel. $L_\\infty$ Error: {np.round(float(linf_error_u), 6)}')
 		plt.plot(xx, uu, **VAL, label='$u$')
 		plt.plot(xx, uhat.T, **TEST, label='$\\hat{u}$')
 		plt.xlim(-1,1)
@@ -104,11 +98,8 @@ def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=5, path
 		mae_error_de = mae(f, ff)
 		l2_error_de = relative_l2(f, ff)
 		linf_error_de = relative_linf(f, ff)
-		plt.title(f'Model: {title}\n'\
-				  f'$f$ Example Epoch {epoch}\n'\
-			      f'$f$ MAE Error: {np.round(mae_error_de, 6)}\n'\
-			      f'$f$ Rel. $L_2$ Error: {np.round(float(l2_error_de), 6)}\n'\
-			      f'$f$ Rel. $L_\\infty$ Error: {np.round(float(linf_error_de), 6)}')
+		plt.title(f'Model: {title},\t$f$ Example Epoch {epoch}\n'\
+			      f'$f$ MAE Error: {np.round(mae_error_de, 6)},\t$f$ Rel. $L_2$ Error: {np.round(float(l2_error_de), 6)},\t$f$ Rel. $L_\\infty$ Error: {np.round(float(linf_error_de), 6)}')
 		plt.plot(xx[1:-1], ff[1:-1], **VAL, label='$f$')
 		plt.plot(xx[1:-1], f[1:-1], **TEST, label='$\\hat{f}$')
 		plt.xlim(-1,1)
