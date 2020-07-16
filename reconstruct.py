@@ -142,10 +142,10 @@ def weak_form2(eps, N, f, u, alphas, lepolys, phi, phi_x, equation, nbfuncs):
 		# convection = ux_phi*2/(N*(N+1))/denom
 		# LHS = diffusion - convection
 		# RHS = 2*f*phi[:,0]/(N*(N+1))/denom
-		print(f'\nDiffusion: {diffusion.shape}\n' \
-			  f'Convection: {convection.shape}\n' \
-			  f'LHS: {LHS.shape}\n' \
-			  f'RHS: {RHS.shape}\n')
+		# print(f'\nDiffusion: {diffusion.shape}\n' \
+		# 	  f'Convection: {convection.shape}\n' \
+		# 	  f'LHS: {LHS.shape}\n' \
+		# 	  f'RHS: {RHS.shape}\n')
 		if nbfuncs > 1:
 			for i in range(1, nbfuncs):
 				diffusion = -eps*(4*i+6)*(-1)*alphas[:,:,i]
