@@ -30,14 +30,14 @@ torch.cuda.empty_cache()
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--equation", type=str, default='Standard', choices=['Standard', 'Burgers', 'Helmholtz'])
 parser.add_argument("--model", type=str, default='ResNet', choices=['ResNet', 'NetA']) 
-parser.add_argument("--blocks", type=int, default=2)
+parser.add_argument("--blocks", type=int, default=0)
 parser.add_argument("--loss", type=str, default='MSE', choices=['MAE', 'MSE'])
 parser.add_argument("--file", type=str, default='500N63', help='Example: --file 2000N31')
 parser.add_argument("--batch", type=int, default=500)
-parser.add_argument("--epochs", type=int, default=100)
+parser.add_argument("--epochs", type=int, default=1)
 parser.add_argument("--ks", type=int, default=5)
 parser.add_argument("--filters", type=int, default=32)
-parser.add_argument("--nbfuncs", type=int, default=10, help='Number of basis functions to use in loss_wf')
+parser.add_argument("--nbfuncs", type=int, default=1, help='Number of basis functions to use in loss_wf')
 parser.add_argument("--A", type=float, default=0)
 parser.add_argument("--transfer", type=str, default=None)
 """
@@ -87,19 +87,19 @@ global_params = {
 """
 
 FILE = args.file
-BATCH = int(args.file.split('N')[0])
+DATASET = int(args.file.split('N')[0])
 SHAPE = int(args.file.split('N')[1]) + 1
 FILTERS = args.filters
 KERNEL_SIZE = args.ks
 PADDING = (args.ks - 1)//2
 EPOCHS = args.epochs
-N, D_in, Filters, D_out = args.batch, 1, FILTERS, SHAPE
-cur_time = str(datetime.datetime.now()).replace(' ', 'T')
-cur_time = cur_time.replace(':','').split('.')[0].replace('-','')
+BATCH_SIZE, D_in, Filters, D_out = args.batch, 1, FILTERS, SHAPE
 FOLDER = f'{args.model}_{args.loss}_epochs{args.epochs}_blocks{args.blocks}_nbfuncs{args.nbfuncs}'
 PATH = os.path.join('training', f"{EQUATION}", FILE, FOLDER)
 BLOCKS = args.blocks
 NBFUNCS = args.nbfuncs
+cur_time = str(datetime.datetime.now()).replace(' ', 'T')
+cur_time = cur_time.replace(':','').split('.')[0].replace('-','')
 
 # #CREATE PATHING
 if os.path.isdir(PATH) == False: os.makedirs(PATH)
@@ -109,8 +109,8 @@ os.makedirs(os.path.join(PATH, 'pics'))
 #CREATE BASIS VECTORS
 xx, lepolys, lepoly_x, lepoly_xx, phi, phi_x, phi_xx = basis_vectors(D_out, equation=EQUATION)
 
-lg_dataset = get_data(EQUATION, FILE, SHAPE, BATCH, SHAPE, EPSILON, kind='train')
-trainloader = torch.utils.data.DataLoader(lg_dataset, batch_size=N, shuffle=True)
+lg_dataset = get_data(EQUATION, FILE, SHAPE, DATASET, EPSILON, kind='train')
+trainloader = torch.utils.data.DataLoader(lg_dataset, batch_size=BATCH_SIZE, shuffle=True)
 model = MODEL(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING, blocks=BLOCKS)
 if args.transfer is not None:
 	model.load_state_dict(torch.load(f'./{args.transfer}.pt'))
@@ -155,7 +155,7 @@ optimizer = torch.optim.LBFGS(model.parameters(), history_size=20, tolerance_gra
 	(*) AMORITIZATION
 	(*) Dropout, L2 Regularization on FC (Remedy for overfitting)
 """
-A, U, F, WF = args.A, 1E3, 0E0, 1E3
+A, U, F, WF = args.A, 1E3, 0E0, 1E4
 BEST_LOSS, losses = float('inf'), {'loss_a':[], 'loss_u':[], 'loss_f': [], 'loss_wf':[], 'loss_train':[], 'loss_validate':[]}
 time0 = time.time()
 for epoch in tqdm(range(1, EPOCHS+1)):
@@ -207,35 +207,35 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 		gc.collect()
 		torch.cuda.empty_cache()
 		raise Exception("Model diverged!")
-	if loss_train/BATCH < BEST_LOSS:
+	if loss_train/DATASET < BEST_LOSS:
 		torch.save(model.state_dict(), PATH + '/model.pt')
-		BEST_LOSS = loss_train/BATCH
+		BEST_LOSS = loss_train/DATASET
 
 	loss_validate = validate(EQUATION, model, optimizer, EPSILON, SHAPE, FILTERS, criterion_a, criterion_u, criterion_f, criterion_wf, lepolys, phi, phi_x, phi_xx, A, U, F, WF, NBFUNCS)
 	if loss_a != 0:
-		losses['loss_a'].append(loss_a.item()/BATCH)
+		losses['loss_a'].append(loss_a.item()/DATASET)
 	else:
-		losses['loss_a'].append(loss_a/BATCH)
+		losses['loss_a'].append(loss_a/DATASET)
 	if loss_u != 0:
-		losses['loss_u'].append(loss_u.item()/BATCH)
+		losses['loss_u'].append(loss_u.item()/DATASET)
 	else:
-		losses['loss_u'].append(loss_u/BATCH)
+		losses['loss_u'].append(loss_u/DATASET)
 	if type(loss_f) == int:
-		losses['loss_f'].append(loss_f/BATCH) 
+		losses['loss_f'].append(loss_f/DATASET) 
 	else:
-		losses['loss_f'].append(loss_f.item()/BATCH)
+		losses['loss_f'].append(loss_f.item()/DATASET)
 	if type(loss_wf) == int:
-		losses['loss_wf'].append(loss_wf/BATCH) 
+		losses['loss_wf'].append(loss_wf/DATASET) 
 	else:
-		losses['loss_wf'].append(loss_wf.item()/BATCH)
-	losses['loss_train'].append(loss_train.item()/BATCH)
+		losses['loss_wf'].append(loss_wf.item()/DATASET)
+	losses['loss_train'].append(loss_train.item()/DATASET)
 	losses['loss_validate'].append(loss_validate.item()/1000)
 
 	if int(.05*EPOCHS) > 0 and EPOCHS > 10 and epoch % int(.05*EPOCHS) == 0:
 		print(f"\nT. Loss: {np.round(losses['loss_train'][-1], 9)}, "\
 			  f"V. Loss: {np.round(losses['loss_validate'][-1], 9)}")
-		f_pred = ODE2(EPSILON, u_pred, a_pred, phi_x, phi_xx, equation=EQUATION)
-		# f_pred = None
+		# f_pred = ODE2(EPSILON, u_pred, a_pred, phi_x, phi_xx, equation=EQUATION)
+		f_pred = None
 		plotter(xx, sample_batch, epoch, a=a_pred, u=u_pred, f=f_pred, title=args.model, ks=KERNEL_SIZE, path=PATH)
 
 time1 = time.time()
@@ -253,7 +253,7 @@ params = {
 	'EPSILON': EPSILON,
 	'FILTERS': FILTERS,
 	'EPOCHS': EPOCHS,
-	'N': N,
+	'BATCH_SIZE': BATCH_SIZE,
 	'LOSS': BEST_LOSS,
 	'AVG_ITER': AVG_ITER,
 	'LOSSES': losses,

@@ -14,7 +14,7 @@ def load_obj(name):
     return data
 
 
-def get_data(EQUATION, FILE, SHAPE, BATCH, D_out, EPSILON, kind='train'):
+def get_data(EQUATION, FILE, SHAPE, BATCH, EPSILON, kind='train'):
     try:
         data = LGDataset(equation=EQUATION, pickle_file=FILE, shape=SHAPE, kind=kind)
     except:

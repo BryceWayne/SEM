@@ -16,11 +16,11 @@ import datetime
 
 def validate(equation, model, optim, epsilon, shape, filters, criterion_a, criterion_u, criterion_f, criterion_wf, lepolys, phi, phi_x, phi_xx, A, U, F, WF, nbfuncs):
 	device = get_device()
-	FILE, EQUATION, SHAPE, BATCH = f'1000N{shape-1}', equation, shape, 1000
-	N, D_in, Filters, D_out = BATCH, 1, filters, shape
+	FILE, EQUATION, SHAPE = f'1000N{shape-1}', equation, shape
+	BATCH_SIZE, D_in, Filters, D_out = 1000, 1, filters, shape
 	# Load the dataset
-	test_data = get_data(EQUATION, FILE, SHAPE, BATCH, D_out, epsilon, kind='validate')
-	testloader = torch.utils.data.DataLoader(test_data, batch_size=N, shuffle=False)
+	test_data = get_data(EQUATION, FILE, SHAPE, BATCH_SIZE, epsilon, kind='validate')
+	testloader = torch.utils.data.DataLoader(test_data, batch_size=BATCH_SIZE, shuffle=False)
 	loss = 0
 	optim.zero_grad()
 	for batch_idx, sample_batch in enumerate(testloader):
@@ -65,8 +65,8 @@ def model_metrics(equation, input_model, file_name, ks, path, epsilon, filters, 
 	PATH = path
 	KERNEL_SIZE = ks
 	PADDING = (ks - 1)//2
-	SHAPE, BATCH = int(FILE.split('N')[1]) + 1, 1000
-	N, D_in, Filters, D_out = BATCH, 1, filters, SHAPE
+	SHAPE = int(FILE.split('N')[1]) + 1
+	BATCH_SIZE, D_in, Filters, D_out = 1000, 1, filters, SHAPE
 	BLOCKS = blocks
 
 	data = {}
@@ -84,8 +84,8 @@ def model_metrics(equation, input_model, file_name, ks, path, epsilon, filters, 
 
 	if FILE.split('N')[1] != INPUT.split('N')[1]:
 		FILE = '1000N' + INPUT.split('N')[1]
-	test_data = get_data(EQUATION, FILE, SHAPE, BATCH, D_out, EPSILON, kind='validate')
-	testloader = torch.utils.data.DataLoader(test_data, batch_size=N, shuffle=False)
+	test_data = get_data(EQUATION, FILE, SHAPE, BATCH_SIZE, EPSILON, kind='validate')
+	testloader = torch.utils.data.DataLoader(test_data, batch_size=BATCH_SIZE, shuffle=False)
 
 	running_MAE_a, running_MAE_u, running_MSE_a, running_MSE_u, running_MinfE_a, running_MinfE_u = 0, 0, 0, 0, 0, 0
 	for batch_idx, sample_batch in enumerate(testloader):
@@ -100,7 +100,7 @@ def model_metrics(equation, input_model, file_name, ks, path, epsilon, filters, 
 		f_pred = f_pred.to('cpu').detach().numpy()
 		a = a.to('cpu').detach().numpy()
 		u = u.to('cpu').detach().numpy()
-		for i in range(N):
+		for i in range(BATCH_SIZE):
 			running_MAE_a += mae(a_pred[i,0,:], a[i,0,:])
 			running_MSE_a += relative_l2(a_pred[i,0,:], a[i,0,:])
 			running_MinfE_a += relative_linf(a_pred[i,0,:], a[i,0,:])
@@ -120,10 +120,10 @@ def model_metrics(equation, input_model, file_name, ks, path, epsilon, filters, 
 	data['DATASET'] = INPUT
 	data['SHAPE'] = SHAPE
 	data['K.SIZE'] = KERNEL_SIZE
-	data['MAEa'] = np.round(running_MAE_a/N, 6)
-	data['MSEa'] = np.round(running_MSE_a/N, 6)
-	data['MIEa'] = np.round(running_MinfE_a/N, 6)
-	data['MAEu'] = np.round(running_MAE_u/N, 6)
-	data['MSEu'] = np.round(running_MSE_u/N, 6)
-	data['MIEu'] = np.round(running_MinfE_u/N, 6)
+	data['MAEa'] = np.round(running_MAE_a/BATCH_SIZE, 6)
+	data['MSEa'] = np.round(running_MSE_a/BATCH_SIZE, 6)
+	data['MIEa'] = np.round(running_MinfE_a/BATCH_SIZE, 6)
+	data['MAEu'] = np.round(running_MAE_u/BATCH_SIZE, 6)
+	data['MSEu'] = np.round(running_MSE_u/BATCH_SIZE, 6)
+	data['MIEu'] = np.round(running_MinfE_u/BATCH_SIZE, 6)
 	return data
