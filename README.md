@@ -6,7 +6,9 @@ This repository solves various differential equations using the Spectral Element
 This script trains a network and will create the dataset if needed, as well as log validation metrics.
 
 Parameters:
+
 `equation: Standard, Burgers, Helmholtz`
+
 `model: NetA, ResNet`
 
 Use
