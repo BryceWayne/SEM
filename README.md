@@ -7,9 +7,25 @@ This script trains a network and will create the dataset if needed, as well as l
 
 Parameters:
 
-`equation: Standard, Burgers, Helmholtz`
+Differential Equation: `equation`**:**`Standard, Burgers, Helmholtz`
 
-`model: NetA, ResNet`
+NN Architecture: `model`**:**`ResNet, NetA`
+
+Num. of Blocks: `blocks`**:**`0,1,2,3,...`
+
+Loss Func,: `loss`**:**`MAE, MSE`
+
+Dataset: `file`**:**`1000N127` (Example)
+
+Batch Size: `batch`**:**`1000` (Example)
+
+Num. of Epochs: `epochs`**:**`50000` (Example)
+
+Kernel Size: `ks`**:**`5` (Example) *Should be odd
+
+Num. of Filters: `filters`**:**`32` (Example)
+
+Num. of Basis Functions: `nbfuncs`**:**`0,1,2,3,...` (Example)
 
 Use
 ```
