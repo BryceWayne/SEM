@@ -42,7 +42,7 @@ def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=5, path
 		x_ = list(range(len(x_)))
 		plt.figure(1, figsize=(10,6))
 		plt.title(f'Model: {title},\t$\\alpha$ Example Epoch {epoch}\n'\
-			      f'$\\alpha$ MAE Error: {np.round(mae_error_a, 6)},\t'\
+			      f'$\\alpha$ MAE Error: {np.round(float(mae_error_a), 6)},\t'\
 			      f'$\\alpha$ Rel. $L_2$ Error: {np.round(float(l2_error_a), 6)},\t'\
 			      f'$\\alpha$ Rel. $L_\\infty$ Error: {np.round(float(linf_error_a), 6)}')
 		plt.plot(x_, aa, **VAL, label='$\\alpha$')
@@ -72,7 +72,7 @@ def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=5, path
 		linf_error_u = relative_linf(uhat, uu)
 		plt.figure(2, figsize=(10,6))
 		plt.title(f'Model: {title},\t$u$ Example Epoch {epoch}\n'\
-			      f'$u$ MAE Error: {np.round(mae_error_u, 6)},\t'\
+			      f'$u$ MAE Error: {np.round(float(mae_error_u), 6)},\t'\
 			      f'$u$ Rel. $L_2$ Error: {np.round(float(l2_error_u), 6)},\t'\
 			      f'$u$ Rel. $L_\\infty$ Error: {np.round(float(linf_error_u), 6)}')
 		plt.plot(xx, uu, **VAL, label='$u$')
@@ -103,7 +103,7 @@ def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=5, path
 		l2_error_de = relative_l2(f, ff)
 		linf_error_de = relative_linf(f, ff)
 		plt.title(f'Model: {title},\t$f$ Example Epoch {epoch}\n'\
-			      f'$f$ MAE Error: {np.round(mae_error_de, 6)},\t'\
+			      f'$f$ MAE Error: {np.round(float(mae_error_de), 6)},\t'\
 			      f'$f$ Rel. $L_2$ Error: {np.round(float(l2_error_de), 6)},\t'\
 			      f'$f$ Rel. $L_\\infty$ Error: {np.round(float(linf_error_de), 6)}')
 		plt.plot(xx[1:-1], ff[1:-1], **VAL, label='$f$')

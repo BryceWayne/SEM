@@ -8,8 +8,8 @@ import argparse
 
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--equation", type=str, default='Standard')
-parser.add_argument("--size", type=int, default=10)
-parser.add_argument("--N", type=int, default=31)
+parser.add_argument("--size", type=int, default=10) # BEFORE N
+parser.add_argument("--N", type=int, default=31) 
 parser.add_argument("--eps", type=float, default=1E-1)
 parser.add_argument("--kind", type=str, default='train', choices=['train', 'validate'])
 parser.add_argument("--rand_eps", type=bool, default=False)
