@@ -74,6 +74,9 @@ def model_metrics(equation, input_model, file_name, ks, path, epsilon, filters, 
 		data['MODEL'] = 'ResNet'
 	elif input_model == NetA:
 		data['MODEL'] = 'NetA'
+	elif input_model == NetB:
+		data['MODEL'] = 'NetB'
+		
 	title = data['MODEL']
 
 	xx, lepolys, lepoly_x, lepoly_xx, phi, phi_x, phi_xx = basis_vectors(D_out, equation=EQUATION)

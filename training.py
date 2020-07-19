@@ -29,7 +29,7 @@ torch.cuda.empty_cache()
 # ARGS
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--equation", type=str, default='Standard', choices=['Standard', 'Burgers', 'Helmholtz'])
-parser.add_argument("--model", type=str, default='ResNet', choices=['ResNet', 'NetA', 'NetB']) 
+parser.add_argument("--model", type=str, default='NetB', choices=['ResNet', 'NetA', 'NetB']) 
 parser.add_argument("--blocks", type=int, default=0)
 parser.add_argument("--loss", type=str, default='MSE', choices=['MAE', 'MSE'])
 parser.add_argument("--file", type=str, default='500N31', help='Example: --file 2000N31')
@@ -63,7 +63,8 @@ if args.model == 'ResNet':
 	MODEL = ResNet
 elif args.model == 'NetA':
 	MODEL = NetA
-
+elif args.model == 'NetB':
+	MODEL = NetB
 
 #CREATE GLOBAL PARAMS
 """
@@ -116,7 +117,7 @@ trainloader = torch.utils.data.DataLoader(lg_dataset, batch_size=BATCH_SIZE, shu
 model = MODEL(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING, blocks=BLOCKS)
 if args.transfer is not None:
 	model.load_state_dict(torch.load(f'./{args.transfer}.pt'))
-	model.train()
+	model.train()	
 
 #KAIMING HE INIT
 if args.transfer is None:
