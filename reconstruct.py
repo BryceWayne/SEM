@@ -23,14 +23,20 @@ def gen_lepolys(N, x):
 
 
 def basis(N, lepolys, equation):
+	print(N)
 	phi = torch.zeros((N-2,N))
-	if equation in ('Standard', 'Burgers'):
-		for i in range(N-2):
-			phi[i,:] = torch.from_numpy(lepolys[i] - lepolys[i+2]).reshape(1,N)
+	if equation == 'Standard':
+		a, b = np.zeros((N,)), np.ones((N,))
+		b *= -1
+	elif equation == 'Burgers':
+		a, b = np.zeros((N,)), np.ones((N,))
+		b *= -1
 	elif equation == 'Helmholtz':
-		for i in range(N-2):
-			coeff = -i*(i+1)/((i+2)*(i+3))
-			phi[i,:] = torch.from_numpy(lepolys[i] + coeff*lepolys[i+2]).reshape(1,N)
+		a, b = np.zeros((N,)), np.ones((N,))
+		for k in range(N):
+			b[k] = -k*(k+1)/((k+2)*(k+3))
+	for i in range(N-2):
+		phi[i,:] = torch.from_numpy(lepolys[i] + a[i]*lepolys[i+1] + b[i]*lepolys[i+2]).reshape(1,N)
 	return phi.to(device)
 
 
@@ -49,13 +55,18 @@ def dx(N, x, lepolys):
 
 def basis_x(N, phi, Dx, equation):
 	phi_x = phi.clone()
-	if equation in ('Standard', 'Burgers'):
-		for i in range(N-2):
-			phi_x[i,:] = torch.from_numpy(Dx[i] - Dx[i+2])
+	if equation == 'Standard':
+		a, b = np.zeros((N,)), np.ones((N,))
+		b *= -1
+	elif equation == 'Burgers':
+		a, b = np.zeros((N,)), np.ones((N,))
+		b *= -1
 	elif equation == 'Helmholtz':
-		for i in range(N-2):
-			coeff = -i*(i+1)/((i+2)*(i+3))
-			phi_x[i,:] = torch.from_numpy(Dx[i] + coeff*Dx[i+2])
+		a, b = np.zeros((N,)), np.ones((N,))
+		for k in range(N):
+			b[k] = -k*(k+1)/((k+2)*(k+3))
+	for i in range(N-2):
+		phi_x[i,:] = torch.from_numpy(Dx[i] + a[i]*Dx[i+1] + b[i]*Dx[i+2]).reshape(1,N)
 	return phi_x.to(device)
 
 
@@ -74,13 +85,18 @@ def dxx(N, x, lepolys):
 
 def basis_xx(N, phi, Dxx, equation):
 	phi_xx = phi.clone()
-	if equation in ('Standard', 'Burgers'):
-		for i in range(N-2):
-			phi_xx[i,:] = torch.from_numpy(Dxx[i] - Dxx[i+2])
+	if equation == 'Standard':
+		a, b = np.zeros((N,)), np.ones((N,))
+		b *= -1
+	elif equation == 'Burgers':
+		a, b = np.zeros((N,)), np.ones((N,))
+		b *= -1
 	elif equation == 'Helmholtz':
-		for i in range(N-2):
-			coeff = -i*(i+1)/((i+2)*(i+3))
-			phi_xx[i,:] = torch.from_numpy(Dxx[i] + coeff*Dxx[i+2])
+		a, b = np.zeros((N,)), np.ones((N,))
+		for k in range(N):
+			b[k] = -k*(k+1)/((k+2)*(k+3))
+	for i in range(N-2):
+		phi_xx[i,:] = torch.from_numpy(Dxx[i] + a[i]*Dxx[i+1] + b[i]*Dxx[i+2]).reshape(1,N)
 	return phi_xx.to(device)
 
 
@@ -107,13 +123,12 @@ def ODE2(eps, u, alphas, phi_x, phi_xx, equation):
 	ux = reconstruct(alphas, phi_x)
 	uxx = reconstruct(alphas, phi_xx)
 	if equation == 'Standard':
-		DE = -eps*uxx - ux
+		return -eps*uxx - ux
 	elif equation == 'Burgers':
-		DE = -eps*uxx + u*ux
+		return -eps*uxx + u*ux
 	elif equation == 'Helmholtz':
 		ku = 3.5
-		DE = uxx + ku*u
-	return DE
+		return uxx + ku*u
 
 
 def weak_form1(eps, N, f, u, alphas, lepolys, phi, phi_x):
@@ -132,15 +147,10 @@ def weak_form2(eps, N, f, u, alphas, lepolys, phi, phi_x, equation, nbfuncs):
 	phi = torch.transpose(phi, 0, 1)
 	denom = torch.square(torch.from_numpy(lepolys[N]).to(device).float())
 	denom = torch.transpose(denom, 0, 1)
-	diffusion = 6*eps*alphas[:,:,0] # int(u_x*phi_0) = 6 *eps*a
+	diffusion = 6*eps*alphas[:,:,0]
 	if equation == 'Standard':
 		u_x = reconstruct(alphas, phi_x)
 		ux_phi = u_x*phi[:,0]
-		#SCALAR
-		# convection = torch.sum(ux_phi*2/(N*(N+1))/denom, axis=2)
-		# LHS = diffusion - convection
-		# RHS = torch.sum(2*f*phi[:,0]/(N*(N+1))/denom, axis=2)
-		#VECTOR
 		convection = torch.sum(ux_phi*2/(N*(N+1))/denom, axis=2)
 		LHS[:,0] = diffusion - convection
 		RHS[:,0] = torch.sum(2*f*phi[:,0]/(N*(N+1))/denom, axis=2)
@@ -148,11 +158,6 @@ def weak_form2(eps, N, f, u, alphas, lepolys, phi, phi_x, equation, nbfuncs):
 			for i in range(1, nbfuncs):
 				diffusion = -eps*(4*i+6)*(-1)*alphas[:,:,i]
 				ux_phi = u_x*phi[:,i]
-				# SCALAR
-				# convection = torch.sum(ux_phi*2/(N*(N+1))/denom, axis=2)
-				# LHS += diffusion - convection
-				# RHS += torch.sum(2*f*phi[:,i]/(N*(N+1))/denom, axis=2)
-				# VECTOR
 				convection = torch.sum(ux_phi*2/(N*(N+1))/denom, axis=2)
 				LHS[:,i] = diffusion - convection
 				RHS[:,i] = torch.sum(2*f*phi[:,i]/(N*(N+1))/denom, axis=2)			

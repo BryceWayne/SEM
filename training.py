@@ -28,16 +28,16 @@ torch.cuda.empty_cache()
 
 # ARGS
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--equation", type=str, default='Standard', choices=['Standard', 'Burgers', 'Helmholtz'])
-parser.add_argument("--model", type=str, default='NetB', choices=['ResNet', 'NetA', 'NetB']) 
-parser.add_argument("--blocks", type=int, default=0)
+parser.add_argument("--equation", type=str, default='Helmholtz', choices=['Standard', 'Burgers', 'Helmholtz'])
+parser.add_argument("--model", type=str, default='NetA', choices=['ResNet', 'NetA', 'NetB']) 
+parser.add_argument("--blocks", type=int, default=2)
 parser.add_argument("--loss", type=str, default='MSE', choices=['MAE', 'MSE'])
-parser.add_argument("--file", type=str, default='500N31', help='Example: --file 2000N31')
+parser.add_argument("--file", type=str, default='500N127', help='Example: --file 2000N31')
 parser.add_argument("--batch", type=int, default=500)
-parser.add_argument("--epochs", type=int, default=10000)
+parser.add_argument("--epochs", type=int, default=5000)
 parser.add_argument("--ks", type=int, default=5)
 parser.add_argument("--filters", type=int, default=32)
-parser.add_argument("--nbfuncs", type=int, default=10, help='Number of basis functions to use in loss_wf')
+parser.add_argument("--nbfuncs", type=int, default=1, help='Number of basis functions to use in loss_wf')
 parser.add_argument("--A", type=float, default=0)
 parser.add_argument("--transfer", type=str, default=None)
 
@@ -105,9 +105,10 @@ cur_time = str(datetime.datetime.now()).replace(' ', 'T')
 cur_time = cur_time.replace(':','').split('.')[0].replace('-','')
 
 # #CREATE PATHING
-if os.path.isdir(PATH) == False: os.makedirs(PATH)
-elif os.path.isdir(PATH) == True: print("\n\nPATH ALREADY EXISTS!\n\n"); exit()
-os.makedirs(os.path.join(PATH, 'pics'))
+if os.path.isdir(PATH) == False: os.makedirs(PATH); os.makedirs(os.path.join(PATH, 'pics'))
+elif os.path.isdir(PATH) == True and args.transfer is None: print("\n\nPATH ALREADY EXISTS!\n\n"); exit()
+elif os.path.isdir(PATH) == True and args.transfer is not None: print("\n\nPATH ALREADY EXISTS!\n\nLOADING MODEL\n\n")
+
 
 #CREATE BASIS VECTORS
 xx, lepolys, lepoly_x, lepoly_xx, phi, phi_x, phi_xx = basis_vectors(D_out, equation=EQUATION)

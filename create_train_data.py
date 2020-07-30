@@ -43,10 +43,14 @@ def create(N:int, epsilon:float):
 
 
 def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standard'):
-	def func(x: np.ndarray) -> np.ndarray:
+	def func(x: np.ndarray, eq: str) -> np.ndarray:
 		# Random force: mean=0, sd=1
 		m = np.random.randn(4)
 		f = 0.5*m[0]*np.sin(m[1]*np.pi*x) + 0.5*m[2]*np.cos(m[3]*np.pi*x)
+		# if eq != 'Helmholtz':
+		# 	f = 0.5*m[0]*np.sin(m[1]*np.pi*x) + 0.5*m[2]*np.cos(m[3]*np.pi*x)
+		# elif eq == 'Helmholtz':
+		# 	f = m[0]*np.sin(2*m[1]*np.pi*x) + m[2]*np.cos(2*m[3]*np.pi*x)
 		return f, m
 
 	def gen_lepolys(N, x):
@@ -56,7 +60,7 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 		return lepolys
 
 	def generate(x, D, a, b, lepolys, epsilon, equation):
-		f, params = func(x)
+		f, params = func(x, equation)
 		if equation == 'Standard':
 			s_diag = np.zeros((N-1,1))
 			M = np.zeros((N-1,N-1))
@@ -171,7 +175,7 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 				u += alphas[i_ind]*(lepolys[i_ind] + a[i_ind]*lepolys[i_ind] + b[i_ind]*lepolys[i_ind])
 			return u, f, alphas, params
 
-	def loop(N, epsilon, size, lepolys, eps_flag, equation):
+	def loop(N, epsilon, size, lepolys, eps_flag, equation, a, b):
 		if eps_flag == True:
 			epsilons = np.random.uniform(1E0, 1E-6, SIZE)
 		data = []
@@ -188,13 +192,13 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 	D = sem.legslbdiff(N+1, x)
 	lepolys = gen_lepolys(N, x)
 	if equation == 'Helmholtz':
-		a, b = np.zeros((N+1, 1)), np.zeros((N+1, 1))
+		a, b = np.zeros((N+1, 1)), np.ones((N+1, 1))
 		for i in range(1, N+2):
 			k = i-1
 			b[k] = -k*(k+1)/((k+2)*(k+3))
 	else:
 		a, b = 0, -1
-	return loop(N, epsilon, size, lepolys, eps_flag, equation)
+	return loop(N, epsilon, size, lepolys, eps_flag, equation, a, b)
 
 
 data = create_fast(N, EPSILON, SIZE, EPS_FLAG, EQUATION)
