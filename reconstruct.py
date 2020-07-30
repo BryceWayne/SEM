@@ -23,7 +23,6 @@ def gen_lepolys(N, x):
 
 
 def basis(N, lepolys, equation):
-	print(N)
 	phi = torch.zeros((N-2,N))
 	if equation == 'Standard':
 		a, b = np.zeros((N,)), np.ones((N,))
