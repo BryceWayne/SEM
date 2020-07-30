@@ -6,11 +6,13 @@ from sem import sem as sem
 from tqdm import tqdm
 import argparse
 import matplotlib.pyplot as plt
+from pprint import pprint
+
 
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--equation", type=str, default='Helmholtz')
 parser.add_argument("--size", type=int, default=1) # BEFORE N
-parser.add_argument("--N", type=int, default=63) 
+parser.add_argument("--N", type=int, default=4) 
 parser.add_argument("--eps", type=float, default=1E-1)
 parser.add_argument("--kind", type=str, default='train', choices=['train', 'validate'])
 parser.add_argument("--rand_eps", type=bool, default=False)
@@ -52,7 +54,7 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 		# u = cos(2*np.pi*x)
 		# u_xx = -cos(x) + k_u*cos(x)
 		coeff = 2*np.pi
-		f = -coeff**2*np.cos(coeff*x) + 3.5*np.cos(coeff*x)
+		f = -4*np.pi**2*np.cos(coeff*x) + 3.5*np.cos(coeff*x)
 		return f, m
 
 	def gen_lepolys(N, x):
@@ -149,18 +151,21 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 			print('\n')
 			for ii in range(1, N):
 				k = ii - 1
-				s_diag[k] = -(4*k+6)*b[k]
+				s_diag[k] = -(4*k + 6)*b[k]
 				phi_k_M = lepolys[k] + a[k]*lepolys[k+1] + b[k]*lepolys[k+2]
+				# print(phi_k_M)
 				for jj in range(1, N):
 					if np.abs(ii-jj) <= 2:
 						l = jj-1
 						psi_l_M = lepolys[l] + a[l]*lepolys[l+1] + b[l]*lepolys[l+2]
 						# print(psi_l_M)
+						# print(phi_k_M.shape, psi_l_M.shape)	
 						M[l, k] = np.sum(psi_l_M*phi_k_M*2/(N*(N+1))/(lepolys[N]**2))
-
+						print(M[l,k])
+			pprint(M)
 			# print(b)
 			S = s_diag*np.eye(N-1)
-			# print(M)
+			pprint(S)
 			g = np.zeros((N+1,))
 			for i in range(1,N+1):
 				k = i-1
@@ -210,7 +215,7 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 	D = sem.legslbdiff(N+1, x)
 	lepolys = gen_lepolys(N, x)
 	if equation == 'Helmholtz':
-		a, b = np.zeros((N+1,)), np.ones((N+1,))
+		a, b = np.zeros((N+1,)), np.zeros((N+1,))
 		for i in range(1, N+2):
 			k = i-1
 			b[k] = -k*(k+1)/((k+2)*(k+3))
