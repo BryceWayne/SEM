@@ -218,7 +218,7 @@ def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path, t
 		plt.xlabel('$i$')
 		plt.ylabel('Point-Wise Error')
 		plt.legend(shadow=True)
-		plt.savefig(f'{PATH}/{equation}_sample_a_pwe.png', bbox_inches='tight')
+		plt.savefig(f'{PATH}/Out of Sample_0{picture}_a_pwe.png', bbox_inches='tight')
 		plt.close(1)
 
 
@@ -241,7 +241,7 @@ def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path, t
 		plt.ylabel('$u(x)$')
 		plt.legend(shadow=True)
 		plt.savefig(f'{PATH}/Out of Sample_0{picture}_u.png', bbox_inches='tight')
-		plt.close()
+		plt.close(2)
 		plt.figure(2, figsize=(10,6))
 		plt.title(f'$u$ Point-Wise Error: {np.round(np.sum(np.abs(uu-uhat))/len(xx), 6)}')
 		plt.plot(xx, np.abs(uu-uhat), 'ro-', mfc='none', label='Error')
@@ -250,7 +250,7 @@ def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path, t
 		plt.xlabel('$x$')
 		plt.ylabel('Point-Wise Error')
 		plt.legend(shadow=True)
-		plt.savefig(f'{PATH}/{equation}_sample_u_pwe.png', bbox_inches='tight')
+		plt.savefig(f'{PATH}/Out of Sample_0{picture}_u_pwe.png', bbox_inches='tight')
 		plt.close(2)
 
 
@@ -271,7 +271,7 @@ def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path, t
 		plt.ylabel('$f(x)$')
 		plt.legend(shadow=True)
 		plt.savefig(f'{PATH}/Out of Sample_0{picture}_f.png', bbox_inches='tight')
-		plt.close()
+		plt.close(3)
 		plt.figure(3, figsize=(10,6))
 		plt.title(f'$f$ Point-Wise Error: {np.round(np.sum(np.abs(ff-f))/len(xx), 6)}')
 		plt.plot(xx, np.abs(ff-f), 'ro-', mfc='none', label='Error')
@@ -280,6 +280,6 @@ def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path, t
 		plt.xlabel('$x$')
 		plt.ylabel('Point-Wise Error')
 		plt.legend(shadow=True)
-		plt.savefig(f'{PATH}/{equation}_sample_f_pwe.png', bbox_inches='tight')
+		plt.savefig(f'{PATH}/Out of Sample_0{picture}_f_pwe.png', bbox_inches='tight')
 		plt.close(3)
 

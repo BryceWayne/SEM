@@ -12,7 +12,7 @@ from pprint import pprint
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--equation", type=str, default='Helmholtz')
 parser.add_argument("--size", type=int, default=1) # BEFORE N
-parser.add_argument("--N", type=int, default=4) 
+parser.add_argument("--N", type=int, default=63) 
 parser.add_argument("--eps", type=float, default=1E-1)
 parser.add_argument("--kind", type=str, default='train', choices=['train', 'validate'])
 parser.add_argument("--rand_eps", type=bool, default=False)
@@ -46,15 +46,10 @@ def create(N:int, epsilon:float):
 
 
 def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standard'):
-	def func(x: np.ndarray, eq: str) -> np.ndarray:
+	def func(x: np.ndarray) -> np.ndarray:
 		# Random force: mean=0, sd=1
 		m = np.random.randn(4)
-		# f = 0.5*m[0]*np.sin(m[1]*np.pi*x) + 0.5*m[2]*np.cos(m[3]*np.pi*x)
-		# u_xx + k_u*u=f
-		# u = cos(2*np.pi*x)
-		# u_xx = -cos(x) + k_u*cos(x)
-		coeff = 2*np.pi
-		f = -4*np.pi**2*np.cos(coeff*x) + 3.5*np.cos(coeff*x)
+		f = 0.5*m[0]*np.sin(m[1]*np.pi*x) + 0.5*m[2]*np.cos(m[3]*np.pi*x)
 		return f, m
 
 	def gen_lepolys(N, x):
@@ -64,7 +59,7 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 		return lepolys
 
 	def generate(x, D, a, b, lepolys, epsilon, equation):
-		f, params = func(x, equation)
+		f, params = func(x)
 		if equation == 'Standard':
 			s_diag = np.zeros((N-1,1))
 			M = np.zeros((N-1,N-1))
@@ -148,24 +143,18 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 			ku = 3.5
 			s_diag = np.zeros((N-1,1))
 			M = np.zeros((N-1, N-1))
-			print('\n')
 			for ii in range(1, N):
 				k = ii - 1
 				s_diag[k] = -(4*k + 6)*b[k]
 				phi_k_M = lepolys[k] + a[k]*lepolys[k+1] + b[k]*lepolys[k+2]
-				# print(phi_k_M)
 				for jj in range(1, N):
 					if np.abs(ii-jj) <= 2:
 						l = jj-1
 						psi_l_M = lepolys[l] + a[l]*lepolys[l+1] + b[l]*lepolys[l+2]
-						# print(psi_l_M)
-						# print(phi_k_M.shape, psi_l_M.shape)	
-						M[l, k] = np.sum(psi_l_M*phi_k_M*2/(N*(N+1))/(lepolys[N]**2))
-						print(M[l,k])
-			pprint(M)
-			# print(b)
+						entry = psi_l_M*phi_k_M*2/(N*(N+1))/(lepolys[N]**2)
+						M[l, k] = np.sum(entry)
+
 			S = s_diag*np.eye(N-1)
-			pprint(S)
 			g = np.zeros((N+1,))
 			for i in range(1,N+1):
 				k = i-1
@@ -183,19 +172,8 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 			u = np.zeros((N+1, 1))
 			for ij in range(1,N):
 				i_ind = ij-1
-				u += alphas[i_ind]*(lepolys[i_ind] + a[i_ind]*lepolys[i_ind] + b[i_ind]*lepolys[i_ind])
-			
-			# print('\n\n')
-			print(u)
-			u_app = np.cos(2*np.pi*x)
-			print(u_app)
-			print('\n\n')
-			print(np.linalg.norm(u-u_app, ord=2))
-			plt.plot(x, u, label='u')
-			plt.plot(x, u_app, label='u_app')
-			plt.xlim(-1,1)
-			plt.legend()
-			plt.show()
+				u += alphas[i_ind]*(lepolys[i_ind] + a[i_ind]*lepolys[i_ind+1] + b[i_ind]*lepolys[i_ind+2])
+				
 			return u, f, alphas, params
 
 	def loop(N, epsilon, size, lepolys, eps_flag, equation, a, b):

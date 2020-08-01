@@ -7,6 +7,9 @@ from evaluate import *
 
 
 def global_parameters():
+	"""
+		Not yet implemented.
+	"""
 	return None
 
 	
