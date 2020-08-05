@@ -13,7 +13,7 @@ def global_parameters():
 	return None
 
 	
-def log_data(EQUATION, MODEL, KERNEL_SIZE, FILE, PATH, BLOCKS, EPSILON, FILTERS, EPOCHS, BATCH_SIZE, LOSS, AVG_ITER, LOSSES, LOSS_TYPE):
+def log_data(EQUATION, MODEL, KERNEL_SIZE, FILE, PATH, BLOCKS, EPSILON, FILTERS, EPOCHS, BATCH_SIZE, LOSS, AVG_ITER, LOSSES, LOSS_TYPE, NBFUNCS):
 	data = model_metrics(EQUATION, MODEL, FILE, KERNEL_SIZE, PATH, EPSILON, FILTERS, BLOCKS)
 	data['AVG IT/S'] = np.round(AVG_ITER, 1)
 	data['LOSS'] = np.round(LOSS, 6)
@@ -23,8 +23,9 @@ def log_data(EQUATION, MODEL, KERNEL_SIZE, FILE, PATH, BLOCKS, EPSILON, FILTERS,
 	data['BLOCKS'] = BLOCKS
 	data['FILTERS'] = FILTERS
 	data['EPSILON'] = EPSILON
+	data['NBFUNCS'] = NBFUNCS
 
-	COLS = ['EQUATION', 'MODEL', 'LOSS_TYPE', 'TIMESTAMP', 'DATASET', 'FOLDER', 'SHAPE', 'BLOCKS', 'K.SIZE', 'FILTERS', 'BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']
+	COLS = ['EQUATION', 'MODEL', 'LOSS_TYPE', 'TIMESTAMP', 'DATASET', 'FOLDER', 'SHAPE', 'BLOCKS', 'K.SIZE', 'FILTERS', 'BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu', 'NBFUNCS']
 	try:
 		df = pd.read_excel('temp.xlsx', ignore_index=True)
 	except:
@@ -57,7 +58,9 @@ def loss_log(params, losses, df):
 	entry['BLOCKS'] = params['BLOCKS']
 	entry['FILTERS'] = params['FILTERS']
 	entry['EPSILON'] = params['EPSILON']
+	entry['EPOCHS'] = params['EPOCHS']
 	entry['LOSS_TYPE'] = params['LOSS_TYPE']
+	entry['NBFUNCS'] = params['NBFUNCS']
 	for _ in ['MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']:
 		val = df[_].tolist()
 		entry[_] = val[-1]

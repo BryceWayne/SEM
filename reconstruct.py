@@ -27,7 +27,7 @@ def basis(N, lepolys, equation):
 	if equation == 'Standard':
 		a, b = np.zeros((N,)), np.ones((N,))
 		b *= -1
-	elif equation == 'Burgers':
+	elif equation in ('Burgers', 'BurgersT'):
 		a, b = np.zeros((N,)), np.ones((N,))
 		b *= -1
 	elif equation == 'Helmholtz':
@@ -57,7 +57,7 @@ def basis_x(N, phi, Dx, equation):
 	if equation == 'Standard':
 		a, b = np.zeros((N,)), np.ones((N,))
 		b *= -1
-	elif equation == 'Burgers':
+	elif equation in ('Burgers', 'BurgersT'):
 		a, b = np.zeros((N,)), np.ones((N,))
 		b *= -1
 	elif equation == 'Helmholtz':
@@ -87,7 +87,7 @@ def basis_xx(N, phi, Dxx, equation):
 	if equation == 'Standard':
 		a, b = np.zeros((N,)), np.ones((N,))
 		b *= -1
-	elif equation == 'Burgers':
+	elif equation in ('Burgers', 'BurgersT'):
 		a, b = np.zeros((N,)), np.ones((N,))
 		b *= -1
 	elif equation == 'Helmholtz':
@@ -125,6 +125,8 @@ def ODE2(eps, u, alphas, phi_x, phi_xx, equation):
 		return -eps*uxx - ux
 	elif equation == 'Burgers':
 		return -eps*uxx + u*ux
+	elif equation == 'BurgersT':
+		return -eps*uxx + u*ux + u
 	elif equation == 'Helmholtz':
 		ku = 3.5
 		return uxx + ku*u
@@ -172,6 +174,7 @@ def weak_form2(eps, N, f, u, alphas, lepolys, phi, phi_x, equation, nbfuncs):
 				LHS[:,i] = diffusion - convection
 				RHS[:,i] = torch.sum(2*f*phi[:,i]/(N*(N+1))/denom, axis=2)
 	elif equation == 'Helmholtz':
+		# VECTOR v SCALAR
 		ku = 3.5
 		x = legslbndm(N+1)
 		D_ = torch.from_numpy(legslbdiff(N+1, x)).to(device).float()

@@ -28,13 +28,13 @@ torch.cuda.empty_cache()
 
 # ARGS
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--equation", type=str, default='Helmholtz', choices=['Standard', 'Burgers', 'Helmholtz'])
-parser.add_argument("--model", type=str, default='ResNet', choices=['ResNet', 'NetA', 'NetB']) 
-parser.add_argument("--blocks", type=int, default=16)
+parser.add_argument("--equation", type=str, default='BurgersT', choices=['Standard', 'Burgers', 'Helmholtz', 'BurgersT'])
+parser.add_argument("--model", type=str, default='NetA', choices=['ResNet', 'NetA', 'NetB', 'Net2D']) 
+parser.add_argument("--blocks", type=int, default=2)
 parser.add_argument("--loss", type=str, default='MSE', choices=['MAE', 'MSE'])
-parser.add_argument("--file", type=str, default='10000N31', help='Example: --file 2000N31')
+parser.add_argument("--file", type=str, default='10N31', help='Example: --file 2000N31')
 # parser.add_argument("--batch", type=int, default=5000)
-parser.add_argument("--epochs", type=int, default=50000)
+parser.add_argument("--epochs", type=int, default=2)
 parser.add_argument("--ks", type=int, default=5)
 parser.add_argument("--filters", type=int, default=32)
 parser.add_argument("--nbfuncs", type=int, default=1, help='Number of basis functions to use in loss_wf')
@@ -56,6 +56,9 @@ elif args.equation == 'Burgers':
 	EPSILON = 5E-1
 elif args.equation == 'Helmholtz':
 	EPSILON = 0
+elif args.equation == 'BurgersT':
+	EPSILON = 1
+
 EQUATION = args.equation
 
 # MODEL
@@ -65,53 +68,34 @@ elif args.model == 'NetA':
 	MODEL = NetA
 elif args.model == 'NetB':
 	MODEL = NetB
-
-#CREATE GLOBAL PARAMS
-"""
-global_params = {
-	'EQUATION': args.equation,
-	'EPSILON': EPSILON,
-	'DATASET': args.file,
-	'N': SHAPE,
-	'TIME': cur_time,
-	'PATH': PATH,
-	'MODEL': args.model,
-	'LOSS_TYPE': LOSS_TYPE,
-	'BLOCKS': BLOCKS,
-	'EPOCHS': EPOCHS,
-	'KERNEL_SIZE': KERNEL_SIZE,
-	'PADDING': PADDING,
-	'FILTERS': FILTERS,
-	'A': A,
-	'U': U,
-	'F': F,
-	'WF': WF
-}
-"""
+elif args.model == 'Net2D':
+	MODEL = Net2D
 
 FILE = args.file
 DATASET = int(args.file.split('N')[0])
 SHAPE = int(args.file.split('N')[1]) + 1
+BLOCKS = args.blocks
+EPOCHS = args.epochs
+NBFUNCS = args.nbfuncs
 FILTERS = args.filters
 KERNEL_SIZE = args.ks
 PADDING = (args.ks - 1)//2
-EPOCHS = args.epochs
-BATCH_SIZE, D_in, Filters, D_out = DATASET, 1, FILTERS, SHAPE
 cur_time = str(datetime.datetime.now()).replace(' ', 'T')
 cur_time = cur_time.replace(':','').split('.')[0].replace('-','')
 FOLDER = f'{args.model}_{args.loss}_epochs{args.epochs}_blocks{args.blocks}_{cur_time}'
 PATH = os.path.join('training', f"{EQUATION}", FILE, FOLDER)
-BLOCKS = args.blocks
-NBFUNCS = args.nbfuncs
+BATCH_SIZE, D_in, Filters, D_out = DATASET, 1, FILTERS, SHAPE
+
+#CREATE BASIS VECTORS
+xx, lepolys, lepoly_x, lepoly_xx, phi, phi_x, phi_xx = basis_vectors(D_out, equation=EQUATION)
+
+# LOSS SCALE FACTORS
+A, U, F, WF = args.A, 1E3, 0E0, 0E4
 
 # #CREATE PATHING
 if os.path.isdir(PATH) == False: os.makedirs(PATH); os.makedirs(os.path.join(PATH, 'pics'))
 elif os.path.isdir(PATH) == True and args.transfer is None: print("\n\nPATH ALREADY EXISTS!\n\n"); exit()
 elif os.path.isdir(PATH) == True and args.transfer is not None: print("\n\nPATH ALREADY EXISTS!\n\nLOADING MODEL\n\n")
-
-
-#CREATE BASIS VECTORS
-xx, lepolys, lepoly_x, lepoly_xx, phi, phi_x, phi_xx = basis_vectors(D_out, equation=EQUATION)
 
 lg_dataset = get_data(EQUATION, FILE, SHAPE, DATASET, EPSILON, kind='train')
 trainloader = torch.utils.data.DataLoader(lg_dataset, batch_size=BATCH_SIZE, shuffle=True)
@@ -144,23 +128,42 @@ elif args.loss == 'MSE':
 
 optimizer = torch.optim.LBFGS(model.parameters(), history_size=20, tolerance_grad=1e-15, tolerance_change=1e-15, max_eval=20)
 
-"""
-	ABLATION
-	In the context of machine learning, we can define ablation study as,
-	“a scientific examination of a machine learning system by removing its
-		building blocks in order to gain insight on their effects on its overall 
-		performance”. 
-	Dataset features and model components are notable examples of these building blocks
-	(hence we use their corresponding terms of feature ablation and model ablation), 
-	but any design choice or module of the system may be included in an ablation study.
-	SOURCE: https://www.quora.com/In-the-context-of-deep-learning-what-is-an-ablation-study
-"""
-"""
-	(*) AMORITIZATION
-	(*) Dropout, L2 Regularization on FC (Remedy for overfitting)
-"""
-A, U, F, WF = args.A, 1E3, 0E0, 1E4
 BEST_LOSS, losses = float('inf'), {'loss_a':[], 'loss_u':[], 'loss_f': [], 'loss_wf':[], 'loss_train':[], 'loss_validate':[]}
+
+#CREATE GLOBAL PARAMS @TOPO
+# work in progress
+# gparams = {
+# 	'EQUATION': EQUATION,
+# 	'xx': xx,
+# 	'lepolys': lepolys,
+# 	'lepoly_x': lepoly_x,
+# 	'lepoly_xx': lepoly_xx,
+# 	'phi': phi,
+# 	'phi_x': phi_x,
+# 	'phi_xx': phi_xx,
+# 	'EPSILON': EPSILON,
+# 	'DATASET': FILE,
+# 	'N': SHAPE,
+# 	'TIME': cur_time,
+# 	'PATH': PATH,
+# 	'MODEL': args.model,
+# 	'LOSS_TYPE': LOSS_TYPE,
+# 	'LOSSES': losses,
+# 	'BEST_LOSS': BEST_LOSS,
+# 	'BLOCKS': BLOCKS,
+# 	'EPOCHS': EPOCHS,
+# 	'NBFUNCS': NBFUNCS,
+# 	'KERNEL_SIZE': KERNEL_SIZE,
+# 	'PADDING': PADDING,
+# 	'FILTERS': FILTERS,
+# 	'A': A,
+# 	'U': U,
+# 	'F': F,
+# 	'WF': WF,
+# 	'OPTIM': optimizer,
+# 	'TRAINED_MODEL': model
+# }
+
 time0 = time.time()
 for epoch in tqdm(range(1, EPOCHS+1)):
 	loss_a, loss_u, loss_f, loss_wf, loss_train = 0, 0, 0, 0, 0
@@ -191,10 +194,12 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 				loss_wf = WF*criterion_wf(LHS, RHS)
 			else:
 				loss_wf = 0
+			# NET LOSS
 			loss = loss_a + loss_u + loss_f + loss_wf
 			if loss.requires_grad:
 				loss.backward()
 			return a_pred, u_pred, f_pred, loss_a, loss_u, loss_f, loss_wf, loss
+		
 		a_pred, u_pred, f_pred, loss_a, loss_u, loss_f, loss_wf, loss = closure(f, a, u)
 		optimizer.step(loss.item)
 		if loss_a != 0:
@@ -211,34 +216,36 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 		model.load_state_dict(torch.load(PATH + '/model.pt'))
 		model.train()
 		optimizer = torch.optim.LBFGS(model.parameters(), history_size=20, tolerance_grad=1e-15, tolerance_change=1e-15, max_eval=20)
-		# gc.collect()
-		# torch.cuda.empty_cache()
 		print('Model diverged!')
 		# raise Exception("Model diverged!")
 	else:
 		if loss_train/DATASET < BEST_LOSS:
 			torch.save(model.state_dict(), PATH + '/model.pt')
 			BEST_LOSS = loss_train/DATASET
+			# gparams['TRAINED_MODEL'] = model
+			# gparams['BEST_LOSS'] = BEST_LOSS
 
 		loss_validate = validate(EQUATION, model, optimizer, EPSILON, SHAPE, FILTERS, criterion_a, criterion_u, criterion_f, criterion_wf, lepolys, phi, phi_x, phi_xx, A, U, F, WF, NBFUNCS)
-		if loss_a != 0:
-			losses['loss_a'].append(loss_a.item()/DATASET)
-		else:
+		if type(loss_a) == int:
 			losses['loss_a'].append(loss_a/DATASET)
-		if loss_u != 0:
-			losses['loss_u'].append(loss_u.item()/DATASET)
 		else:
+			losses['loss_a'].append(loss_a.item()/DATASET)
+		if type(loss_u) == int:
 			losses['loss_u'].append(loss_u/DATASET)
+		else:
+			losses['loss_u'].append(loss_u.item()/DATASET)
 		if type(loss_f) == int:
 			losses['loss_f'].append(loss_f/DATASET) 
 		else:
-			losses['loss_f'].append(loss_f.item()/DATASET)
+			losses['loss_f'].append(loss_f.item()/DATASET) 
 		if type(loss_wf) == int:
 			losses['loss_wf'].append(loss_wf/DATASET) 
 		else:
 			losses['loss_wf'].append(loss_wf.item()/DATASET)
+			
 		losses['loss_train'].append(loss_train.item()/DATASET)
 		losses['loss_validate'].append(loss_validate.item()/1000)
+		# gparams['LOSSES'] = losses
 
 		if int(.05*EPOCHS) > 0 and EPOCHS > 10 and epoch % int(.05*EPOCHS) == 0:
 			print(f"\nT. Loss: {np.round(losses['loss_train'][-1], 9)}, "\
@@ -246,6 +253,7 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			# f_pred = ODE2(EPSILON, u_pred, a_pred, phi_x, phi_xx, equation=EQUATION)
 			f_pred = None
 			plotter(xx, sample_batch, epoch, a=a_pred, u=u_pred, f=f_pred, title=args.model, ks=KERNEL_SIZE, path=PATH)
+			out_of_sample(EQUATION, SHAPE, a_pred, u_pred, f_pred, sample_batch, PATH, arg.model)
 
 time1 = time.time()
 loss_plot(losses, FILE, EPOCHS, SHAPE, KERNEL_SIZE, BEST_LOSS, PATH, title=args.model)
@@ -266,7 +274,8 @@ params = {
 	'LOSS': BEST_LOSS,
 	'AVG_ITER': AVG_ITER,
 	'LOSSES': losses,
-	'LOSS_TYPE': LOSS_TYPE
+	'LOSS_TYPE': LOSS_TYPE,
+	'NBFUNCS': NBFUNCS
 }
 
 df = log_data(**params)

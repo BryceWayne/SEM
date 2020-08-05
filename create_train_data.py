@@ -10,10 +10,10 @@ from pprint import pprint
 
 
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--equation", type=str, default='Helmholtz')
+parser.add_argument("--equation", type=str, default='BurgersT')
 parser.add_argument("--size", type=int, default=1) # BEFORE N
-parser.add_argument("--N", type=int, default=63) 
-parser.add_argument("--eps", type=float, default=1E-1)
+parser.add_argument("--N", type=int, default=31) 
+parser.add_argument("--eps", type=float, default=1)
 parser.add_argument("--kind", type=str, default='train', choices=['train', 'validate'])
 parser.add_argument("--rand_eps", type=bool, default=False)
 args = parser.parse_args()
@@ -60,8 +60,8 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 
 	def generate(x, D, a, b, lepolys, epsilon, equation):
 		f, params = func(x)
+		s_diag = np.zeros((N-1,1))
 		if equation == 'Standard':
-			s_diag = np.zeros((N-1,1))
 			M = np.zeros((N-1,N-1))
 			for ii in range(1, N):
 				k = ii - 1
@@ -104,10 +104,8 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 					L = lepolys[k]
 					_ += g[j-1]*L[i-1]
 				u[i-1] = _[0]
-			return u, f, alphas, params
 
 		elif equation == 'Burgers':
-			s_diag = np.zeros((N-1,1))
 			for ii in range(1, N):
 				k = ii - 1
 				s_diag[k] = -(4*k+6)*b
@@ -137,11 +135,66 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 				error = np.max(u_sol - u_old)
 				u_old = u_sol
 				iterations += 1
-			return u_sol, f, alphas, params
+			u = u_sol
+
+		elif equation == 'BurgersT':
+			M = np.zeros((N-1, N-1))
+			tol, T, dt = 1E-9, .001, 1E-4
+			t_f = int(T//dt)
+			u0 = 0
+			u_pre = np.zeros_like(x)
+			u_ans, f_ans, alphas_ans = [], [], []
+			for ii in range(1, N):
+				k = ii - 1
+				s_diag[k] = -(4*k + 6)*b
+				phi_k_M = lepolys[k] + a*lepolys[k+1] + b*lepolys[k+2]
+				for jj in range(1, N):
+					if np.abs(ii-jj) <= 2:
+						l = jj-1
+						psi_l_M = lepolys[l] + a*lepolys[l+1] + b*lepolys[l+2]
+						entry = psi_l_M*phi_k_M*2/(N*(N+1))/(lepolys[N]**2)
+						M[l, k] = np.sum(entry)
+			S = s_diag*np.eye(N-1)
+			Mass = epsilon*S + 1/dt*M
+			
+			for t_idx in range(1, t_f + 1):
+				if type(u0) == int:
+					error, tolerance, u_old, force = 1, tol, 0*f.copy(), f.copy()
+				else:
+					error, tolerance, u_old, force = 1, tol, 0*f.copy(), np.cos(t_idx*dt)*f.copy()
+				u_pre = u0
+				f_ans.append(force + u_pre)
+
+				iterations = 0
+				while error > tolerance:
+					f_ = force - u_old*(D@u_old) + 1/dt*u_pre
+					g = np.zeros((N+1,))
+					for i in range(1,N+1):
+						k = i-1
+						g[k] = (2*k+1)/(N*(N+1))*np.sum(f_*(lepolys[k])/(lepolys[N]**2))
+					g[N-1] = 1/(N+1)*np.sum(f_/lepolys[N])
+
+					bar_f = np.zeros((N-1,))
+					for i in range(1,N):
+						k = i-1
+						bar_f[k] = g[k]/(k+1/2) + a*g[k+1]/(k+3/2) + b*g[k+2]/(k+5/2)
+
+					alphas = np.linalg.solve(Mass, bar_f)
+					u_sol = np.zeros((N+1, 1))
+					for ij in range(1, N):
+						i_ind = ij - 1
+						u_sol += alphas[i_ind]*(lepolys[i_ind] + a*lepolys[i_ind+1] + b*lepolys[i_ind+2])
+
+					error = np.max(u_sol - u_old)
+					u_old = u_sol
+					iterations += 1
+				u_ans.append(u_sol)
+				alphas_ans.append(alphas)
+				u0 = u_sol
+			u, f, alphas = u_ans, f_ans, alphas_ans
 			
 		elif equation == 'Helmholtz':
 			ku = 3.5
-			s_diag = np.zeros((N-1,1))
 			M = np.zeros((N-1, N-1))
 			for ii in range(1, N):
 				k = ii - 1
@@ -168,13 +221,13 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 
 			Mass = -S + ku*M
 			alphas = np.linalg.solve(Mass, bar_f)
-						
+
 			u = np.zeros((N+1, 1))
 			for ij in range(1,N):
 				i_ind = ij-1
 				u += alphas[i_ind]*(lepolys[i_ind] + a[i_ind]*lepolys[i_ind+1] + b[i_ind]*lepolys[i_ind+2])
-				
-			return u, f, alphas, params
+
+		return u, f, alphas, params
 
 	def loop(N, epsilon, size, lepolys, eps_flag, equation, a, b):
 		if eps_flag == True:
@@ -185,7 +238,12 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 			if eps_flag == True:
 				epsilon = epsilons[n]
 			u, f, alphas, params = generate(x, D, a, b, lepolys, epsilon, equation)
-			data.append([u, f, alphas, params, epsilon])
+			if equation == 'BurgersT':
+				for i, u_ in enumerate(u):
+					if i < len(u) - 1:
+						data.append([u[i+1], f[i], alphas[i+1], params, epsilon])
+			else:
+				data.append([u, f, alphas, params, epsilon])
 		return data
 
 
