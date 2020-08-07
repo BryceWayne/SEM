@@ -20,7 +20,7 @@ def validate(equation, model, optim, epsilon, shape, filters, criterion_a, crite
 	BATCH_SIZE, D_in, Filters, D_out = 1000, 1, filters, shape
 	# Load the dataset
 	test_data = get_data(EQUATION, FILE, SHAPE, BATCH_SIZE, epsilon, kind='validate')
-	testloader = torch.utils.data.DataLoader(test_data, batch_size=BATCH_SIZE, shuffle=False)
+	testloader = torch.utils.data.DataLoader(test_data, batch_size=BATCH_SIZE, shuffle=True)
 	loss = 0
 	optim.zero_grad()
 	for batch_idx, sample_batch in enumerate(testloader):

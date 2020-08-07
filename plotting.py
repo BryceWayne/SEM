@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from sem.sem import *
+from reconstruct import *
 
 
 def relative_l2(measured, theoretical):
@@ -42,9 +43,9 @@ def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=5, path
 		x_ = list(range(len(x_)))
 		plt.figure(1, figsize=(10,6))
 		plt.title(f'Model: {title},\t$\\alpha$ Example Epoch {epoch}\n'\
-			      f'$\\alpha$ MAE Error: {np.round(float(mae_error_a), 6)},\t'\
-			      f'$\\alpha$ Rel. $L_2$ Error: {np.round(float(l2_error_a), 6)},\t'\
-			      f'$\\alpha$ Rel. $L_\\infty$ Error: {np.round(float(linf_error_a), 6)}')
+			      f'$\\alpha$ MAE Error: {np.round(float(mae_error_a), 9)},\t'\
+			      f'$\\alpha$ Rel. $L_2$ Error: {np.round(float(l2_error_a), 9)},\t'\
+			      f'$\\alpha$ Rel. $L_\\infty$ Error: {np.round(float(linf_error_a), 9)}')
 		plt.plot(x_, aa, **VAL, label='$\\alpha$')
 		plt.plot(x_, ahat, **TEST, label='$\\hat{\\alpha}$')
 		plt.xlim(x_[0], x_[-1])
@@ -56,7 +57,7 @@ def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=5, path
 		plt.close(1)
 		plt.figure(1, figsize=(10,6))
 		plt.title(f'$\\alpha$ Example Epoch {epoch}\n'\
-			      f'$\\alpha$ Point-Wise Error: {np.round(np.sum(np.abs(aa-ahat))/len(x_), 6)}')
+			      f'$\\alpha$ Point-Wise Error: {np.round(np.sum(np.abs(aa-ahat))/len(x_), 9)}')
 		plt.plot(x_, np.abs(aa-ahat), 'ro-', mfc='none', label='Error')
 		plt.xlim(x_[0], x_[-1])
 		plt.grid(alpha=0.618)
@@ -72,9 +73,9 @@ def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=5, path
 		linf_error_u = relative_linf(uhat, uu)
 		plt.figure(2, figsize=(10,6))
 		plt.title(f'Model: {title},\t$u$ Example Epoch {epoch}\n'\
-			      f'$u$ MAE Error: {np.round(float(mae_error_u), 6)},\t'\
-			      f'$u$ Rel. $L_2$ Error: {np.round(float(l2_error_u), 6)},\t'\
-			      f'$u$ Rel. $L_\\infty$ Error: {np.round(float(linf_error_u), 6)}')
+			      f'$u$ MAE Error: {np.round(float(mae_error_u), 9)},\t'\
+			      f'$u$ Rel. $L_2$ Error: {np.round(float(l2_error_u), 9)},\t'\
+			      f'$u$ Rel. $L_\\infty$ Error: {np.round(float(linf_error_u), 9)}')
 		plt.plot(xx, uu, **VAL, label='$u$')
 		plt.plot(xx, uhat.T, **TEST, label='$\\hat{u}$')
 		plt.xlim(-1,1)
@@ -87,7 +88,7 @@ def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=5, path
 		plt.close(2)
 		plt.figure(2, figsize=(10,6))
 		plt.title(f'$u$ Example Epoch {epoch}\n'\
-			      f'$u$ Point-Wise Error: {np.round(np.sum(np.abs(uu-uhat))/len(xx), 6)}')
+			      f'$u$ Point-Wise Error: {np.round(np.sum(np.abs(uu-uhat))/len(xx), 9)}')
 		plt.plot(xx, np.abs(uu-uhat), 'ro-', mfc='none', label='Error')
 		plt.xlim(-1,1)
 		plt.grid(alpha=0.618)
@@ -103,9 +104,9 @@ def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=5, path
 		l2_error_de = relative_l2(f, ff)
 		linf_error_de = relative_linf(f, ff)
 		plt.title(f'Model: {title},\t$f$ Example Epoch {epoch}\n'\
-			      f'$f$ MAE Error: {np.round(float(mae_error_de), 6)},\t'\
-			      f'$f$ Rel. $L_2$ Error: {np.round(float(l2_error_de), 6)},\t'\
-			      f'$f$ Rel. $L_\\infty$ Error: {np.round(float(linf_error_de), 6)}')
+			      f'$f$ MAE Error: {np.round(float(mae_error_de), 9)},\t'\
+			      f'$f$ Rel. $L_2$ Error: {np.round(float(l2_error_de), 9)},\t'\
+			      f'$f$ Rel. $L_\\infty$ Error: {np.round(float(linf_error_de), 9)}')
 		plt.plot(xx[1:-1], ff[1:-1], **VAL, label='$f$')
 		plt.plot(xx[1:-1], f[1:-1], **TEST, label='$\\hat{f}$')
 		plt.xlim(-1,1)
@@ -118,7 +119,7 @@ def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=5, path
 		plt.close(3)
 		plt.figure(3, figsize=(10,6))
 		plt.title(f'$f$ Example Epoch {epoch}\n'\
-			      f'$f$ Point-Wise Error: {np.round(np.sum(np.abs(ff-f))/len(xx), 6)}')
+			      f'$f$ Point-Wise Error: {np.round(np.sum(np.abs(ff-f))/len(xx), 9)}')
 		plt.plot(xx, np.abs(ff-f), 'ro-', mfc='none', label='Error')
 		plt.xlim(-1,1)
 		plt.grid(alpha=0.618)
@@ -188,7 +189,6 @@ def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path, t
 	for picture in range(10):
 		xx = legslbndm(SHAPE-2)
 		ahat = a_pred[picture,0,:]
-		ff = sample_batch['f'][picture,0,:].to('cpu').detach().numpy()
 		aa = sample_batch['a'][picture,0,:].to('cpu').detach().numpy()
 		mae_error_a = mae(ahat, aa)
 		l2_error_a = relative_l2(ahat, aa)
@@ -196,9 +196,9 @@ def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path, t
 		xx_ = list(range(len(xx)))
 		plt.figure(1, figsize=(10,6))
 		plt.title(f'Out of Sample\nExample: {picture+1}, Model: {title}\n'\
-		      	  f'MAE Error: {np.round(float(mae_error_a), 6)}\n'\
-				  f'Rel. $L_2$ Error: {np.round(float(l2_error_a), 6)}\n'\
-				  f'Rel. $L_\\infty$ Error: {np.round(float(linf_error_a), 6)}')
+		      	  f'MAE Error: {np.round(float(mae_error_a), 9)}\n'\
+				  f'Rel. $L_2$ Error: {np.round(float(l2_error_a), 9)}\n'\
+				  f'Rel. $L_\\infty$ Error: {np.round(float(linf_error_a), 9)}')
 		plt.plot(xx_, aa, **VAL, label='$\\alpha$')
 		plt.plot(xx_, ahat, **TEST, label='$\\hat{\\alpha}$')
 		plt.xlim(xx_[0],xx_[-1])
@@ -209,7 +209,7 @@ def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path, t
 		plt.savefig(f'{PATH}/Out of Sample_0{picture}_a.png', bbox_inches='tight')
 		plt.close(1)
 		plt.figure(1, figsize=(10,6))
-		plt.title(f'$\\alpha$ Point-Wise Error: {np.round(np.sum(np.abs(aa-ahat))/len(xx), 6)}')
+		plt.title(f'$\\alpha$ Point-Wise Error: {np.round(np.sum(np.abs(aa-ahat))/len(xx), 9)}')
 		plt.plot(xx_, np.abs(aa-ahat), 'ro-', mfc='none', label='Error')
 		# plt.plot(x_, ahat, 'bo', mfc='none', label='$\\hat{\\alpha}$')
 		# plt.plot(xxx, ff, 'g-', label='$f$')
@@ -230,9 +230,9 @@ def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path, t
 		xx = legslbndm(SHAPE)
 		plt.figure(2, figsize=(10,6))
 		plt.title(f'Out of Sample\nExample: {picture+1}, Model: {title}\n'\
-				  f'MAE Error: {np.round(float(mae_error_u), 6)}\n'\
-				  f'Rel. $L_2$ Error: {np.round(float(l2_error_u), 6)}\n'\
-				  f'Rel. $L_\\infty$ Error: {np.round(float(linf_error_u), 6)}')
+				  f'MAE Error: {np.round(float(mae_error_u), 9)}\n'\
+				  f'Rel. $L_2$ Error: {np.round(float(l2_error_u), 9)}\n'\
+				  f'Rel. $L_\\infty$ Error: {np.round(float(linf_error_u), 9)}')
 		plt.plot(xx, uu, **VAL, label='$u$')
 		plt.plot(xx, uhat, **TEST, label='$\\hat{u}$')
 		plt.xlim(-1,1)
@@ -243,7 +243,7 @@ def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path, t
 		plt.savefig(f'{PATH}/Out of Sample_0{picture}_u.png', bbox_inches='tight')
 		plt.close(2)
 		plt.figure(2, figsize=(10,6))
-		plt.title(f'$u$ Point-Wise Error: {np.round(np.sum(np.abs(uu-uhat))/len(xx), 6)}')
+		plt.title(f'$u$ Point-Wise Error: {np.round(np.sum(np.abs(uu-uhat))/len(xx), 9)}')
 		plt.plot(xx, np.abs(uu-uhat), 'ro-', mfc='none', label='Error')
 		plt.xlim(-1,1)
 		plt.grid(alpha=0.618)
@@ -253,33 +253,47 @@ def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path, t
 		plt.savefig(f'{PATH}/Out of Sample_0{picture}_u_pwe.png', bbox_inches='tight')
 		plt.close(2)
 
+		if f_pred is not None:
+			plt.figure(3, figsize=(10,6))
+			f = f_pred[picture,0,:]
+			ff = sample_batch['f'][picture,0,:].to('cpu').detach().numpy()
+			mae_error_f = mae(f, ff)
+			l2_error_f = relative_l2(f, ff)
+			linf_error_f = relative_linf(f, ff)
+			plt.title(f'Out of Sample\nExample: {picture+1}, Model: {title}\n'\
+					  f'MAE Error: {np.round(float(mae_error_f), 9)}\n'\
+					  f'Rel. $L_2$ Error: {np.round(float(l2_error_f), 9)}\n'\
+					  f'Rel. $L_\\infty$ Error: {np.round(float(linf_error_f), 9)}')
+			plt.plot(xx[1:-1], ff[1:-1], **VAL, label='$f$')
+			plt.plot(xx[1:-1], f[1:-1], **TEST, label='$\\hat{f}$')
+			plt.xlim(-1,1)
+			plt.grid(alpha=0.618)
+			plt.xlabel('$x$')
+			plt.ylabel('$f(x)$')
+			plt.legend(shadow=True)
+			plt.savefig(f'{PATH}/Out of Sample_0{picture}_f.png', bbox_inches='tight')
+			plt.close(3)
+			plt.figure(3, figsize=(10,6))
+			plt.title(f'$f$ Point-Wise Error: {np.round(np.sum(np.abs(ff-f))/len(xx), 9)}')
+			plt.plot(xx, np.abs(ff-f), 'ro-', mfc='none', label='Error')
+			plt.xlim(-1,1)
+			plt.grid(alpha=0.618)
+			plt.xlabel('$x$')
+			plt.ylabel('Point-Wise Error')
+			plt.legend(shadow=True)
+			plt.savefig(f'{PATH}/Out of Sample_0{picture}_f_pwe.png', bbox_inches='tight')
+			plt.close(3)
 
-		plt.figure(3, figsize=(10,6))
-		f = f_pred[picture,0,:]
-		mae_error_f = mae(f, ff)
-		l2_error_f = relative_l2(f, ff)
-		linf_error_f = relative_linf(f, ff)
-		plt.title(f'Out of Sample\nExample: {picture+1}, Model: {title}\n'\
-				  f'MAE Error: {np.round(float(mae_error_f), 6)}\n'\
-				  f'Rel. $L_2$ Error: {np.round(float(l2_error_f), 6)}\n'\
-				  f'Rel. $L_\\infty$ Error: {np.round(float(linf_error_f), 6)}')
-		plt.plot(xx[1:-1], ff[1:-1], **VAL, label='$f$')
-		plt.plot(xx[1:-1], f[1:-1], **TEST, label='$\\hat{f}$')
-		plt.xlim(-1,1)
-		plt.grid(alpha=0.618)
-		plt.xlabel('$x$')
-		plt.ylabel('$f(x)$')
-		plt.legend(shadow=True)
-		plt.savefig(f'{PATH}/Out of Sample_0{picture}_f.png', bbox_inches='tight')
-		plt.close(3)
-		plt.figure(3, figsize=(10,6))
-		plt.title(f'$f$ Point-Wise Error: {np.round(np.sum(np.abs(ff-f))/len(xx), 6)}')
-		plt.plot(xx, np.abs(ff-f), 'ro-', mfc='none', label='Error')
-		plt.xlim(-1,1)
-		plt.grid(alpha=0.618)
-		plt.xlabel('$x$')
-		plt.ylabel('Point-Wise Error')
-		plt.legend(shadow=True)
-		plt.savefig(f'{PATH}/Out of Sample_0{picture}_f_pwe.png', bbox_inches='tight')
-		plt.close(3)
-
+def periodic_report(model, batch, equation, epsilon, shape, epoch, xx, phi_x, phi_xx, losses, a_pred, u_pred, f_pred, ks, path):
+	print(f"\nT. Loss: {np.round(losses['loss_train'][-1], 9)}, "\
+		  f"V. Loss: {np.round(losses['loss_validate'][-1], 9)}")
+	if equation in ('Burgers', 'BurgersT'):
+		f_pred = None
+	elif equation in ('Standard', 'Helmholtz'):
+		f_pred = ODE2(epsilon, u_pred, a_pred, phi_x, phi_xx, equation=equation)
+	plotter(xx, batch, epoch, a=a_pred, u=u_pred, f=f_pred, title=model, ks=ks, path=path)
+	# a_pred = a_pred.to('cpu').detach().numpy()
+	# u_pred = u_pred.to('cpu').detach().numpy()
+	# if f_pred is not None:
+	# 	f_pred = f_pred.to('cpu').detach().numpy()
+	# out_of_sample(equation, shape, a_pred, u_pred, f_pred, batch, path, model)

@@ -7,6 +7,7 @@ from tqdm import tqdm
 import argparse
 import matplotlib.pyplot as plt
 from pprint import pprint
+from mpl_toolkits import mplot3d 
 
 
 parser = argparse.ArgumentParser("SEM")
@@ -14,7 +15,7 @@ parser.add_argument("--equation", type=str, default='BurgersT')
 parser.add_argument("--size", type=int, default=1) # BEFORE N
 parser.add_argument("--N", type=int, default=31) 
 parser.add_argument("--eps", type=float, default=1)
-parser.add_argument("--kind", type=str, default='train', choices=['train', 'validate'])
+parser.add_argument("--kind", type=str, default='validate', choices=['train', 'validate'])
 parser.add_argument("--rand_eps", type=bool, default=False)
 args = parser.parse_args()
 
@@ -33,7 +34,7 @@ def save_obj(data, name, equation, kind):
 	if os.path.isdir(path) == False:
 		os.makedirs(f'data/{equation}/{kind}')
 	with open(f'data/{equation}/{kind}/'+ name + '.pkl', 'wb') as f:
-		pickle.dump(data	, f, pickle.HIGHEST_PROTOCOL)
+		pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
 
 
 def create(N:int, epsilon:float):
@@ -139,11 +140,9 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 
 		elif equation == 'BurgersT':
 			M = np.zeros((N-1, N-1))
-			tol, T, dt = 1E-9, .001, 1E-4
-			t_f = int(T//dt)
-			u0 = 0
-			u_pre = np.zeros_like(x)
-			u_ans, f_ans, alphas_ans = [], [], []
+			tol, T, dt = 1E-9, 1E-2, 1E-4
+			t_f = int(T/dt)
+			u_pre, u_ans, f_ans, alphas_ans = np.zeros_like(x), [], [], []
 			for ii in range(1, N):
 				k = ii - 1
 				s_diag[k] = -(4*k + 6)*b
@@ -154,20 +153,16 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 						psi_l_M = lepolys[l] + a*lepolys[l+1] + b*lepolys[l+2]
 						entry = psi_l_M*phi_k_M*2/(N*(N+1))/(lepolys[N]**2)
 						M[l, k] = np.sum(entry)
+
 			S = s_diag*np.eye(N-1)
-			Mass = epsilon*S + 1/dt*M
+			Mass = epsilon*S + (1/dt)*M
 			
-			for t_idx in range(1, t_f + 1):
-				if type(u0) == int:
-					error, tolerance, u_old, force = 1, tol, 0*f.copy(), f.copy()
-				else:
-					error, tolerance, u_old, force = 1, tol, 0*f.copy(), np.cos(t_idx*dt)*f.copy()
-				u_pre = u0
-				f_ans.append(force + u_pre)
+			for t_idx in np.linspace(1, t_f, t_f, endpoint=True):
+				error, tolerance, u_old, force = 1, tol, u_pre.copy(), np.cos(t_idx*dt)*f
 
 				iterations = 0
 				while error > tolerance:
-					f_ = force - u_old*(D@u_old) + 1/dt*u_pre
+					f_ = force - u_old*(D@u_old) + (1/dt)*u_pre
 					g = np.zeros((N+1,))
 					for i in range(1,N+1):
 						k = i-1
@@ -186,11 +181,13 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 						u_sol += alphas[i_ind]*(lepolys[i_ind] + a*lepolys[i_ind+1] + b*lepolys[i_ind+2])
 
 					error = np.max(u_sol - u_old)
-					u_old = u_sol
+					u_old = u_sol.copy()
 					iterations += 1
+
 				u_ans.append(u_sol)
+				f_ans.append(force)
 				alphas_ans.append(alphas)
-				u0 = u_sol
+				u_pre = u_sol
 			u, f, alphas = u_ans, f_ans, alphas_ans
 			
 		elif equation == 'Helmholtz':
@@ -239,9 +236,20 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 				epsilon = epsilons[n]
 			u, f, alphas, params = generate(x, D, a, b, lepolys, epsilon, equation)
 			if equation == 'BurgersT':
+				# fig = plt.figure(1, figsize=(10, 6)) 
+				# ax = plt.axes(projection ='3d') 
+				# z = np.array(u).reshape(N+1, 100)
+				# my_cmap = plt.get_cmap('jet')
+				# ax.plot_surface(x, list(range(len(u))), z, cmap=my_cmap)
+				# ax.set_zticks([])
+				plt.figure(2, figsize=(10,6))
 				for i, u_ in enumerate(u):
-					if i < len(u) - 1:
-						data.append([u[i+1], f[i], alphas[i+1], params, epsilon])
+					if i < len(u):
+						data.append([u[i], f[i], alphas[i], params, epsilon])
+						if i % int(0.1*len(u)) == 0 and i > 0:
+							plt.plot(x, u[i], label=f'$u{i}$')
+				plt.legend()
+				plt.show()
 			else:
 				data.append([u, f, alphas, params, epsilon])
 		return data
@@ -261,6 +269,6 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 
 
 data = create_fast(N, EPSILON, SIZE, EPS_FLAG, EQUATION)
-data = np.array(data)
+data = np.array(data, dtype=object)
 
 save_obj(data, f'{SIZE}N{N}', EQUATION, KIND)

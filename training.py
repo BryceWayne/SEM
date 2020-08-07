@@ -28,13 +28,13 @@ torch.cuda.empty_cache()
 
 # ARGS
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--equation", type=str, default='BurgersT', choices=['Standard', 'Burgers', 'Helmholtz', 'BurgersT'])
-parser.add_argument("--model", type=str, default='NetA', choices=['ResNet', 'NetA', 'NetB', 'Net2D']) 
+parser.add_argument("--equation", type=str, default='Burgers', choices=['Standard', 'Burgers', 'Helmholtz']) # , 'BurgersT'
+parser.add_argument("--model", type=str, default='NetA', choices=['ResNet', 'NetA', 'NetB']) # , 'Net2D' 
 parser.add_argument("--blocks", type=int, default=2)
 parser.add_argument("--loss", type=str, default='MSE', choices=['MAE', 'MSE'])
 parser.add_argument("--file", type=str, default='10N31', help='Example: --file 2000N31')
 # parser.add_argument("--batch", type=int, default=5000)
-parser.add_argument("--epochs", type=int, default=2)
+parser.add_argument("--epochs", type=int, default=3000)
 parser.add_argument("--ks", type=int, default=5)
 parser.add_argument("--filters", type=int, default=32)
 parser.add_argument("--nbfuncs", type=int, default=1, help='Number of basis functions to use in loss_wf')
@@ -50,27 +50,21 @@ MAML - model agnostic model learning
 args = parser.parse_args()
 
 #EQUATION
-if args.equation == 'Standard':
-	EPSILON = 1E-1
-elif args.equation == 'Burgers':
-	EPSILON = 5E-1
-elif args.equation == 'Helmholtz':
-	EPSILON = 0
-elif args.equation == 'BurgersT':
-	EPSILON = 1
-
+epsilons = {'Standard': 1E-1,
+			'Burgers': 5E-1,
+			'BurgersT': 1,
+			'Helmholtz': 0}
+EPSILON = epsilons[args.equation]
 EQUATION = args.equation
 
 # MODEL
-if args.model == 'ResNet':
-	MODEL = ResNet
-elif args.model == 'NetA':
-	MODEL = NetA
-elif args.model == 'NetB':
-	MODEL = NetB
-elif args.model == 'Net2D':
-	MODEL = Net2D
+models = {'ResNet': ResNet,
+		  'NetA': NetA,
+		  'NetB': NetB,
+		  'Net2D': Net2D}
+MODEL = models[args.model]
 
+#GLOBALS
 FILE = args.file
 DATASET = int(args.file.split('N')[0])
 SHAPE = int(args.file.split('N')[1]) + 1
@@ -86,17 +80,26 @@ FOLDER = f'{args.model}_{args.loss}_epochs{args.epochs}_blocks{args.blocks}_{cur
 PATH = os.path.join('training', f"{EQUATION}", FILE, FOLDER)
 BATCH_SIZE, D_in, Filters, D_out = DATASET, 1, FILTERS, SHAPE
 
+# LOSS SCALE FACTORS
+A, U, F, WF = args.A, 1E3, 0E0, 1E3
+
 #CREATE BASIS VECTORS
 xx, lepolys, lepoly_x, lepoly_xx, phi, phi_x, phi_xx = basis_vectors(D_out, equation=EQUATION)
 
-# LOSS SCALE FACTORS
-A, U, F, WF = args.A, 1E3, 0E0, 0E4
-
 # #CREATE PATHING
 if os.path.isdir(PATH) == False: os.makedirs(PATH); os.makedirs(os.path.join(PATH, 'pics'))
-elif os.path.isdir(PATH) == True and args.transfer is None: print("\n\nPATH ALREADY EXISTS!\n\n"); exit()
-elif os.path.isdir(PATH) == True and args.transfer is not None: print("\n\nPATH ALREADY EXISTS!\n\nLOADING MODEL\n\n")
+elif os.path.isdir(PATH) == True:
+	if args.transfer is None:
+		print("\n\nPATH ALREADY EXISTS!\n\nEXITING\n\n")
+		exit()
+	elif args.transfer is not None:
+		print("\n\nPATH ALREADY EXISTS!\n\nLOADING MODEL\n\n")
 
+# if EQUATION == 'BurgersT':
+# 	# NEED TO NORMALIZE INPUT
+# 	lg_dataset = get_data(EQUATION, FILE, SHAPE, DATASET, EPSILON, transform_f=True, kind='train')
+# else:
+# 	lg_dataset = get_data(EQUATION, FILE, SHAPE, DATASET, EPSILON, kind='train')
 lg_dataset = get_data(EQUATION, FILE, SHAPE, DATASET, EPSILON, kind='train')
 trainloader = torch.utils.data.DataLoader(lg_dataset, batch_size=BATCH_SIZE, shuffle=True)
 model = MODEL(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING, blocks=BLOCKS)
@@ -113,56 +116,22 @@ device = get_device()
 model.to(device)
 
 # Construct our loss function and an Optimizer.
+LOSS_TYPE = args.loss
 if args.loss == 'MAE':
-	LOSS_TYPE = args.loss
-	criterion_a = torch.nn.L1Loss()
-	criterion_u = torch.nn.L1Loss()
-	criterion_f = torch.nn.L1Loss()
-	criterion_wf = torch.nn.L1Loss()
+	criterion_a, criterion_u, criterion_f, criterion_wf = torch.nn.L1Loss(), torch.nn.L1Loss(), torch.nn.L1Loss(), torch.nn.L1Loss()
 elif args.loss == 'MSE':
-	LOSS_TYPE = args.loss
-	criterion_a = torch.nn.MSELoss(reduction="sum")
-	criterion_u = torch.nn.MSELoss(reduction="sum")
-	criterion_f = torch.nn.MSELoss(reduction="sum")
-	criterion_wf = torch.nn.MSELoss(reduction="sum")
+	criterion_a, criterion_u, criterion_f, criterion_wf = torch.nn.MSELoss(reduction="sum"), torch.nn.MSELoss(reduction="sum"), torch.nn.MSELoss(reduction="sum"), torch.nn.MSELoss(reduction="sum")
 
 optimizer = torch.optim.LBFGS(model.parameters(), history_size=20, tolerance_grad=1e-15, tolerance_change=1e-15, max_eval=20)
 
-BEST_LOSS, losses = float('inf'), {'loss_a':[], 'loss_u':[], 'loss_f': [], 'loss_wf':[], 'loss_train':[], 'loss_validate':[]}
-
-#CREATE GLOBAL PARAMS @TOPO
-# work in progress
-# gparams = {
-# 	'EQUATION': EQUATION,
-# 	'xx': xx,
-# 	'lepolys': lepolys,
-# 	'lepoly_x': lepoly_x,
-# 	'lepoly_xx': lepoly_xx,
-# 	'phi': phi,
-# 	'phi_x': phi_x,
-# 	'phi_xx': phi_xx,
-# 	'EPSILON': EPSILON,
-# 	'DATASET': FILE,
-# 	'N': SHAPE,
-# 	'TIME': cur_time,
-# 	'PATH': PATH,
-# 	'MODEL': args.model,
-# 	'LOSS_TYPE': LOSS_TYPE,
-# 	'LOSSES': losses,
-# 	'BEST_LOSS': BEST_LOSS,
-# 	'BLOCKS': BLOCKS,
-# 	'EPOCHS': EPOCHS,
-# 	'NBFUNCS': NBFUNCS,
-# 	'KERNEL_SIZE': KERNEL_SIZE,
-# 	'PADDING': PADDING,
-# 	'FILTERS': FILTERS,
-# 	'A': A,
-# 	'U': U,
-# 	'F': F,
-# 	'WF': WF,
-# 	'OPTIM': optimizer,
-# 	'TRAINED_MODEL': model
-# }
+BEST_LOSS = float('inf')
+losses = {'loss_a':[],
+		  'loss_u':[], 
+		  'loss_f': [], 
+		  'loss_wf':[], 
+		  'loss_train':[], 
+		  'loss_validate':[]}
+# gparams = global_parameters()
 
 time0 = time.time()
 for epoch in tqdm(range(1, EPOCHS+1)):
@@ -213,11 +182,13 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 		loss_train += np.round(float(loss.to('cpu').detach()), 9)
 	
 	if np.isnan(loss_train):
-		model.load_state_dict(torch.load(PATH + '/model.pt'))
-		model.train()
-		optimizer = torch.optim.LBFGS(model.parameters(), history_size=20, tolerance_grad=1e-15, tolerance_change=1e-15, max_eval=20)
-		print('Model diverged!')
-		# raise Exception("Model diverged!")
+		try:
+			model.load_state_dict(torch.load(PATH + '/model.pt'))
+			model.train()
+			optimizer = torch.optim.LBFGS(model.parameters(), history_size=20, tolerance_grad=1e-15, tolerance_change=1e-15, max_eval=20)
+			print('Model diverged!')
+		except:
+			raise Exception("Model diverged! Unable to load a previous state.")
 	else:
 		if loss_train/DATASET < BEST_LOSS:
 			torch.save(model.state_dict(), PATH + '/model.pt')
@@ -226,34 +197,11 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			# gparams['BEST_LOSS'] = BEST_LOSS
 
 		loss_validate = validate(EQUATION, model, optimizer, EPSILON, SHAPE, FILTERS, criterion_a, criterion_u, criterion_f, criterion_wf, lepolys, phi, phi_x, phi_xx, A, U, F, WF, NBFUNCS)
-		if type(loss_a) == int:
-			losses['loss_a'].append(loss_a/DATASET)
-		else:
-			losses['loss_a'].append(loss_a.item()/DATASET)
-		if type(loss_u) == int:
-			losses['loss_u'].append(loss_u/DATASET)
-		else:
-			losses['loss_u'].append(loss_u.item()/DATASET)
-		if type(loss_f) == int:
-			losses['loss_f'].append(loss_f/DATASET) 
-		else:
-			losses['loss_f'].append(loss_f.item()/DATASET) 
-		if type(loss_wf) == int:
-			losses['loss_wf'].append(loss_wf/DATASET) 
-		else:
-			losses['loss_wf'].append(loss_wf.item()/DATASET)
-			
-		losses['loss_train'].append(loss_train.item()/DATASET)
-		losses['loss_validate'].append(loss_validate.item()/1000)
+		losses = log_loss(losses, loss_a, loss_u, loss_f, loss_wf, loss_train, loss_validate, DATASET)
 		# gparams['LOSSES'] = losses
 
-		if int(.05*EPOCHS) > 0 and EPOCHS > 10 and epoch % int(.05*EPOCHS) == 0:
-			print(f"\nT. Loss: {np.round(losses['loss_train'][-1], 9)}, "\
-				  f"V. Loss: {np.round(losses['loss_validate'][-1], 9)}")
-			# f_pred = ODE2(EPSILON, u_pred, a_pred, phi_x, phi_xx, equation=EQUATION)
-			f_pred = None
-			plotter(xx, sample_batch, epoch, a=a_pred, u=u_pred, f=f_pred, title=args.model, ks=KERNEL_SIZE, path=PATH)
-			out_of_sample(EQUATION, SHAPE, a_pred, u_pred, f_pred, sample_batch, PATH, arg.model)
+		if int(.1*EPOCHS) > 0 and EPOCHS > 10 and epoch % int(.1*EPOCHS) == 0:
+			periodic_report(args.model, sample_batch, EQUATION, EPSILON, SHAPE, epoch, xx, phi_x, phi_xx, losses, a_pred, u_pred, f_pred, KERNEL_SIZE, PATH)
 
 time1 = time.time()
 loss_plot(losses, FILE, EPOCHS, SHAPE, KERNEL_SIZE, BEST_LOSS, PATH, title=args.model)
