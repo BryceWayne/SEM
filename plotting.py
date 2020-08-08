@@ -12,8 +12,8 @@ from reconstruct import *
 
 def relative_l2(measured, theoretical):
 	return np.linalg.norm(measured-theoretical, ord=2)/np.linalg.norm(theoretical, ord=2)
-def relative_linf(measured, theoretical):
-	return np.linalg.norm(measured-theoretical, ord=np.inf)/np.linalg.norm(theoretical, ord=np.inf)
+def linf(measured, theoretical):
+	return np.linalg.norm(measured-theoretical, ord=np.inf)
 def mae(measured, theoretical):
 	return np.linalg.norm(measured-theoretical, ord=1)/len(theoretical)
 
@@ -39,13 +39,13 @@ def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=5, path
 		ahat = a[0,0,:].to('cpu').detach().numpy()
 		mae_error_a = mae(ahat, aa)
 		l2_error_a = relative_l2(ahat, aa)
-		linf_error_a = relative_linf(ahat, aa)
+		linf_error_a = linf(ahat, aa)
 		x_ = list(range(len(x_)))
 		plt.figure(1, figsize=(10,6))
 		plt.title(f'Model: {title},\t$\\alpha$ Example Epoch {epoch}\n'\
 			      f'$\\alpha$ MAE Error: {np.round(float(mae_error_a), 9)},\t'\
 			      f'$\\alpha$ Rel. $L_2$ Error: {np.round(float(l2_error_a), 9)},\t'\
-			      f'$\\alpha$ Rel. $L_\\infty$ Error: {np.round(float(linf_error_a), 9)}')
+			      f'$\\alpha$ $L_\\infty$ Error: {np.round(float(linf_error_a), 9)}')
 		plt.plot(x_, aa, **VAL, label='$\\alpha$')
 		plt.plot(x_, ahat, **TEST, label='$\\hat{\\alpha}$')
 		plt.xlim(x_[0], x_[-1])
@@ -70,12 +70,12 @@ def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=5, path
 		uhat = u[0,0,:].to('cpu').detach().numpy()
 		mae_error_u = mae(uhat, uu)
 		l2_error_u = relative_l2(uhat, uu)
-		linf_error_u = relative_linf(uhat, uu)
+		linf_error_u = linf(uhat, uu)
 		plt.figure(2, figsize=(10,6))
 		plt.title(f'Model: {title},\t$u$ Example Epoch {epoch}\n'\
 			      f'$u$ MAE Error: {np.round(float(mae_error_u), 9)},\t'\
 			      f'$u$ Rel. $L_2$ Error: {np.round(float(l2_error_u), 9)},\t'\
-			      f'$u$ Rel. $L_\\infty$ Error: {np.round(float(linf_error_u), 9)}')
+			      f'$u$ $L_\\infty$ Error: {np.round(float(linf_error_u), 9)}')
 		plt.plot(xx, uu, **VAL, label='$u$')
 		plt.plot(xx, uhat.T, **TEST, label='$\\hat{u}$')
 		plt.xlim(-1,1)
@@ -102,11 +102,11 @@ def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=5, path
 		plt.figure(3, figsize=(10,6))
 		mae_error_de = mae(f, ff)
 		l2_error_de = relative_l2(f, ff)
-		linf_error_de = relative_linf(f, ff)
+		linf_error_de = linf(f, ff)
 		plt.title(f'Model: {title},\t$f$ Example Epoch {epoch}\n'\
 			      f'$f$ MAE Error: {np.round(float(mae_error_de), 9)},\t'\
 			      f'$f$ Rel. $L_2$ Error: {np.round(float(l2_error_de), 9)},\t'\
-			      f'$f$ Rel. $L_\\infty$ Error: {np.round(float(linf_error_de), 9)}')
+			      f'$f$ $L_\\infty$ Error: {np.round(float(linf_error_de), 9)}')
 		plt.plot(xx[1:-1], ff[1:-1], **VAL, label='$f$')
 		plt.plot(xx[1:-1], f[1:-1], **TEST, label='$\\hat{f}$')
 		plt.xlim(-1,1)
@@ -192,13 +192,13 @@ def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path, t
 		aa = sample_batch['a'][picture,0,:].to('cpu').detach().numpy()
 		mae_error_a = mae(ahat, aa)
 		l2_error_a = relative_l2(ahat, aa)
-		linf_error_a = relative_linf(ahat, aa)
+		linf_error_a = linf(ahat, aa)
 		xx_ = list(range(len(xx)))
 		plt.figure(1, figsize=(10,6))
 		plt.title(f'Out of Sample\nExample: {picture+1}, Model: {title}\n'\
 		      	  f'MAE Error: {np.round(float(mae_error_a), 9)}\n'\
 				  f'Rel. $L_2$ Error: {np.round(float(l2_error_a), 9)}\n'\
-				  f'Rel. $L_\\infty$ Error: {np.round(float(linf_error_a), 9)}')
+				  f'$L_\\infty$ Error: {np.round(float(linf_error_a), 9)}')
 		plt.plot(xx_, aa, **VAL, label='$\\alpha$')
 		plt.plot(xx_, ahat, **TEST, label='$\\hat{\\alpha}$')
 		plt.xlim(xx_[0],xx_[-1])
@@ -226,13 +226,13 @@ def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path, t
 		uu = sample_batch['u'][picture,0,:].to('cpu').detach().numpy()
 		mae_error_u = mae(uhat, uu)
 		l2_error_u = relative_l2(uhat, uu)
-		linf_error_u = relative_linf(uhat, uu)
+		linf_error_u = linf(uhat, uu)
 		xx = legslbndm(SHAPE)
 		plt.figure(2, figsize=(10,6))
 		plt.title(f'Out of Sample\nExample: {picture+1}, Model: {title}\n'\
 				  f'MAE Error: {np.round(float(mae_error_u), 9)}\n'\
 				  f'Rel. $L_2$ Error: {np.round(float(l2_error_u), 9)}\n'\
-				  f'Rel. $L_\\infty$ Error: {np.round(float(linf_error_u), 9)}')
+				  f'$L_\\infty$ Error: {np.round(float(linf_error_u), 9)}')
 		plt.plot(xx, uu, **VAL, label='$u$')
 		plt.plot(xx, uhat, **TEST, label='$\\hat{u}$')
 		plt.xlim(-1,1)
@@ -259,11 +259,11 @@ def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path, t
 			ff = sample_batch['f'][picture,0,:].to('cpu').detach().numpy()
 			mae_error_f = mae(f, ff)
 			l2_error_f = relative_l2(f, ff)
-			linf_error_f = relative_linf(f, ff)
+			linf_error_f = linf(f, ff)
 			plt.title(f'Out of Sample\nExample: {picture+1}, Model: {title}\n'\
 					  f'MAE Error: {np.round(float(mae_error_f), 9)}\n'\
 					  f'Rel. $L_2$ Error: {np.round(float(l2_error_f), 9)}\n'\
-					  f'Rel. $L_\\infty$ Error: {np.round(float(linf_error_f), 9)}')
+					  f'$L_\\infty$ Error: {np.round(float(linf_error_f), 9)}')
 			plt.plot(xx[1:-1], ff[1:-1], **VAL, label='$f$')
 			plt.plot(xx[1:-1], f[1:-1], **TEST, label='$\\hat{f}$')
 			plt.xlim(-1,1)

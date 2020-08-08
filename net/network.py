@@ -15,8 +15,9 @@ def weights_init(m):
 def conv1d(in_planes, out_planes, stride=1, bias=True, kernel_size=5, padding=2, dialation=1) :
     return nn.Conv1d(in_planes, out_planes, kernel_size=kernel_size, stride=stride, padding=padding, bias=bias)
 
-## TRY GROUP NORM, NOT BATCH NORM
-## Kaiming He
+def conv1d(in_planes, out_planes, stride=1, bias=True, kernel_size=5, padding=2, dialation=1) :
+    return nn.Conv2d(in_planes, out_planes, kernel_size=kernel_size, stride=stride, padding=padding, bias=bias)
+
 class ResNet(nn.Module):
     def __init__(self, d_in, filters, d_out, kernel_size=5, padding=2, blocks=5):
         super(ResNet, self).__init__()

@@ -140,9 +140,9 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 
 		elif equation == 'BurgersT':
 			M = np.zeros((N-1, N-1))
-			tol, T, dt = 1E-9, 1E-2, 1E-4
+			tol, T, dt = 1E-9, 5E-4, 1E-4
 			t_f = int(T/dt)
-			u_pre, u_ans, f_ans, alphas_ans = np.zeros_like(x), [], [], []
+			u_pre, u_ans, f_ans, alphas_ans = np.sin(np.pi*x), [], [], []
 			for ii in range(1, N):
 				k = ii - 1
 				s_diag[k] = -(4*k + 6)*b
@@ -158,7 +158,7 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 			Mass = epsilon*S + (1/dt)*M
 			
 			for t_idx in np.linspace(1, t_f, t_f, endpoint=True):
-				error, tolerance, u_old, force = 1, tol, u_pre.copy(), np.cos(t_idx*dt)*f
+				error, tolerance, u_old, force = 1, tol, u_pre, np.cos(t_idx*dt)*f
 
 				iterations = 0
 				while error > tolerance:
