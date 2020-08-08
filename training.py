@@ -32,12 +32,12 @@ parser.add_argument("--equation", type=str, default='Burgers', choices=['Standar
 parser.add_argument("--model", type=str, default='NetA', choices=['ResNet', 'NetA', 'NetB']) # , 'Net2D' 
 parser.add_argument("--blocks", type=int, default=2)
 parser.add_argument("--loss", type=str, default='MSE', choices=['MAE', 'MSE'])
-parser.add_argument("--file", type=str, default='1000N31', help='Example: --file 2000N31')
+parser.add_argument("--file", type=str, default='10N31', help='Example: --file 2000N31')
 # parser.add_argument("--batch", type=int, default=5000)
-parser.add_argument("--epochs", type=int, default=100000)
-parser.add_argument("--ks", type=int, default=5)
+parser.add_argument("--epochs", type=int, default=20)
+parser.add_argument("--ks", type=int, default=7)
 parser.add_argument("--filters", type=int, default=32)
-parser.add_argument("--nbfuncs", type=int, default=1, help='Number of basis functions to use in loss_wf')
+parser.add_argument("--nbfuncs", type=int, default=5, help='Number of basis functions to use in loss_wf')
 parser.add_argument("--A", type=float, default=0)
 parser.add_argument("--transfer", type=str, default=None)
 

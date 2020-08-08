@@ -108,10 +108,10 @@ def model_metrics(equation, input_model, file_name, ks, path, epsilon, filters, 
 		for i in range(BATCH_SIZE):
 			running_MAE_a += mae(a_pred[i,0,:], a[i,0,:])
 			running_MSE_a += relative_l2(a_pred[i,0,:], a[i,0,:])
-			running_MinfE_a += relative_linf(a_pred[i,0,:], a[i,0,:])
+			running_MinfE_a += linf(a_pred[i,0,:], a[i,0,:])
 			running_MAE_u += mae(u_pred[i,0,:], u[i,0,:])
 			running_MSE_u += relative_l2(u_pred[i,0,:], u[i,0,:])
-			running_MinfE_u += relative_linf(u_pred[i,0,:], u[i,0,:])
+			running_MinfE_u += linf(u_pred[i,0,:], u[i,0,:])
 
 	out_of_sample(EQUATION, SHAPE, a_pred, u_pred, f_pred, sample_batch, PATH, title)
 	

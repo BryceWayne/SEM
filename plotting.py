@@ -43,9 +43,9 @@ def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=5, path
 		x_ = list(range(len(x_)))
 		plt.figure(1, figsize=(10,6))
 		plt.title(f'Model: {title},\t$\\alpha$ Example Epoch {epoch}\n'\
-			      f'$\\alpha$ MAE Error: {np.round(float(mae_error_a), 9)},\t'\
-			      f'$\\alpha$ Rel. $L_2$ Error: {np.round(float(l2_error_a), 9)},\t'\
-			      f'$\\alpha$ $L_\\infty$ Error: {np.round(float(linf_error_a), 9)}')
+			      f'MAE Error: {np.round(float(mae_error_a), 9)},\t'\
+			      f'Rel. $L_2$ Error: {np.round(float(l2_error_a), 9)},\t'\
+			      f'$L_\\infty$ Error: {np.round(float(linf_error_a), 9)}')
 		plt.plot(x_, aa, **VAL, label='$\\alpha$')
 		plt.plot(x_, ahat, **TEST, label='$\\hat{\\alpha}$')
 		plt.xlim(x_[0], x_[-1])
@@ -56,7 +56,7 @@ def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=5, path
 		plt.savefig(f'{path}/pics/epoch{str(epoch).zfill(5)}_a.png', bbox_inches='tight')
 		plt.close(1)
 		plt.figure(1, figsize=(10,6))
-		plt.title(f'$\\alpha$ Example Epoch {epoch}\n'\
+		plt.title(f'Example Epoch {epoch}\n'\
 			      f'$\\alpha$ Point-Wise Error: {np.round(np.sum(np.abs(aa-ahat))/len(x_), 9)}')
 		plt.plot(x_, np.abs(aa-ahat), 'ro-', mfc='none', label='Error')
 		plt.xlim(x_[0], x_[-1])
@@ -73,9 +73,9 @@ def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=5, path
 		linf_error_u = linf(uhat, uu)
 		plt.figure(2, figsize=(10,6))
 		plt.title(f'Model: {title},\t$u$ Example Epoch {epoch}\n'\
-			      f'$u$ MAE Error: {np.round(float(mae_error_u), 9)},\t'\
-			      f'$u$ Rel. $L_2$ Error: {np.round(float(l2_error_u), 9)},\t'\
-			      f'$u$ $L_\\infty$ Error: {np.round(float(linf_error_u), 9)}')
+			      f'MAE Error: {np.round(float(mae_error_u), 9)},\t'\
+			      f'Rel. $L_2$ Error: {np.round(float(l2_error_u), 9)},\t'\
+			      f'$L_\\infty$ Error: {np.round(float(linf_error_u), 9)}')
 		plt.plot(xx, uu, **VAL, label='$u$')
 		plt.plot(xx, uhat.T, **TEST, label='$\\hat{u}$')
 		plt.xlim(-1,1)
@@ -87,7 +87,7 @@ def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=5, path
 		# plt.show()
 		plt.close(2)
 		plt.figure(2, figsize=(10,6))
-		plt.title(f'$u$ Example Epoch {epoch}\n'\
+		plt.title(f'Example Epoch {epoch}\n'\
 			      f'$u$ Point-Wise Error: {np.round(np.sum(np.abs(uu-uhat))/len(xx), 9)}')
 		plt.plot(xx, np.abs(uu-uhat), 'ro-', mfc='none', label='Error')
 		plt.xlim(-1,1)
@@ -104,9 +104,9 @@ def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=5, path
 		l2_error_de = relative_l2(f, ff)
 		linf_error_de = linf(f, ff)
 		plt.title(f'Model: {title},\t$f$ Example Epoch {epoch}\n'\
-			      f'$f$ MAE Error: {np.round(float(mae_error_de), 9)},\t'\
-			      f'$f$ Rel. $L_2$ Error: {np.round(float(l2_error_de), 9)},\t'\
-			      f'$f$ $L_\\infty$ Error: {np.round(float(linf_error_de), 9)}')
+			      f'MAE Error: {np.round(float(mae_error_de), 9)},\t'\
+			      f'Rel. $L_2$ Error: {np.round(float(l2_error_de), 9)},\t'\
+			      f'$L_\\infty$ Error: {np.round(float(linf_error_de), 9)}')
 		plt.plot(xx[1:-1], ff[1:-1], **VAL, label='$f$')
 		plt.plot(xx[1:-1], f[1:-1], **TEST, label='$\\hat{f}$')
 		plt.xlim(-1,1)
@@ -118,7 +118,7 @@ def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=5, path
 		# plt.show()
 		plt.close(3)
 		plt.figure(3, figsize=(10,6))
-		plt.title(f'$f$ Example Epoch {epoch}\n'\
+		plt.title(f'Example Epoch {epoch}\n'\
 			      f'$f$ Point-Wise Error: {np.round(np.sum(np.abs(ff-f))/len(xx), 9)}')
 		plt.plot(xx, np.abs(ff-f), 'ro-', mfc='none', label='Error')
 		plt.xlim(-1,1)
