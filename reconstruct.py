@@ -143,8 +143,8 @@ def weak_form1(eps, N, f, u, alphas, lepolys, phi, phi_x):
 def weak_form2(eps, N, f, u, alphas, lepolys, phi, phi_x, equation, nbfuncs):
 	B, i, j = u.shape
 	N -= 1
-	LHS = torch.zeros((B, nbfuncs, 1)).to(device).float()
-	RHS = torch.zeros((B, nbfuncs, 1)).to(device).float()
+	# LHS = torch.zeros((B, nbfuncs, 1)).to(device).float()
+	# RHS = torch.zeros((B, nbfuncs, 1)).to(device).float()
 	phi = torch.transpose(phi, 0, 1)
 	denom = torch.square(torch.from_numpy(lepolys[N]).to(device).float())
 	denom = torch.transpose(denom, 0, 1)
@@ -153,28 +153,35 @@ def weak_form2(eps, N, f, u, alphas, lepolys, phi, phi_x, equation, nbfuncs):
 		u_x = reconstruct(alphas, phi_x)
 		ux_phi = u_x*phi[:,0]
 		convection = torch.sum(ux_phi*2/(N*(N+1))/denom, axis=2)
-		LHS[:,0] = diffusion - convection
-		RHS[:,0] = torch.sum(2*f*phi[:,0]/(N*(N+1))/denom, axis=2)
+		# LHS[:,0] = diffusion - convection
+		# RHS[:,0] = torch.sum(2*f*phi[:,0]/(N*(N+1))/denom, axis=2)
+		LHS = diffusion - convection
+		RHS = torch.sum(2*f*phi[:,0]/(N*(N+1))/denom, axis=2)
 		if nbfuncs > 1:
 			for i in range(1, nbfuncs):
 				diffusion = -eps*(4*i+6)*(-1)*alphas[:,:,i]
 				ux_phi = u_x*phi[:,i]
 				convection = torch.sum(ux_phi*2/(N*(N+1))/denom, axis=2)
-				LHS[:,i] = diffusion - convection
-				RHS[:,i] = torch.sum(2*f*phi[:,i]/(N*(N+1))/denom, axis=2)			
+				# LHS[:,i] = diffusion - convection
+				# RHS[:,i] = torch.sum(2*f*phi[:,i]/(N*(N+1))/denom, axis=2)
+				LHS += diffusion - convection
+				RHS += torch.sum(2*f*phi[:,i]/(N*(N+1))/denom, axis=2)			
 	elif equation == 'Burgers':
 		phi_x = torch.transpose(phi_x, 0, 1)
 		convection = torch.sum(0.5*u**2*phi_x[:,0]/(N*(N+1))/denom, axis=2)
-		LHS[:,0] = diffusion - convection
-		RHS[:,0] = torch.sum(2*f*phi[:,0]/(N*(N+1))/denom, axis=2)
+		# LHS[:,0] = diffusion - convection
+		# RHS[:,0] = torch.sum(2*f*phi[:,0]/(N*(N+1))/denom, axis=2)
+		LHS = diffusion - convection
+		RHS = torch.sum(2*f*phi[:,0]/(N*(N+1))/denom, axis=2)
 		if nbfuncs > 1:
 			for i in range(1, nbfuncs):
 				diffusion = -eps*(4*i+6)*(-1)*alphas[:,:,i]
 				convection = torch.sum(0.5*u**2*phi_x[:,i]/(N*(N+1))/denom, axis=2)
-				LHS[:,i] = diffusion - convection
-				RHS[:,i] = torch.sum(2*f*phi[:,i]/(N*(N+1))/denom, axis=2)
+				# LHS[:,i] = diffusion - convection
+				# RHS[:,i] = torch.sum(2*f*phi[:,i]/(N*(N+1))/denom, axis=2)
+				LHS += diffusion - convection
+				RHS += torch.sum(2*f*phi[:,i]/(N*(N+1))/denom, axis=2)
 	elif equation == 'Helmholtz':
-		# VECTOR v SCALAR
 		ku = 3.5
 		x = legslbndm(N+1)
 		D_ = torch.from_numpy(legslbdiff(N+1, x)).to(device).float()
@@ -186,12 +193,16 @@ def weak_form2(eps, N, f, u, alphas, lepolys, phi, phi_x, equation, nbfuncs):
 		temp = torch.transpose(temp, 1, 2)
 		diffusion = torch.sum(2*temp*phi_x[:,0]/(N*(N+1))/denom, axis=2)
 		reaction = ku*torch.sum(2*u*phi[:,0]/(N*(N+1))/denom, axis=2)
-		LHS[:,0] = -diffusion + reaction 
-		RHS[:,0] = torch.sum(2*f*phi[:,0]/(N*(N+1))/denom, axis=2)
+		# LHS[:,0] = -diffusion + reaction 
+		# RHS[:,0] = torch.sum(2*f*phi[:,0]/(N*(N+1))/denom, axis=2)
+		LHS = -diffusion + reaction 
+		RHS = torch.sum(2*f*phi[:,0]/(N*(N+1))/denom, axis=2)
 		if nbfuncs > 1:
 			for i in range(1, nbfuncs):
 				diffusion = torch.sum(2*temp*phi_x[:,i]/(N*(N+1))/denom, axis=2)
 				reaction = ku*torch.sum(2*u*phi[:,i]/(N*(N+1))/denom, axis=2)
-				LHS[:,i] = -diffusion + reaction 
-				RHS[:,i] = torch.sum(2*f*phi[:,i]/(N*(N+1))/denom, axis=2)
+				# LHS[:,i] = -diffusion + reaction 
+				# RHS[:,i] = torch.sum(2*f*phi[:,i]/(N*(N+1))/denom, axis=2)
+				LHS += -diffusion + reaction 
+				RHS += torch.sum(2*f*phi[:,i]/(N*(N+1))/denom, axis=2)
 	return LHS, RHS

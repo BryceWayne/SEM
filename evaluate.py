@@ -45,7 +45,7 @@ def validate(equation, model, optim, epsilon, shape, filters, criterion_a, crite
 				loss_f = F*criterion_f(f_pred, f)
 			else:
 				f_pred, loss_f = None, 0
-			if WF != 0:
+			if WF != 0 and equation != 'BurgersT':
 				LHS, RHS = weak_form2(epsilon, SHAPE, f, u_pred, a_pred, lepolys, phi, phi_x, equation=EQUATION, nbfuncs=nbfuncs)
 				loss_wf = WF*criterion_wf(LHS, RHS)
 			else:
@@ -76,6 +76,8 @@ def model_metrics(equation, input_model, file_name, ks, path, epsilon, filters, 
 		data['MODEL'] = 'NetA'
 	elif input_model == NetB:
 		data['MODEL'] = 'NetB'
+	elif input_model == Net2D:
+		data['MODEL'] = 'Net2D'
 		
 	title = data['MODEL']
 

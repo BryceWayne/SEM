@@ -242,14 +242,14 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 				# my_cmap = plt.get_cmap('jet')
 				# ax.plot_surface(x, list(range(len(u))), z, cmap=my_cmap)
 				# ax.set_zticks([])
-				plt.figure(2, figsize=(10,6))
+				# plt.figure(2, figsize=(10,6))
 				for i, u_ in enumerate(u):
 					if i < len(u):
 						data.append([u[i], f[i], alphas[i], params, epsilon])
-						if i % int(0.1*len(u)) == 0 and i > 0:
-							plt.plot(x, u[i], label=f'$u{i}$')
-				plt.legend()
-				plt.show()
+				# 		if i % int(0.1*len(u)) == 0 and i > 0:
+				# 			plt.plot(x, u[i], label=f'$u{i}$')
+				# plt.legend()
+				# plt.show()
 			else:
 				data.append([u, f, alphas, params, epsilon])
 		return data

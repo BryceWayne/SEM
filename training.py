@@ -28,11 +28,11 @@ torch.cuda.empty_cache()
 
 # ARGS
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--equation", type=str, default='Burgers', choices=['Standard', 'Burgers', 'Helmholtz']) # , 'BurgersT'
+parser.add_argument("--equation", type=str, default='Burgers', choices=['Standard', 'Burgers', 'Helmholtz', 'BurgersT']) # 
 parser.add_argument("--model", type=str, default='NetA', choices=['ResNet', 'NetA', 'NetB']) # , 'Net2D' 
 parser.add_argument("--blocks", type=int, default=2)
 parser.add_argument("--loss", type=str, default='MSE', choices=['MAE', 'MSE'])
-parser.add_argument("--file", type=str, default='10000N31', help='Example: --file 2000N31')
+parser.add_argument("--file", type=str, default='1000N31', help='Example: --file 2000N31')
 # parser.add_argument("--batch", type=int, default=5000)
 parser.add_argument("--epochs", type=int, default=100000)
 parser.add_argument("--ks", type=int, default=5)
@@ -158,7 +158,7 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 				loss_f = F*criterion_f(f_pred, f)
 			else:
 				f_pred, loss_f = None, 0
-			if WF != 0:
+			if WF != 0 and EQUATION != 'BurgersT':
 				LHS, RHS = weak_form2(EPSILON, SHAPE, f, u_pred, a_pred, lepolys, phi, phi_x, equation=EQUATION, nbfuncs=NBFUNCS)
 				loss_wf = WF*criterion_wf(LHS, RHS)
 			else:
