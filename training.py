@@ -32,13 +32,13 @@ parser.add_argument("--equation", type=str, default='Burgers', choices=['Standar
 parser.add_argument("--model", type=str, default='NetA', choices=['ResNet', 'NetA', 'NetB']) # , 'Net2D' 
 parser.add_argument("--blocks", type=int, default=2)
 parser.add_argument("--loss", type=str, default='MSE', choices=['MAE', 'MSE'])
-parser.add_argument("--file", type=str, default='10N31', help='Example: --file 2000N31')
-# parser.add_argument("--batch", type=int, default=5000)
-parser.add_argument("--epochs", type=int, default=20)
-parser.add_argument("--ks", type=int, default=7)
-parser.add_argument("--filters", type=int, default=32)
-parser.add_argument("--nbfuncs", type=int, default=5, help='Number of basis functions to use in loss_wf')
+parser.add_argument("--file", type=str, default='5000N31', help='Example: --file 2000N31')
+parser.add_argument("--epochs", type=int, default=100000)
+parser.add_argument("--ks", type=int, default=5, choices=[3, 5, 7, 9, 11, 13, 15, 17])
+parser.add_argument("--filters", type=int, default=32, choices=[8, 16, 32, 64])
+parser.add_argument("--nbfuncs", type=int, default=10, help='Number of basis functions to use in loss_wf')
 parser.add_argument("--A", type=float, default=0)
+parser.add_argument("--F", type=float, default=1)
 parser.add_argument("--transfer", type=str, default=None)
 
 """
@@ -49,13 +49,13 @@ MAML - model agnostic model learning
 
 args = parser.parse_args()
 
+EQUATION = args.equation
 #EQUATION
 epsilons = {'Standard': 1E-1,
 			'Burgers': 5E-1,
 			'BurgersT': 1,
 			'Helmholtz': 0}
-EPSILON = epsilons[args.equation]
-EQUATION = args.equation
+EPSILON = epsilons[EQUATION]
 
 # MODEL
 models = {'ResNet': ResNet,
@@ -76,17 +76,17 @@ KERNEL_SIZE = args.ks
 PADDING = (args.ks - 1)//2
 cur_time = str(datetime.datetime.now()).replace(' ', 'T')
 cur_time = cur_time.replace(':','').split('.')[0].replace('-','')
-FOLDER = f'{args.model}_{args.loss}_epochs{args.epochs}_blocks{args.blocks}_{cur_time}'
+FOLDER = f'{args.model}_{args.loss}_epochs{EPOCHS}_blocks{BLOCKS}_{cur_time}'
 PATH = os.path.join('training', f"{EQUATION}", FILE, FOLDER)
 BATCH_SIZE, D_in, Filters, D_out = DATASET, 1, FILTERS, SHAPE
 
 # LOSS SCALE FACTORS
-A, U, F, WF = args.A, 1E3, 0E0, 1E3
+A, U, F, WF = args.A, 1E3, args.F, 1E3
 
-#CREATE BASIS VECTORS
+# CREATE BASIS VECTORS
 xx, lepolys, lepoly_x, lepoly_xx, phi, phi_x, phi_xx = basis_vectors(D_out, equation=EQUATION)
 
-# #CREATE PATHING
+# CREATE PATHING
 if os.path.isdir(PATH) == False: os.makedirs(PATH); os.makedirs(os.path.join(PATH, 'pics'))
 elif os.path.isdir(PATH) == True:
 	if args.transfer is None:
@@ -95,11 +95,7 @@ elif os.path.isdir(PATH) == True:
 	elif args.transfer is not None:
 		print("\n\nPATH ALREADY EXISTS!\n\nLOADING MODEL\n\n")
 
-# if EQUATION == 'BurgersT':
-# 	# NEED TO NORMALIZE INPUT
-# 	lg_dataset = get_data(EQUATION, FILE, SHAPE, DATASET, EPSILON, transform_f=True, kind='train')
-# else:
-# 	lg_dataset = get_data(EQUATION, FILE, SHAPE, DATASET, EPSILON, kind='train')
+# LOAD DATASET
 lg_dataset = get_data(EQUATION, FILE, SHAPE, DATASET, EPSILON, kind='train')
 trainloader = torch.utils.data.DataLoader(lg_dataset, batch_size=BATCH_SIZE, shuffle=True)
 model = MODEL(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING, blocks=BLOCKS)
@@ -168,7 +164,7 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			if loss.requires_grad:
 				loss.backward()
 			return a_pred, u_pred, f_pred, loss_a, loss_u, loss_f, loss_wf, loss
-		
+
 		a_pred, u_pred, f_pred, loss_a, loss_u, loss_f, loss_wf, loss = closure(f, a, u)
 		optimizer.step(loss.item)
 		if loss_a != 0:
@@ -180,7 +176,7 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 		if loss_wf != 0:
 			loss_wf += np.round(float(loss_wf.to('cpu').detach()), 9)
 		loss_train += np.round(float(loss.to('cpu').detach()), 9)
-	
+
 	if np.isnan(loss_train):
 		try:
 			model.load_state_dict(torch.load(PATH + '/model.pt'))
