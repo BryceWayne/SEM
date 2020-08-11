@@ -54,14 +54,16 @@ EQUATION = args.equation
 epsilons = {'Standard': 1E-1,
 			'Burgers': 5E-1,
 			'BurgersT': 1,
-			'Helmholtz': 0}
+			'Helmholtz': 0,
+			}
 EPSILON = epsilons[EQUATION]
 
 # MODEL
 models = {'ResNet': ResNet,
 		  'NetA': NetA,
 		  'NetB': NetB,
-		  'Net2D': Net2D}
+		  'Net2D': Net2D,
+		  }
 MODEL = models[args.model]
 
 #GLOBALS
@@ -116,7 +118,7 @@ LOSS_TYPE = args.loss
 if args.loss == 'MAE':
 	criterion_a, criterion_u, criterion_f, criterion_wf = torch.nn.L1Loss(), torch.nn.L1Loss(), torch.nn.L1Loss(), torch.nn.L1Loss()
 elif args.loss == 'MSE':
-	criterion_a, criterion_u, criterion_f, criterion_wf = torch.nn.MSELoss(reduction="sum"), torch.nn.MSELoss(reduction="sum"), torch.nn.MSELoss(reduction="sum"), torch.nn.MSELoss(reduction="sum")
+	criterion_a, criterion_u, criterion_f, criterion_wf = torch.nn.MSELoss(reduction="sum"), torch.nn.MSELoss(reduction="sum"), torch.nn.L1Loss(), torch.nn.MSELoss(reduction="sum")
 
 optimizer = torch.optim.LBFGS(model.parameters(), history_size=20, tolerance_grad=1e-15, tolerance_change=1e-15, max_eval=20)
 
