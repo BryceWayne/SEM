@@ -31,7 +31,7 @@ parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--equation", type=str, default='Burgers', choices=['Standard', 'Burgers', 'Helmholtz', 'BurgersT']) # 
 parser.add_argument("--model", type=str, default='NetA', choices=['ResNet', 'NetA', 'NetB']) # , 'Net2D' 
 parser.add_argument("--blocks", type=int, default=2)
-parser.add_argument("--loss", type=str, default='MSE', choices=['MAE', 'MSE'])
+parser.add_argument("--loss", type=str, default='MSE', choices=['MAE', 'MSE', 'RMSE'])
 parser.add_argument("--file", type=str, default='5000N31', help='Example: --file 2000N31')
 parser.add_argument("--epochs", type=int, default=100000)
 parser.add_argument("--ks", type=int, default=5, choices=[3, 5, 7, 9, 11, 13, 15, 17])
@@ -119,6 +119,8 @@ if args.loss == 'MAE':
 	criterion_a, criterion_u, criterion_wf = torch.nn.L1Loss(), torch.nn.L1Loss(), torch.nn.L1Loss()
 elif args.loss == 'MSE':
 	criterion_a, criterion_u, criterion_wf = torch.nn.MSELoss(reduction="sum"), torch.nn.MSELoss(reduction="sum"), torch.nn.MSELoss(reduction="sum")
+elif args.loss == 'RMSE':
+	criterion_a, criterion_u, criterion_wf = torch.nn.RMSELoss(), torch.nn.RMSELoss(), torch.nn.RMSELoss()
 criterion_f = torch.nn.L1Loss()
 
 optimizer = torch.optim.LBFGS(model.parameters(), history_size=20, tolerance_grad=1e-15, tolerance_change=1e-15, max_eval=20)
