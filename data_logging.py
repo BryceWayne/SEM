@@ -27,7 +27,7 @@ def log_loss(losses, loss_a, loss_u, loss_f, loss_wf, loss_train, loss_validate,
 	losses['loss_validate'].append(loss_validate.item()/1000)
 	return losses
 
-def log_data(EQUATION, MODEL, KERNEL_SIZE, FILE, PATH, BLOCKS, EPSILON, FILTERS, EPOCHS, BATCH_SIZE, LOSS, AVG_ITER, LOSSES, LOSS_TYPE, NBFUNCS):
+def log_data(EQUATION, MODEL, KERNEL_SIZE, FILE, PATH, BLOCKS, EPSILON, FILTERS, EPOCHS, BATCH_SIZE, LOSS, AVG_ITER, LOSSES, LOSS_TYPE, NBFUNCS, NPARAMS):
 	data = model_metrics(EQUATION, MODEL, FILE, KERNEL_SIZE, PATH, EPSILON, FILTERS, BLOCKS)
 	data['AVG IT/S'] = np.round(AVG_ITER, 1)
 	data['LOSS'] = np.round(LOSS, 6)
@@ -38,7 +38,8 @@ def log_data(EQUATION, MODEL, KERNEL_SIZE, FILE, PATH, BLOCKS, EPSILON, FILTERS,
 	data['FILTERS'] = FILTERS
 	data['EPSILON'] = EPSILON
 	data['NBFUNCS'] = NBFUNCS
-
+	data['NPARAMS'] = NPARAMS
+	
 	COLS = ['EQUATION', 'MODEL', 'LOSS_TYPE', 'TIMESTAMP', 'DATASET', 'FOLDER', 'SHAPE', 'BLOCKS', 'K.SIZE', 'FILTERS', 'BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu', 'NBFUNCS']
 	try:
 		df = pd.read_excel('temp.xlsx', ignore_index=True)

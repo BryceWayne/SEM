@@ -11,9 +11,9 @@ from mpl_toolkits import mplot3d
 
 
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--equation", type=str, default='BurgersT')
+parser.add_argument("--equation", type=str, default='Burgers', choices=['Standard', 'Burgers', 'Helmholtz', 'BurgersT'])
 parser.add_argument("--size", type=int, default=1) # BEFORE N
-parser.add_argument("--N", type=int, default=31) 
+parser.add_argument("--N", type=int, default=31, choices=[int(2**i-1) for i in [4, 5, 6, 7, 8]]) 
 parser.add_argument("--eps", type=float, default=1)
 parser.add_argument("--kind", type=str, default='validate', choices=['train', 'validate'])
 parser.add_argument("--rand_eps", type=bool, default=False)

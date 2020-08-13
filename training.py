@@ -39,7 +39,7 @@ parser.add_argument("--filters", type=int, default=32, choices=[8, 16, 32, 64])
 parser.add_argument("--nbfuncs", type=int, default=10, help='Number of basis functions to use in loss_wf')
 parser.add_argument("--A", type=float, default=0)
 parser.add_argument("--F", type=float, default=1)
-parser.add_argument("--transfer", type=str, default=None)
+parser.add_argument("--transfer", type=str, default='model')
 
 """
 Parabolic - Hyperbolic - Elliptic
@@ -116,9 +116,10 @@ model.to(device)
 # Construct our loss function and an Optimizer.
 LOSS_TYPE = args.loss
 if args.loss == 'MAE':
-	criterion_a, criterion_u, criterion_f, criterion_wf = torch.nn.L1Loss(), torch.nn.L1Loss(), torch.nn.L1Loss(), torch.nn.L1Loss()
+	criterion_a, criterion_u, criterion_wf = torch.nn.L1Loss(), torch.nn.L1Loss(), torch.nn.L1Loss()
 elif args.loss == 'MSE':
-	criterion_a, criterion_u, criterion_f, criterion_wf = torch.nn.MSELoss(reduction="sum"), torch.nn.MSELoss(reduction="sum"), torch.nn.L1Loss(), torch.nn.MSELoss(reduction="sum")
+	criterion_a, criterion_u, criterion_wf = torch.nn.MSELoss(reduction="sum"), torch.nn.MSELoss(reduction="sum"), torch.nn.MSELoss(reduction="sum")
+criterion_f = torch.nn.L1Loss()
 
 optimizer = torch.optim.LBFGS(model.parameters(), history_size=20, tolerance_grad=1e-15, tolerance_change=1e-15, max_eval=20)
 
@@ -205,6 +206,7 @@ time1 = time.time()
 loss_plot(losses, FILE, EPOCHS, SHAPE, KERNEL_SIZE, BEST_LOSS, PATH, title=args.model)
 dt = time1 - time0
 AVG_ITER = np.round(dt/EPOCHS, 6)
+NPARAMS = sum(p.numel() for p in model.parameters() if p.requires_grad)
 
 params = {
 	'EQUATION': EQUATION,
@@ -221,7 +223,8 @@ params = {
 	'AVG_ITER': AVG_ITER,
 	'LOSSES': losses,
 	'LOSS_TYPE': LOSS_TYPE,
-	'NBFUNCS': NBFUNCS
+	'NBFUNCS': NBFUNCS,
+	'NPARAMS': NPARAMS
 }
 
 df = log_data(**params)
