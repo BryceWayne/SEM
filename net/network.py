@@ -12,6 +12,10 @@ def weights_init(m):
         torch.nn.init.zeros_(m.bias)
 
 
+def swish(x):
+    return x * torch.sigmoid(x)
+
+
 class RMSELoss(nn.Module):
     def __init__(self, eps=1e-9):
         super().__init__()
@@ -22,11 +26,14 @@ class RMSELoss(nn.Module):
         loss = torch.sqrt(self.mse(yhat,y) + self.eps)
         return loss
 
+
 def conv1d(in_planes, out_planes, stride=1, bias=True, kernel_size=5, padding=2, dialation=1) :
     return nn.Conv1d(in_planes, out_planes, kernel_size=kernel_size, stride=stride, padding=padding, bias=bias)
 
+
 def conv2d(in_planes, out_planes, stride=1, bias=True, kernel_size=5, padding=2, dialation=1) :
     return nn.Conv2d(in_planes, out_planes, kernel_size=kernel_size, stride=stride, padding=padding, bias=bias)
+
 
 class ResNet(nn.Module):
     def __init__(self, d_in, filters, d_out, kernel_size=5, padding=2, blocks=5):
@@ -110,9 +117,59 @@ class NetB(nn.Module) :
         return out
 
 
+class NetC(nn.Module) :
+    def __init__(self, d_in, filters, d_out, kernel_size=7, padding=3, blocks=0) :
+        super(NetC,self).__init__()
+        self.d_in = d_in
+        self.blocks = blocks
+        self.filters = filters
+        self.d_out = d_out
+        self.kern = kernel_size
+        self.pad = padding
+        self.conv1 = conv1d(d_in, filters, kernel_size=self.kern, padding=self.pad)
+        self.convH = conv1d(filters, filters, kernel_size=self.kern, padding=self.pad)
+        self.fcH = nn.Linear(filters*(self.d_out + 2), self.d_out, bias=True)
+    def forward(self, x):
+        m = swish
+        out = m(self.conv1(x))
+        if self.blocks != 0:
+            for block in range(self.blocks):
+                out = m(self.convH(out))
+        out = self.convH(out)
+        out = out.flatten(start_dim=1)
+        out = self.fcH(out)
+        out = out.view(out.shape[0], 1, self.d_out)
+        return out
+
+
+class FC(nn.Module):
+    def __init__(self, d_in, hidden, d_out, layers=1, activation='relu') :
+        super(FC,self).__init__()
+        self.layer1 = nn.Linear(d_in, h)
+        self.relu = nn.ReLU()
+        self.swish = swish()
+        self.sigmoid = nn.Sigmoid()
+        self.hidden = hidden
+        self.layers = layers
+        self.activation = activation
+        self.layer2 = nn.Linear(h, h)
+        self.layer3 = nn.Linear(h, d_out)
+    def forward(self, x):
+        if self.activation.lower() == 'relu':
+            m = self.relu
+        elif self.activation.lower() == 'sigmoid':
+            m = self.sigmoid
+        elif self.activation.lower() == 'swish':
+            m = self.swish
+        out = m(self.layer1(x))
+        for _ in range(self.layers):
+            out = m(self.layer2(out))
+        out = self.layer3(out)
+        return out
+
 class Net2D(nn.Module) :
     def __init__(self, d_in, filters, d_out, kernel_size=7, padding=3, blocks=0) :
-        super(NetB,self).__init__()
+        super(Net2D,self).__init__()
         self.d_in = d_in
         self.blocks = blocks
         self.filters = filters

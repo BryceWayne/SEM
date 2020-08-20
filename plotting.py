@@ -19,7 +19,7 @@ def mae(measured, theoretical):
 
 def color_scheme():
 	# http://tableaufriction.blogspot.com/2012/11/finally-you-can-use-tableau-data-colors.html
-	RED, BLUE, GREEN, PURPLE = '#ff2626', '#2626ff', '#26ff26', '#9326ff'
+	RED, BLUE, GREEN, PURPLE = '#ff265c', '#265cff', '#5cff26', '#ff5d26'
 	return RED, BLUE, GREEN, PURPLE
 
 def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=5, path='.'):
@@ -40,7 +40,7 @@ def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=5, path
 		mae_error_a = mae(ahat, aa)
 		l2_error_a = relative_l2(ahat, aa)
 		linf_error_a = linf(ahat, aa)
-		x_ = list(range(len(x_)))
+		x_ = list(range(1, len(x_) + 1))
 		plt.figure(1, figsize=(10,6))
 		plt.title(f'Model: {title},\t$\\alpha$ Example Epoch {epoch}\n'\
 			      f'MAE Error: {np.round(float(mae_error_a), 9)},\t'\
@@ -109,7 +109,7 @@ def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=5, path
 			      f'$L_\\infty$ Error: {np.round(float(linf_error_de), 9)}')
 		plt.plot(xx[1:-1], ff[1:-1], **VAL, label='$f$')
 		plt.plot(xx[1:-1], f[1:-1], **TEST, label='$\\hat{f}$')
-		plt.xlim(-1,1)
+		plt.xlim(xx[1], xx[-2])
 		plt.grid(alpha=0.618)
 		plt.xlabel('$x$')
 		plt.ylabel('$f(x)$')
@@ -121,7 +121,7 @@ def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=5, path
 		plt.title(f'Example Epoch {epoch}\n'\
 			      f'$f$ Point-Wise Error: {np.round(np.sum(np.abs(ff-f))/len(xx), 9)}')
 		plt.plot(xx, np.abs(ff-f), 'ro-', mfc='none', label='Error')
-		plt.xlim(-1,1)
+		plt.xlim(xx[0], xx[-1])
 		plt.grid(alpha=0.618)
 		plt.xlabel('$x$')
 		plt.ylabel('Point-Wise Error')
@@ -149,12 +149,26 @@ def loss_plot(losses, file, epoch, shape, ks, best_loss, path, title='alpha'):
 	plt.xlabel('Epoch')
 	plt.xlim(1, epoch)
 	plt.grid(alpha=0.618)
+	plt.ylabel('Log Loss')
+	plt.legend(shadow=True)
+	plt.title(f'Log Loss vs. Epoch\nModel: {title}\n'\
+		      f'Best Loss: {best_loss}\n'\
+		      f'File: {file},$\\quad$Collocation Points: {shape},$\\quad$Kernel: {ks}')
+	plt.savefig(f'{path}/log_loss_train.png', bbox_inches='tight')
+	# plt.show()
+	plt.close(1)
+	plt.figure(1, figsize=(10,6))
+	plt.plot(x, np.array(loss_train), color=RED, label='Train')
+	plt.plot(x, np.array(loss_validate), color=BLUE, label='Validate')
+	plt.xlabel('Epoch')
+	plt.xlim(1, epoch)
+	plt.grid(alpha=0.618)
 	plt.ylabel('Loss')
 	plt.legend(shadow=True)
 	plt.title(f'Loss vs. Epoch\nModel: {title}\n'\
 		      f'Best Loss: {best_loss}\n'\
-		      f'File: {file},$\\quad$Shape: {shape},$\\quad$Kernel: {ks}')
-	plt.savefig(f'{path}/loss train.png', bbox_inches='tight')
+		      f'File: {file},$\\quad$Collocation Points: {shape},$\\quad$Kernel: {ks}')
+	plt.savefig(f'{path}/loss_train.png', bbox_inches='tight')
 	# plt.show()
 	plt.close(1)
 	plt.figure(2, figsize=(10,6))
@@ -170,11 +184,30 @@ def loss_plot(losses, file, epoch, shape, ks, best_loss, path, title='alpha'):
 	plt.xlabel('Epoch')
 	plt.xlim(1, epoch)
 	plt.grid(alpha=0.618)
+	plt.ylabel('Log Loss')
+	plt.legend(shadow=True)
+	plt.title(f'Log Loss vs. Epoch\nModel: {title}\n'\
+		      f'File: {file},$\\quad$Collocation Points: {shape},$\\quad$Kernel: {ks}')
+	plt.savefig(f'{path}/log_loss_individual.png', bbox_inches='tight')
+	# plt.show()
+	plt.close(2)
+	plt.figure(2, figsize=(10,6))
+	if loss_a[-1] != 0:
+		plt.plot(x, np.array(loss_a), color=RED, label='$\\hat{\\alpha}$')
+	if loss_u[-1] != 0:
+		plt.plot(x, np.array(loss_u), color=BLUE, label='$\\hat{u}$')
+	if loss_f[-1] != 0:
+		plt.plot(x, np.array(loss_f), color=GREEN, label='$\\hat{f}$')
+	if loss_wf[-1] != 0:
+		plt.plot(x, np.array(loss_wf), color=PURPLE, label='Weak Form')
+	plt.xlabel('Epoch')
+	plt.xlim(1, epoch)
+	plt.grid(alpha=0.618)
 	plt.ylabel('Loss')
 	plt.legend(shadow=True)
 	plt.title(f'Loss vs. Epoch\nModel: {title}\n'\
-		      f'File: {file},$\\quad$Shape: {shape},$\\quad$Kernel: {ks}')
-	plt.savefig(f'{path}/loss individual.png', bbox_inches='tight')
+		      f'File: {file},$\\quad$Collocation Points: {shape},$\\quad$Kernel: {ks}')
+	plt.savefig(f'{path}/loss_individual.png', bbox_inches='tight')
 	# plt.show()
 	plt.close(2)
 
@@ -196,8 +229,8 @@ def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path, t
 		xx_ = list(range(len(xx)))
 		plt.figure(1, figsize=(10,6))
 		plt.title(f'Out of Sample\nExample: {picture+1}, Model: {title}\n'\
-		      	  f'MAE Error: {np.round(float(mae_error_a), 9)}\n'\
-				  f'Rel. $L_2$ Error: {np.round(float(l2_error_a), 9)}\n'\
+		      	  f'MAE Error: {np.round(float(mae_error_a), 9)},\t'\
+				  f'Rel. $L_2$ Error: {np.round(float(l2_error_a), 9)},\t'\
 				  f'$L_\\infty$ Error: {np.round(float(linf_error_a), 9)}')
 		plt.plot(xx_, aa, **VAL, label='$\\alpha$')
 		plt.plot(xx_, ahat, **TEST, label='$\\hat{\\alpha}$')
@@ -230,8 +263,8 @@ def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path, t
 		xx = legslbndm(SHAPE)
 		plt.figure(2, figsize=(10,6))
 		plt.title(f'Out of Sample\nExample: {picture+1}, Model: {title}\n'\
-				  f'MAE Error: {np.round(float(mae_error_u), 9)}\n'\
-				  f'Rel. $L_2$ Error: {np.round(float(l2_error_u), 9)}\n'\
+				  f'MAE Error: {np.round(float(mae_error_u), 9)},\t'\
+				  f'Rel. $L_2$ Error: {np.round(float(l2_error_u), 9)},\t'\
 				  f'$L_\\infty$ Error: {np.round(float(linf_error_u), 9)}')
 		plt.plot(xx, uu, **VAL, label='$u$')
 		plt.plot(xx, uhat, **TEST, label='$\\hat{u}$')
@@ -261,8 +294,8 @@ def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path, t
 			l2_error_f = relative_l2(f, ff)
 			linf_error_f = linf(f, ff)
 			plt.title(f'Out of Sample\nExample: {picture+1}, Model: {title}\n'\
-					  f'MAE Error: {np.round(float(mae_error_f), 9)}\n'\
-					  f'Rel. $L_2$ Error: {np.round(float(l2_error_f), 9)}\n'\
+					  f'MAE Error: {np.round(float(mae_error_f), 9)},\t'\
+					  f'Rel. $L_2$ Error: {np.round(float(l2_error_f), 9)},\t'\
 					  f'$L_\\infty$ Error: {np.round(float(linf_error_f), 9)}')
 			plt.plot(xx[1:-1], ff[1:-1], **VAL, label='$f$')
 			plt.plot(xx[1:-1], f[1:-1], **TEST, label='$\\hat{f}$')

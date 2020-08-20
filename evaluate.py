@@ -16,8 +16,8 @@ import datetime
 
 def validate(equation, model, optim, epsilon, shape, filters, criterion_a, criterion_u, criterion_f, criterion_wf, lepolys, phi, phi_x, phi_xx, A, U, F, WF, nbfuncs):
 	device = get_device()
-	FILE, EQUATION, SHAPE = f'1000N{shape-1}', equation, shape
-	BATCH_SIZE, D_in, Filters, D_out = 1000, 1, filters, shape
+	FILE, EQUATION, SHAPE = f'10000N{shape-1}', equation, shape
+	BATCH_SIZE, D_in, Filters, D_out = 10000, 1, filters, shape
 	# Load the dataset
 	test_data = get_data(EQUATION, FILE, SHAPE, BATCH_SIZE, epsilon, kind='validate')
 	testloader = torch.utils.data.DataLoader(test_data, batch_size=BATCH_SIZE, shuffle=True)
@@ -61,12 +61,12 @@ def model_metrics(equation, input_model, file_name, ks, path, epsilon, filters, 
 	device = get_device()
 	
 	EQUATION, EPSILON, INPUT = equation, epsilon, file_name
-	FILE = '1000N' + INPUT.split('N')[1]
+	FILE = '10000N' + INPUT.split('N')[1]
 	PATH = path
 	KERNEL_SIZE = ks
 	PADDING = (ks - 1)//2
 	SHAPE = int(FILE.split('N')[1]) + 1
-	BATCH_SIZE, D_in, Filters, D_out = 1000, 1, filters, SHAPE
+	BATCH_SIZE, D_in, Filters, D_out = 10000, 1, filters, SHAPE
 	BLOCKS = blocks
 
 	data = {}
@@ -76,6 +76,8 @@ def model_metrics(equation, input_model, file_name, ks, path, epsilon, filters, 
 		data['MODEL'] = 'NetA'
 	elif input_model == NetB:
 		data['MODEL'] = 'NetB'
+	elif input_model == NetC:
+		data['MODEL'] = 'NetC'
 	elif input_model == Net2D:
 		data['MODEL'] = 'Net2D'
 		
@@ -88,7 +90,7 @@ def model_metrics(equation, input_model, file_name, ks, path, epsilon, filters, 
 	model.eval()
 
 	if FILE.split('N')[1] != INPUT.split('N')[1]:
-		FILE = '1000N' + INPUT.split('N')[1]
+		FILE = '10000N' + INPUT.split('N')[1]
 	test_data = get_data(EQUATION, FILE, SHAPE, BATCH_SIZE, EPSILON, kind='validate')
 	testloader = torch.utils.data.DataLoader(test_data, batch_size=BATCH_SIZE, shuffle=False)
 
@@ -132,3 +134,104 @@ def model_metrics(equation, input_model, file_name, ks, path, epsilon, filters, 
 	data['MSEu'] = np.round(running_MSE_u/BATCH_SIZE, 6)
 	data['MIEu'] = np.round(running_MinfE_u/BATCH_SIZE, 6)
 	return data
+
+
+def model_stats(path):
+	# def model_metrics(equation, input_model, file_name, ks, path, epsilon, filters, blocks):
+	device = get_device()
+	cwd = os.getcwd()
+	os.chdir(path)
+	with open("parameters.txt", 'r') as f:
+		text = f.readlines()
+	from pprint import pprint
+	os.chdir(cwd)
+	# pprint(text)
+	for i, _ in enumerate(text):
+		text[i] = _.rstrip('\n')
+	gparams = {}
+	for i, _ in enumerate(text):
+		_ = _.split(':')
+		k, v = _[0], _[1]
+		try:
+			gparams[k] = float(v)
+		except:
+			gparams[k] = v
+	pprint(gparams)
+	# print(gparams['model'])
+	if gparams['model'] == 'ResNet':
+		model = ResNet
+	elif gparams['model'] == 'NetA':
+		model = NetA
+	elif gparams['model'] == 'NetB':
+		model = NetB
+	elif gparams['model'] == 'NetC':
+		model = NetC
+	
+	EQUATION, EPSILON, INPUT = gparams['equation'], gparams['epsilon'], gparams['file']
+	FILE = '10000N' + INPUT.split('N')[1]
+	PATH = gparams['path']
+	KERNEL_SIZE = int(gparams['ks'])
+	PADDING = (KERNEL_SIZE - 1)//2
+	SHAPE = int(FILE.split('N')[1]) + 1
+	BATCH_SIZE, D_in, Filters, D_out = 10000, 1, int(gparams['filters']), SHAPE
+	BLOCKS = int(gparams['blocks'])
+
+	xx, lepolys, lepoly_x, lepoly_xx, phi, phi_x, phi_xx = basis_vectors(D_out, equation=EQUATION)
+	# # LOAD MODEL
+	model = model(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING, blocks=BLOCKS).to(device)
+	model.load_state_dict(torch.load(PATH + '/model.pt'))
+	model.eval()
+
+	test_data = get_data(EQUATION, FILE, SHAPE, BATCH_SIZE, EPSILON, kind='validate')
+	testloader = torch.utils.data.DataLoader(test_data, batch_size=BATCH_SIZE, shuffle=False)
+
+	MAE_a, MSE_a, MinfE_a, MAE_u, MSE_u, MinfE_u, pwe_a, pwe_u = [], [], [], [], [], [], [], []
+	for batch_idx, sample_batch in enumerate(testloader):
+		f = sample_batch['f'].to(device)
+		u = sample_batch['u'].to(device)
+		a = sample_batch['a'].to(device)
+		a_pred = model(f)
+		u_pred = reconstruct(a_pred, phi)
+		f_pred = ODE2(EPSILON, u_pred, a_pred, phi_x, phi_xx, equation=EQUATION)
+		a_pred = a_pred.to('cpu').detach().numpy()
+		u_pred = u_pred.to('cpu').detach().numpy()
+		f_pred = f_pred.to('cpu').detach().numpy()
+		a = a.to('cpu').detach().numpy()
+		u = u.to('cpu').detach().numpy()
+		for i in range(BATCH_SIZE):
+			MAE_a.append(mae(a_pred[i,0,:], a[i,0,:]))
+			MSE_a.append(relative_l2(a_pred[i,0,:], a[i,0,:]))
+			MinfE_a.append(linf(a_pred[i,0,:], a[i,0,:]))
+			MAE_u.append(mae(u_pred[i,0,:], u[i,0,:]))
+			MSE_u.append(relative_l2(u_pred[i,0,:], u[i,0,:]))
+			MinfE_u.append(linf(u_pred[i,0,:], u[i,0,:]))
+			pwe_a.append(np.round(a_pred[i,0,:] - a[i,0,:], 9))
+			pwe_u.append(np.round(u_pred[i,0,:] - u[i,0,:], 9))
+			if relative_l2(u_pred[i,0,:], u[i,0,:]) > 1:
+				plt.plot(xx, u_pred[i,0,:], label='Pred')
+				plt.plot(xx, u[i,0,:], label='True')
+				plt.legend()
+				plt.xlim(-1, 1)
+				plt.show()
+	
+	values = {
+		'MAE_a': MAE_a,
+		'MSE_a': MSE_a,
+		'MinfE_a': MinfE_a,
+		'MAE_u': MAE_u,
+		'MSE_u': MSE_u,
+		'MinfE_u': MinfE_u,
+		'PWE_a': pwe_a,
+		'PWE_u': pwe_u
+	}
+
+	df = pd.DataFrame(values)
+	os.chdir(path)
+	df.to_csv('out_of_sample.csv')
+	try:
+		df = pd.DataFrame(gparams['losses'])
+		df.to_csv('losses.csv')
+	except:
+		pass
+	os.chdir(cwd)
+	return values

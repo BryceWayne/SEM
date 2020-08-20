@@ -12,10 +12,10 @@ from mpl_toolkits import mplot3d
 
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--equation", type=str, default='Burgers', choices=['Standard', 'Burgers', 'Helmholtz', 'BurgersT'])
-parser.add_argument("--size", type=int, default=1) # BEFORE N
+parser.add_argument("--size", type=int, default=1000) # BEFORE N
 parser.add_argument("--N", type=int, default=31, choices=[int(2**i-1) for i in [4, 5, 6, 7, 8]]) 
-parser.add_argument("--eps", type=float, default=1)
-parser.add_argument("--kind", type=str, default='validate', choices=['train', 'validate'])
+parser.add_argument("--eps", type=float, default=0.5)
+parser.add_argument("--kind", type=str, default='train', choices=['train', 'validate'])
 parser.add_argument("--rand_eps", type=bool, default=False)
 args = parser.parse_args()
 
@@ -47,10 +47,16 @@ def create(N:int, epsilon:float):
 
 
 def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standard'):
-	def func(x: np.ndarray) -> np.ndarray:
+	def func(x: np.ndarray, equation: str) -> np.ndarray:
 		# Random force: mean=0, sd=1
-		m = np.random.randn(4)
-		f = 0.5*m[0]*np.sin(m[1]*np.pi*x) + 0.5*m[2]*np.cos(m[3]*np.pi*x)
+		if equation == 'Burgers':
+			m = np.random.randn(4)
+			f = 0.5*m[0]*np.sin(m[1]*np.pi*x)
+			# f = 0.5*m[0]*np.cos(m[1]*np.pi*x)
+			# f = 2*np.pi**2*np.sin(2*np.pi*x) + 2*np.pi*np.cos(2*np.pi*x)*np.sin(2*np.pi*x)
+		else:
+			m = np.random.randn(4)
+			f = 0.5*m[0]*np.sin(m[1]*np.pi*x) + 0.5*m[2]*np.cos(m[3]*np.pi*x)
 		return f, m
 
 	def gen_lepolys(N, x):
@@ -58,9 +64,8 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 		for i in range(N+3):
 			lepolys[i] = sem.lepoly(i, x)
 		return lepolys
-
 	def generate(x, D, a, b, lepolys, epsilon, equation):
-		f, params = func(x)
+		f, params = func(x, equation)
 		s_diag = np.zeros((N-1,1))
 		if equation == 'Standard':
 			M = np.zeros((N-1,N-1))
@@ -112,7 +117,7 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 				s_diag[k] = -(4*k+6)*b
 			S = s_diag*np.eye(N-1)
 			Mass = epsilon*S
-			error, tolerance, u_old, force = 1, 1E-14, 0*f.copy(), f.copy()
+			error, tolerance, u_old, force = 1, 1E-9, 0*f.copy(), f.copy()
 			iterations = 0
 			while error > tolerance:
 				f_ = force - u_old*(D@u_old)
@@ -231,27 +236,51 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 			epsilons = np.random.uniform(1E0, 1E-6, SIZE)
 		data = []
 		U, F, ALPHAS, PARAMS = [], [], [], []
+		temp = []
 		for n in tqdm(range(size)):
 			if eps_flag == True:
 				epsilon = epsilons[n]
-			u, f, alphas, params = generate(x, D, a, b, lepolys, epsilon, equation)
 			if equation == 'BurgersT':
-				# fig = plt.figure(1, figsize=(10, 6)) 
-				# ax = plt.axes(projection ='3d') 
-				# z = np.array(u).reshape(N+1, 100)
-				# my_cmap = plt.get_cmap('jet')
-				# ax.plot_surface(x, list(range(len(u))), z, cmap=my_cmap)
-				# ax.set_zticks([])
-				# plt.figure(2, figsize=(10,6))
+				u, f, alphas, params = generate(x, D, a, b, lepolys, epsilon, equation)
 				for i, u_ in enumerate(u):
 					if i < len(u):
 						data.append([u[i], f[i], alphas[i], params, epsilon])
-				# 		if i % int(0.1*len(u)) == 0 and i > 0:
-				# 			plt.plot(x, u[i], label=f'$u{i}$')
-				# plt.legend()
+			elif equation == 'Burgers':
+				u, f, alphas, params = generate(x, D, a, b, lepolys, epsilon, equation)
+				LHS, RHS = 0, 0
+				for _ in range(5):
+					phi_0 = lepolys[_] - lepolys[_+2]
+					phi_x = D@phi_0
+					diffusion = -epsilon*(4*_+6)*(-1)*alphas[_]
+					denom = lepolys[N]**2
+					convection = np.sum(0.5*u**2*phi_x/(N*(N+1))/denom)
+					LHS += diffusion - convection
+					RHS += np.sum(2*f*phi_0/(N*(N+1))/denom)
+				# print(np.abs(LHS-RHS))
+				while np.abs(LHS-RHS) > 1E-5:
+					u, f, alphas, params = generate(x, D, a, b, lepolys, epsilon, equation)
+					LHS, RHS = 0, 0
+					for _ in range(5):
+						phi_0 = lepolys[_] - lepolys[_+2]
+						phi_x = D@phi_0
+						diffusion = -epsilon*(4*_+6)*(-1)*alphas[_]
+						denom = lepolys[N]**2
+						convection = np.sum(0.5*u**2*phi_x/(N*(N+1))/denom)
+						LHS += diffusion - convection
+						RHS += np.sum(2*f*phi_0/(N*(N+1))/denom)
+
+				temp.append(np.abs(LHS-RHS))
+			
+				# plt.plot(x, np.sin(2*np.pi*x), label='Exact')
+				# plt.plot(x, u, label='Approx')
+				# plt.xlim(-1, 1)
 				# plt.show()
+				# print(np.linalg.norm(u-np.sin(2*np.pi*x), ord=np.inf))
 			else:
-				data.append([u, f, alphas, params, epsilon])
+				u, f, alphas, params = generate(x, D, a, b, lepolys, epsilon, equation)
+			data.append([u, f, alphas, params, epsilon])
+		print(max(temp), np.mean(temp), min(temp))
+		exit()	
 		return data
 
 
@@ -271,4 +300,4 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 data = create_fast(N, EPSILON, SIZE, EPS_FLAG, EQUATION)
 data = np.array(data, dtype=object)
 
-save_obj(data, f'{SIZE}N{N}', EQUATION, KIND)
+# save_obj(data, f'{SIZE}N{N}', EQUATION, KIND)
