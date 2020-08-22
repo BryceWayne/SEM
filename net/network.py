@@ -11,6 +11,9 @@ def weights_init(m):
         torch.nn.init.kaiming_normal_(m.weight.data)
         torch.nn.init.zeros_(m.bias)
 
+def init_optim(model):
+    return torch.optim.LBFGS(model.parameters(), history_size=50, tolerance_grad=1e-15, tolerance_change=1e-15, max_eval=50)
+
 
 def swish(x):
     return x * torch.sigmoid(x)
@@ -88,6 +91,7 @@ class NetA(nn.Module) :
         out = self.convH(out)
         out = out.flatten(start_dim=1)
         out = self.fcH(out)
+        # torch.nn.Dropout(0.2)
         out = out.view(out.shape[0], 1, self.d_out)
         return out
 

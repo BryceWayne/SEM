@@ -66,6 +66,9 @@ def normalize(pickle_file, dim):
     fst_moment = torch.empty(1)
     snd_moment = torch.empty(1)
     data = load_obj(pickle_file)
+    with open(f'./data/{equation}/{kind}/' + pickle_file + '.pkl', 'rb') as f:
+            self.data = pickle.load(f)
+            self.data = self.data[:,:]
     f = torch.Tensor(data[:,dim,:])
     sum_ = torch.sum(f, dim=[0])
     sum_of_square = torch.sum(f ** 2, dim=[0])

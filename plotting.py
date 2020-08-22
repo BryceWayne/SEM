@@ -157,20 +157,20 @@ def loss_plot(losses, file, epoch, shape, ks, best_loss, path, title='alpha'):
 	plt.savefig(f'{path}/log_loss_train.png', bbox_inches='tight')
 	# plt.show()
 	plt.close(1)
-	plt.figure(1, figsize=(10,6))
-	plt.plot(x, np.array(loss_train), color=RED, label='Train')
-	plt.plot(x, np.array(loss_validate), color=BLUE, label='Validate')
-	plt.xlabel('Epoch')
-	plt.xlim(1, epoch)
-	plt.grid(alpha=0.618)
-	plt.ylabel('Loss')
-	plt.legend(shadow=True)
-	plt.title(f'Loss vs. Epoch\nModel: {title}\n'\
-		      f'Best Loss: {best_loss}\n'\
-		      f'File: {file},$\\quad$Collocation Points: {shape},$\\quad$Kernel: {ks}')
-	plt.savefig(f'{path}/loss_train.png', bbox_inches='tight')
-	# plt.show()
-	plt.close(1)
+	# plt.figure(1, figsize=(10,6))
+	# plt.plot(x, np.array(loss_train), color=RED, label='Train')
+	# plt.plot(x, np.array(loss_validate), color=BLUE, label='Validate')
+	# plt.xlabel('Epoch')
+	# plt.xlim(1, epoch)
+	# plt.grid(alpha=0.618)
+	# plt.ylabel('Loss')
+	# plt.legend(shadow=True)
+	# plt.title(f'Loss vs. Epoch\nModel: {title}\n'\
+	# 	      f'Best Loss: {best_loss}\n'\
+	# 	      f'File: {file},$\\quad$Collocation Points: {shape},$\\quad$Kernel: {ks}')
+	# plt.savefig(f'{path}/loss_train.png', bbox_inches='tight')
+	# # plt.show()
+	# plt.close(1)
 	plt.figure(2, figsize=(10,6))
 	x = list(range(1, len(loss_a)+1))
 	if loss_a[-1] != 0:
@@ -191,25 +191,25 @@ def loss_plot(losses, file, epoch, shape, ks, best_loss, path, title='alpha'):
 	plt.savefig(f'{path}/log_loss_individual.png', bbox_inches='tight')
 	# plt.show()
 	plt.close(2)
-	plt.figure(2, figsize=(10,6))
-	if loss_a[-1] != 0:
-		plt.plot(x, np.array(loss_a), color=RED, label='$\\hat{\\alpha}$')
-	if loss_u[-1] != 0:
-		plt.plot(x, np.array(loss_u), color=BLUE, label='$\\hat{u}$')
-	if loss_f[-1] != 0:
-		plt.plot(x, np.array(loss_f), color=GREEN, label='$\\hat{f}$')
-	if loss_wf[-1] != 0:
-		plt.plot(x, np.array(loss_wf), color=PURPLE, label='Weak Form')
-	plt.xlabel('Epoch')
-	plt.xlim(1, epoch)
-	plt.grid(alpha=0.618)
-	plt.ylabel('Loss')
-	plt.legend(shadow=True)
-	plt.title(f'Loss vs. Epoch\nModel: {title}\n'\
-		      f'File: {file},$\\quad$Collocation Points: {shape},$\\quad$Kernel: {ks}')
-	plt.savefig(f'{path}/loss_individual.png', bbox_inches='tight')
-	# plt.show()
-	plt.close(2)
+	# plt.figure(2, figsize=(10,6))
+	# if loss_a[-1] != 0:
+	# 	plt.plot(x, np.array(loss_a), color=RED, label='$\\hat{\\alpha}$')
+	# if loss_u[-1] != 0:
+	# 	plt.plot(x, np.array(loss_u), color=BLUE, label='$\\hat{u}$')
+	# if loss_f[-1] != 0:
+	# 	plt.plot(x, np.array(loss_f), color=GREEN, label='$\\hat{f}$')
+	# if loss_wf[-1] != 0:
+	# 	plt.plot(x, np.array(loss_wf), color=PURPLE, label='Weak Form')
+	# plt.xlabel('Epoch')
+	# plt.xlim(1, epoch)
+	# plt.grid(alpha=0.618)
+	# plt.ylabel('Loss')
+	# plt.legend(shadow=True)
+	# plt.title(f'Loss vs. Epoch\nModel: {title}\n'\
+	# 	      f'File: {file},$\\quad$Collocation Points: {shape},$\\quad$Kernel: {ks}')
+	# plt.savefig(f'{path}/loss_individual.png', bbox_inches='tight')
+	# # plt.show()
+	# plt.close(2)
 
 
 def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path, title='alpha'):

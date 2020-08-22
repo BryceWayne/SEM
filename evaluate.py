@@ -9,6 +9,7 @@ from net.network import *
 from sem.sem import *
 from reconstruct import *
 from plotting import *
+from data_logging import *
 import subprocess
 import pandas as pd
 import datetime
@@ -16,8 +17,9 @@ import datetime
 
 def validate(equation, model, optim, epsilon, shape, filters, criterion_a, criterion_u, criterion_f, criterion_wf, lepolys, phi, phi_x, phi_xx, A, U, F, WF, nbfuncs):
 	device = get_device()
-	FILE, EQUATION, SHAPE = f'10000N{shape-1}', equation, shape
-	BATCH_SIZE, D_in, Filters, D_out = 10000, 1, filters, shape
+	VAL_SIZE = 1000
+	FILE, EQUATION, SHAPE = f'{VAL_SIZE}N{shape-1}', equation, shape
+	BATCH_SIZE, D_in, Filters, D_out = VAL_SIZE, 1, filters, shape
 	# Load the dataset
 	test_data = get_data(EQUATION, FILE, SHAPE, BATCH_SIZE, epsilon, kind='validate')
 	testloader = torch.utils.data.DataLoader(test_data, batch_size=BATCH_SIZE, shuffle=True)
@@ -59,14 +61,14 @@ def validate(equation, model, optim, epsilon, shape, filters, criterion_a, crite
 
 def model_metrics(equation, input_model, file_name, ks, path, epsilon, filters, blocks):
 	device = get_device()
-	
+	VAL_SIZE = 1000
 	EQUATION, EPSILON, INPUT = equation, epsilon, file_name
-	FILE = '10000N' + INPUT.split('N')[1]
+	FILE = f'{VAL_SIZE}N' + INPUT.split('N')[1]
 	PATH = path
 	KERNEL_SIZE = ks
 	PADDING = (ks - 1)//2
 	SHAPE = int(FILE.split('N')[1]) + 1
-	BATCH_SIZE, D_in, Filters, D_out = 10000, 1, filters, SHAPE
+	BATCH_SIZE, D_in, Filters, D_out = VAL_SIZE, 1, filters, SHAPE
 	BLOCKS = blocks
 
 	data = {}
@@ -145,7 +147,7 @@ def model_stats(path):
 		text = f.readlines()
 	from pprint import pprint
 	os.chdir(cwd)
-	# pprint(text)
+
 	for i, _ in enumerate(text):
 		text[i] = _.rstrip('\n')
 	gparams = {}
@@ -157,7 +159,7 @@ def model_stats(path):
 		except:
 			gparams[k] = v
 	pprint(gparams)
-	# print(gparams['model'])
+
 	if gparams['model'] == 'ResNet':
 		model = ResNet
 	elif gparams['model'] == 'NetA':
@@ -168,12 +170,13 @@ def model_stats(path):
 		model = NetC
 	
 	EQUATION, EPSILON, INPUT = gparams['equation'], gparams['epsilon'], gparams['file']
-	FILE = '10000N' + INPUT.split('N')[1]
+	
+	FILE = '1000N' + INPUT.split('N')[1]
 	PATH = gparams['path']
 	KERNEL_SIZE = int(gparams['ks'])
 	PADDING = (KERNEL_SIZE - 1)//2
 	SHAPE = int(FILE.split('N')[1]) + 1
-	BATCH_SIZE, D_in, Filters, D_out = 10000, 1, int(gparams['filters']), SHAPE
+	BATCH_SIZE, D_in, Filters, D_out = 1000, 1, int(gparams['filters']), SHAPE
 	BLOCKS = int(gparams['blocks'])
 
 	xx, lepolys, lepoly_x, lepoly_xx, phi, phi_x, phi_xx = basis_vectors(D_out, equation=EQUATION)
@@ -207,12 +210,12 @@ def model_stats(path):
 			MinfE_u.append(linf(u_pred[i,0,:], u[i,0,:]))
 			pwe_a.append(np.round(a_pred[i,0,:] - a[i,0,:], 9))
 			pwe_u.append(np.round(u_pred[i,0,:] - u[i,0,:], 9))
-			if relative_l2(u_pred[i,0,:], u[i,0,:]) > 1:
-				plt.plot(xx, u_pred[i,0,:], label='Pred')
-				plt.plot(xx, u[i,0,:], label='True')
-				plt.legend()
-				plt.xlim(-1, 1)
-				plt.show()
+			# if relative_l2(u_pred[i,0,:], u[i,0,:]) > 1:
+			# 	plt.plot(xx, u_pred[i,0,:], label='Pred')
+			# 	plt.plot(xx, u[i,0,:], label='True')
+			# 	plt.legend()
+			# 	plt.xlim(-1, 1)
+			# 	plt.show()
 	
 	values = {
 		'MAE_a': MAE_a,
@@ -225,6 +228,10 @@ def model_stats(path):
 		'PWE_u': pwe_u
 	}
 
+	# for k, v in values.items():
+	# 	gparams[k] = np.mean(v)
+
+	# log_gparams(gparams)
 	df = pd.DataFrame(values)
 	os.chdir(path)
 	df.to_csv('out_of_sample.csv')

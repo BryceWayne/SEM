@@ -7,6 +7,12 @@ from evaluate import *
 import os, json
 
 
+def record_path(path):
+	entry = str(path) + '\n'
+	with open("paths.txt", 'a') as f:
+		f.write(entry)
+
+
 def log_loss(losses, loss_a, loss_u, loss_f, loss_wf, loss_train, loss_validate, dataset):
 	if type(loss_a) == int:
 		losses['loss_a'].append(loss_a/dataset)
@@ -93,6 +99,10 @@ def log_gparams(gparams):
 	os.chdir(gparams['path'])
 	with open('parameters.txt', 'w') as f:
 		for k, v in gparams.items():
-			entry = f"{k}:{v}\n"
-			f.write(entry)
+			if k == 'losses':
+				df = pd.DataFrame(gparams['losses'])
+				df.to_csv('losses.csv')
+			else:
+				entry = f"{k}:{v}\n"
+				f.write(entry)
 	os.chdir(cwd)
