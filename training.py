@@ -33,7 +33,7 @@ parser.add_argument("--equation", type=str, default='Burgers', choices=['Standar
 parser.add_argument("--model", type=str, default='NetA', choices=['ResNet', 'NetA', 'NetB', 'NetC']) # , 'Net2D' 
 parser.add_argument("--blocks", type=int, default=2)
 parser.add_argument("--loss", type=str, default='MSE', choices=['MAE', 'MSE', 'RMSE'])
-parser.add_argument("--file", type=str, default='100000N31', help='Example: --file 2000N31')
+parser.add_argument("--file", type=str, default='75000N31', help='Example: --file 2000N31')
 parser.add_argument("--epochs", type=int, default=10000)
 parser.add_argument("--ks", type=int, default=5, choices=[3, 5, 7, 9, 11, 13, 15, 17])
 parser.add_argument("--filters", type=int, default=32, choices=[8, 16, 32, 64])
