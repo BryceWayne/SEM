@@ -14,23 +14,33 @@ def load_obj(name):
     return data
 
 
-def get_data(EQUATION, FILE, SHAPE, BATCH, EPSILON, kind='train'):
+def get_data(gparams, kind='train'):
+    equation, file, sd = gparams['equation'], gparams['file'], gparams['sd']
+    shape, epsilon = int(file.split('N')[1]) + 1, gparams['epsilon']
+    if kind == 'validate':
+        size = 1000
+        file = f'{size}N{shape-1}'
+    else:
+        size = int(file.split('N')[0])
     try:
-        data = LGDataset(equation=EQUATION, pickle_file=FILE, shape=SHAPE, kind=kind)
+        data = LGDataset(equation=equation, pickle_file=file, shape=shape, kind=kind, sd=sd)
     except:
-        subprocess.call(f'python create_train_data.py --equation {EQUATION} --size {BATCH} --N {SHAPE - 1} --eps {EPSILON} --kind {kind}', shell=True)
-        data = LGDataset(equation=EQUATION, pickle_file=FILE, shape=SHAPE, kind=kind)
+        subprocess.call(f'python create_train_data.py --equation {equation} --size {size}'\
+                        f' --N {shape - 1} --eps {epsilon} --kind {kind} --sd {sd}', shell=True)
+        data = LGDataset(equation=equation, pickle_file=file, shape=shape, kind=kind, sd=sd)
     return data
 
 
 class LGDataset():
     """Legendre-Galerkin Dataset."""
-    def __init__(self, equation, pickle_file, shape=64, transform_f=None, transform_a=None, kind='train'):
+    def __init__(self, equation, pickle_file, shape=64, transform_f=None, transform_a=None, kind='train', sd=1):
         """
         Args:
             pickle_file (string): Path to the pkl file with annotations.
             root_dir (string): Directory with all the images.
         """
+        if equation == 'Burgers':
+            pickle_file += f'sd{sd}'
         with open(f'./data/{equation}/{kind}/' + pickle_file + '.pkl', 'rb') as f:
             self.data = pickle.load(f)
             self.data = self.data[:,:]
@@ -69,7 +79,7 @@ def normalize(pickle_file, dim):
     with open(f'./data/{equation}/{kind}/' + pickle_file + '.pkl', 'rb') as f:
             self.data = pickle.load(f)
             self.data = self.data[:,:]
-    f = torch.Tensor(data[:,dim,:])
+    f = torch.Tensor(data[:,dim])
     sum_ = torch.sum(f, dim=[0])
     sum_of_square = torch.sum(f ** 2, dim=[0])
     fst_moment = (f.shape[0] * fst_moment + sum_) / (f.shape[0] + f.shape[1])

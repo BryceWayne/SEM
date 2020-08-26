@@ -148,16 +148,18 @@ class NetC(nn.Module) :
 
 class FC(nn.Module):
     def __init__(self, d_in, hidden, d_out, layers=1, activation='relu') :
-        super(FC,self).__init__()
-        self.layer1 = nn.Linear(d_in, h)
-        self.relu = nn.ReLU()
-        self.swish = swish()
-        self.sigmoid = nn.Sigmoid()
+        super(FC, self).__init__()
+        self.layer1 = nn.Linear(1, 32)
+        self.relu = nn.ReLU(inplace=True)
+        self.swish = swish
+        self.sigmoid = nn.Sigmoid
         self.hidden = hidden
         self.layers = layers
         self.activation = activation
-        self.layer2 = nn.Linear(h, h)
-        self.layer3 = nn.Linear(h, d_out)
+        self.d_in = d_in
+        self.d_out = d_out
+        self.layer2 = nn.Linear(hidden, hidden)
+        self.layer3 = nn.Linear(hidden, d_out)
     def forward(self, x):
         if self.activation.lower() == 'relu':
             m = self.relu
@@ -165,11 +167,13 @@ class FC(nn.Module):
             m = self.sigmoid
         elif self.activation.lower() == 'swish':
             m = self.swish
-        out = m(self.layer1(x))
+        out = self.relu(self.layer2(x))
         for _ in range(self.layers):
-            out = m(self.layer2(out))
+            out = self.relu(self.layer2(out))
         out = self.layer3(out)
+        out = out.view(out.shape[0], self.d_in, self.d_out)
         return out
+
 
 class Net2D(nn.Module) :
     def __init__(self, d_in, filters, d_out, kernel_size=7, padding=3, blocks=0) :

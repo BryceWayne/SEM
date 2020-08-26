@@ -31,32 +31,27 @@ def log_loss(losses, loss_a, loss_u, loss_f, loss_wf, loss_train, loss_validate,
 	else:
 		losses['loss_wf'].append(loss_wf.item()/dataset)
 	losses['loss_train'].append(loss_train.item()/dataset)
-	losses['loss_validate'].append(loss_validate.item()/10000)
+	losses['loss_validate'].append(loss_validate.item()/1000)
 	return losses
 
-def log_data(EQUATION, MODEL, KERNEL_SIZE, FILE, PATH, BLOCKS, EPSILON, FILTERS, EPOCHS, BATCH_SIZE, LOSS, AVG_ITER, LOSSES, LOSS_TYPE, NBFUNCS, NPARAMS):
-	data = model_metrics(EQUATION, MODEL, FILE, KERNEL_SIZE, PATH, EPSILON, FILTERS, BLOCKS)
-	data['AVG IT/S'] = np.round(AVG_ITER, 1)
-	data['LOSS'] = np.round(LOSS, 6)
-	data['LOSS_TYPE'] = LOSS_TYPE
-	data['EPOCHS'] = EPOCHS
-	data['BATCH'] = BATCH_SIZE
-	data['BLOCKS'] = BLOCKS
-	data['FILTERS'] = FILTERS
-	data['EPSILON'] = EPSILON
-	data['NBFUNCS'] = NBFUNCS
-	data['NPARAMS'] = NPARAMS
-	
-	COLS = ['EQUATION', 'MODEL', 'LOSS_TYPE', 'TIMESTAMP', 'DATASET', 'FOLDER', 'SHAPE', 'BLOCKS', 'K.SIZE', 'FILTERS', 'BATCH', 'EPOCHS', 'AVG IT/S', 'LOSS', 'MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu', 'NBFUNCS', 'NPARAMS']
-	try:
-		df = pd.read_excel('temp.xlsx', ignore_index=True)
-	except:
-		df = pd.DataFrame([], columns=COLS)			
-	entries = df.to_dict('records')
-	entries.append(data)
+def log_data(gparams, model):
+	equation, kernel_size, path, file = gparams['equation'], gparams['ks'], gparams['path'], gparams['file']
+	epsilon, filters, blocks, sd = gparams['epsilon'], gparams['filters'], gparams['blocks'], gparams['sd']
+	epochs, npfuncs, nparams = gparams['epochs'], gparams['nbfuncs'], gparams['nparams']
+	batch_size, loss, avgIter = gparams['batch_size'], gparams['loss'], gparams['avgIter']
+	losses, loss_type = gparams['losses'], gparams['loss_type']
+	data = model_metrics(gparams, model)
+	data['AVG IT/S'] = np.round(avgIter, 1)
+	data['LOSS'] = np.round(loss, 6)
+	data['LOSS_TYPE'] = loss_type
+	data['EPOCHS'] = epochs
+	data['BATCH'] = batch_size
+	data['BLOCKS'] = blocks
+	data['FILTERS'] = filters
+	data['EPSILON'] = epsilon
+	data['NBFUNCS'] = nbfuncs
+	data['NPARAMS'] = nparams
 
-	df = pd.DataFrame(entries)
-	df.to_excel('log_data.xlsx')
 	return df
 
 def loss_log(params, losses, df):

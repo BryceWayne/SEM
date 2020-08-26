@@ -16,6 +16,7 @@ parser.add_argument("--size", type=int, default=1) # BEFORE N
 parser.add_argument("--N", type=int, default=31, choices=[int(2**i-1) for i in [4, 5, 6, 7, 8]]) 
 parser.add_argument("--eps", type=float, default=1)
 parser.add_argument("--kind", type=str, default='train', choices=['train', 'validate'])
+parser.add_argument("--sd", type=float, default=1)
 parser.add_argument("--rand_eps", type=bool, default=False)
 args = parser.parse_args()
 
@@ -26,7 +27,7 @@ N = args.N
 EPSILON = args.eps
 EPS_FLAG = args.rand_eps
 KIND = args.kind
-
+SD = args.sd
 
 def save_obj(data, name, equation, kind):
 	cwd = os.getcwd()
@@ -46,12 +47,14 @@ def create(N:int, epsilon:float):
 	return x, u, f, a
 
 
-def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standard'):
-	def func(x: np.ndarray, equation: str) -> np.ndarray:
+def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standard', sd=1):
+	def func(x: np.ndarray, equation: str, sd: float) -> np.ndarray:
 		# Random force: mean=0, sd=1
 		if equation == 'Burgers':
-			m = np.random.randn(4)
-			f = m[0]*np.sin(m[1]*np.pi*x) # + 0.5*m[2]*np.cos(m[3]*np.pi*x)
+			m = np.random.normal(0, sd, 4)
+			# mean = 0, sd=0.25
+			# y = np.sin(2*pi*x)
+			f =(2 + m[0])*np.sin((2 + m[1])*np.pi*x) # + 0.5*m[2]*np.cos(m[3]*np.pi*x)
 		else:
 			m = np.random.randn(4)
 			f = m[0]*np.sin(m[1]*np.pi*x) + m[2]*np.cos(m[3]*np.pi*x)
@@ -62,8 +65,9 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 		for i in range(N+3):
 			lepolys[i] = sem.lepoly(i, x)
 		return lepolys
-	def generate(x, D, a, b, lepolys, epsilon, equation):
-		f, params = func(x, equation)
+		
+	def generate(x, D, a, b, lepolys, epsilon, equation, sd):
+		f, params = func(x, equation, sd)
 		s_diag = np.zeros((N-1,1))
 		if equation == 'Standard':
 			M = np.zeros((N-1,N-1))
@@ -238,12 +242,12 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 			if eps_flag == True:
 				epsilon = epsilons[n]
 			if equation == 'BurgersT':
-				u, f, alphas, params = generate(x, D, a, b, lepolys, epsilon, equation)
+				u, f, alphas, params = generate(x, D, a, b, lepolys, epsilon, equation, sd)
 				for i, u_ in enumerate(u):
 					if i < len(u):
 						data.append([u[i], f[i], alphas[i], params, epsilon])
 			elif equation == 'Burgers':
-				u, f, alphas, params = generate(x, D, a, b, lepolys, epsilon, equation)
+				u, f, alphas, params = generate(x, D, a, b, lepolys, epsilon, equation, sd)
 				LHS, RHS = 0, 0
 				for _ in range(10):
 					phi_0 = lepolys[_] - lepolys[_+2]
@@ -253,8 +257,8 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 					convection = np.sum(u**2*phi_x/(N*(N+1))/denom)
 					LHS += diffusion - convection
 					RHS += np.sum(2*f*phi_0/(N*(N+1))/denom)
-				while np.abs(LHS-RHS) > 1E-5:
-					u, f, alphas, params = generate(x, D, a, b, lepolys, epsilon, equation)
+				while np.abs(LHS-RHS) > 1E-5 and np.linalg.norm(u, ord=2) < 1E-2:
+					u, f, alphas, params = generate(x, D, a, b, lepolys, epsilon, equation, sd)
 					LHS, RHS = 0, 0
 					for _ in range(10):
 						phi_0 = lepolys[_] - lepolys[_+2]
@@ -265,7 +269,7 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 						LHS += diffusion - convection
 						RHS += np.sum(2*f*phi_0/(N*(N+1))/denom)
 			else:
-				u, f, alphas, params = generate(x, D, a, b, lepolys, epsilon, equation)
+				u, f, alphas, params = generate(x, D, a, b, lepolys, epsilon, equation, sd)
 			data.append([u, f, alphas, params, epsilon])
 		return data
 
@@ -283,7 +287,10 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 	return loop(N, epsilon, size, lepolys, eps_flag, equation, a, b)
 
 
-data = create_fast(N, EPSILON, SIZE, EPS_FLAG, EQUATION)
+data = create_fast(N, EPSILON, SIZE, EPS_FLAG, EQUATION, SD)
 data = np.array(data, dtype=object)
 
-save_obj(data, f'{SIZE}N{N}', EQUATION, KIND)
+if EQUATION == 'Burgers':
+	save_obj(data, f'{SIZE}N{N}sd{SD}', EQUATION, KIND)
+else:
+	save_obj(data, f'{SIZE}N{N}', EQUATION, KIND)

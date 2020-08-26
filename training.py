@@ -29,30 +29,33 @@ torch.cuda.empty_cache()
 
 # ARGS
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--equation", type=str, default='Burgers', choices=['Standard', 'Burgers', 'Helmholtz', 'BurgersT']) # 
-parser.add_argument("--model", type=str, default='NetA', choices=['ResNet', 'NetA', 'NetB', 'NetC']) # , 'Net2D' 
-parser.add_argument("--blocks", type=int, default=2)
+parser.add_argument("--equation", type=str, default='Burgers', choices=['Standard', 'Burgers', 'Helmholtz']) #, 'BurgersT' 
+parser.add_argument("--model", type=str, default='NetC', choices=['ResNet', 'NetA', 'NetB', 'NetC']) # , 'Net2D' 
+parser.add_argument("--blocks", type=int, default=5)
 parser.add_argument("--loss", type=str, default='MSE', choices=['MAE', 'MSE', 'RMSE'])
-parser.add_argument("--file", type=str, default='75000N31', help='Example: --file 2000N31')
+parser.add_argument("--file", type=str, default='20000N63', help='Example: --file 2000N31')
 parser.add_argument("--epochs", type=int, default=10000)
 parser.add_argument("--ks", type=int, default=5, choices=[3, 5, 7, 9, 11, 13, 15, 17])
 parser.add_argument("--filters", type=int, default=32, choices=[8, 16, 32, 64])
 parser.add_argument("--nbfuncs", type=int, default=1, help='Number of basis functions to use in loss_wf')
 parser.add_argument("--A", type=float, default=0)
-parser.add_argument("--F", type=float, default=1E3)
+parser.add_argument("--F", type=float, default=0)
+parser.add_argument("--sd", type=float, default=0.1)
 parser.add_argument("--transfer", type=str, default=None)
 
 args = parser.parse_args()
 gparams = args.__dict__
 
 EQUATION = args.equation
-epsilons = {'Standard': 1E-1,
+epsilons = {
+			'Standard': 1E-1,
 			'Burgers': 1,
 			'BurgersT': 1,
 			'Helmholtz': 0,
 			}
 EPSILON = epsilons[EQUATION]
-models = {'ResNet': ResNet,
+models = {
+		  'ResNet': ResNet,
 		  'NetA': NetA,
 		  'NetB': NetB,
 		  'NetC': NetC,
@@ -61,22 +64,23 @@ models = {'ResNet': ResNet,
 MODEL = models[args.model]
 
 #GLOBALS
-FILE = args.file
-DATASET = int(args.file.split('N')[0])
-SHAPE = int(args.file.split('N')[1]) + 1
-BLOCKS = args.blocks
-EPOCHS = args.epochs
-NBFUNCS = args.nbfuncs
-FILTERS = args.filters
-KERNEL_SIZE = args.ks
-PADDING = (args.ks - 1)//2
+FILE = gparams['file']
+DATASET = int(FILE.split('N')[0])
+SHAPE = int(FILE.split('N')[1]) + 1
+BLOCKS = int(gparams['blocks'])
+EPOCHS = int(gparams['epochs'])
+NBFUNCS = int(gparams['nbfuncs'])
+FILTERS = int(gparams['filters'])
+KERNEL_SIZE = int(gparams['ks'])
+PADDING = (KERNEL_SIZE - 1)//2
 cur_time = str(datetime.datetime.now()).replace(' ', 'T')
 cur_time = cur_time.replace(':','').split('.')[0].replace('-','')
-FOLDER = f'{args.model}_epochs{EPOCHS}_{cur_time}'
+FOLDER = f'{gparams["model"]}_epochs{EPOCHS}_{cur_time}'
 PATH = os.path.join('training', f"{EQUATION}", FILE, FOLDER)
+gparams['path'] = PATH
 BATCH_SIZE, D_in, Filters, D_out = DATASET, 1, FILTERS, SHAPE
 # LOSS SCALE FACTORS
-A, U, F, WF = args.A, 1E3, args.F, 1E3
+A, U, F, WF = int(gparams['A']), 1E0, int(gparams['F']), 1E0
 
 gparams['U'] = U
 gparams['WF'] = WF
@@ -91,29 +95,30 @@ elif os.path.isdir(PATH) == True:
 	elif args.transfer is not None:
 		print("\n\nPATH ALREADY EXISTS!\n\nLOADING MODEL\n\n")
 
-gparams['path'] = PATH
-with open("paths.txt", "a") as f:
-	f.write(str(PATH) + '\n')
 
 # CREATE BASIS VECTORS
 xx, lepolys, lepoly_x, lepoly_xx, phi, phi_x, phi_xx = basis_vectors(D_out, equation=EQUATION)
 
 # LOAD DATASET
-# transform_f = 
-lg_dataset = get_data(EQUATION, FILE, SHAPE, DATASET, EPSILON, kind='train')
+lg_dataset = get_data(gparams, kind='train')
 trainloader = torch.utils.data.DataLoader(lg_dataset, batch_size=BATCH_SIZE, shuffle=True)
-model = MODEL(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING, blocks=BLOCKS)
+if args.model == 'FC':
+	model = MODEL(D_in, Filters, D_out - 2, layers=BLOCKS, activation='relu')
+else:
+	model = MODEL(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING, blocks=BLOCKS)
 if args.transfer is not None:
 	model.load_state_dict(torch.load(f'./{args.transfer}.pt'))
 	model.train()	
 
+# Check if CUDA is available and then use it.
+device = get_device()
+gparams['device'] = device
+# SEND TO GPU (or CPU)
+model.to(device)
 #KAIMING HE INIT
 if args.transfer is None:
 	model.apply(weights_init)
-# Check if CUDA is available and then use it.
-device = get_device()
-# SEND TO GPU (or CPU)
-model.to(device)
+
 #INIT OPTIMIZER
 optimizer = init_optim(model)
 
@@ -128,9 +133,15 @@ elif args.loss == 'RMSE':
 criterion_wf = torch.nn.MSELoss(reduction="sum")
 criterion_f = torch.nn.L1Loss()
 
-
+criterion = {
+			 'a': criterion_a,
+			 'f': criterion_f,
+			 'u': criterion_u,
+			 'wf': criterion_wf,
+			}
 BEST_LOSS = float('inf')
-losses = {'loss_a':[],
+losses = {
+		  'loss_a':[],
 		  'loss_u':[], 
 		  'loss_f': [], 
 		  'loss_wf':[], 
@@ -151,7 +162,13 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			if torch.is_grad_enabled():
 				optimizer.zero_grad()
 			a_pred = model(f)
+			# l2norm_loss = l2norm(a_pred)
+			# Regularization not Normalization 
+			# Can map? Reduce var of tr. data set
+			# Data aug. Incr var at test time (Better generalization power)
+			# What feature can we augment? Adding perceptually small noise to input f
 			if A != 0:
+				#l1norm of a_pred
 				loss_a = A*criterion_a(a_pred, a)
 			else:
 				loss_a = 0
@@ -202,8 +219,8 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			BEST_LOSS = loss_train/DATASET
 			gparams['best_loss'] = BEST_LOSS
 			
-		loss_validate = validate(EQUATION, model, optimizer, EPSILON, SHAPE, FILTERS, criterion_a, criterion_u, criterion_f, criterion_wf, lepolys, phi, phi_x, phi_xx, A, U, F, WF, NBFUNCS)
-		losses = log_loss(losses, loss_a, loss_u, loss_f, loss_wf, loss_train, loss_validate, DATASET)
+		loss_validate = validate(gparams, model, optimizer, criterion, lepolys, phi, phi_x, phi_xx)	
+		losses = log_loss(losses, loss_a, loss_u, loss_f, loss_wf, loss_train, loss_validate, BATCH_SIZE)
 		
 		if int(.05*EPOCHS) > 0 and EPOCHS > 10 and epoch % int(.05*EPOCHS) == 0:
 			periodic_report(args.model, sample_batch, EQUATION, EPSILON, SHAPE, epoch, xx, phi_x, phi_xx, losses, a_pred, u_pred, f_pred, KERNEL_SIZE, PATH)
@@ -214,34 +231,22 @@ AVG_ITER = np.round(dt/EPOCHS, 6)
 NPARAMS = sum(p.numel() for p in model.parameters() if p.requires_grad)
 
 gparams['dt'] = dt
-gparams['AvgIter'] = AVG_ITER
-gparams['nparams'] = NPARAMS
-
-params = {
-	'EQUATION': EQUATION,
-	'MODEL': MODEL,
-	'KERNEL_SIZE': KERNEL_SIZE,
-	'FILE': FILE,
-	'PATH': PATH,
-	'BLOCKS': BLOCKS,
-	'EPSILON': EPSILON,
-	'FILTERS': FILTERS,
-	'EPOCHS': EPOCHS,
-	'BATCH_SIZE': BATCH_SIZE,
-	'LOSS': BEST_LOSS,
-	'AVG_ITER': AVG_ITER,
-	'LOSSES': losses,
-	'LOSS_TYPE': LOSS_TYPE,
-	'NBFUNCS': NBFUNCS,
-	'NPARAMS': NPARAMS
-}
-
+gparams['avgIter'] = AVG_ITER
+gparams['nParams'] = NPARAMS
+gparams['batchSize'] = BATCH_SIZE
+gparams['bestLoss'] = BEST_LOSS
 gparams['losses'] = losses
-loss_plot(losses, FILE, EPOCHS, SHAPE, KERNEL_SIZE, BEST_LOSS, PATH, title=args.model)
-df = log_data(**params)
-loss_log(params, losses ,df)
+gparams['lossType'] = LOSS_TYPE
+
+with open("paths.txt", "a") as f:
+	f.write(str(PATH) + '\n')
+
+loss_plot(gparams)
+values = model_stats(PATH, kind='validate')
+for k, v in values.items():
+	gparams[k] = np.mean(v)
+
 log_gparams(gparams)
-model_stats(PATH)
 
 # EVERYONE APRECIATES A CLEAN WORKSPACE
 gc.collect()

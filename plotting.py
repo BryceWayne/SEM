@@ -19,17 +19,17 @@ def mae(measured, theoretical):
 
 def color_scheme():
 	# http://tableaufriction.blogspot.com/2012/11/finally-you-can-use-tableau-data-colors.html
-	RED, BLUE, GREEN, PURPLE = '#ff265c', '#265cff', '#5cff26', '#ff5d26'
-	return RED, BLUE, GREEN, PURPLE
+	red, blue, green, purple = '#ff265c', '#265cff', '#5cff26', '#ff5d26'
+	return red, blue, green, purple
 
 def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=5, path='.'):
 	# https://www.colorhexa.com/
 	# https://colorbrewer2.org/#type=diverging&scheme=RdBu&n=4
 	# http://vis.stanford.edu/papers/semantically-resonant-colors
 	# https://medialab.github.io/iwanthue/
-	RED, BLUE, GREEN, PURPLE = color_scheme()
-	TEST  = {'color':RED, 'marker':'o', 'linestyle':'none', 'markersize': 3}
-	VAL = {'color':BLUE, 'marker':'o', 'linestyle':'solid', 'mfc':'none'}
+	red, blue, green, purple = color_scheme()
+	TEST  = {'color':red, 'marker':'o', 'linestyle':'none', 'markersize': 3}
+	VAL = {'color':blue, 'marker':'o', 'linestyle':'solid', 'mfc':'none'}
 	aa = sample['a'][0,0,:].to('cpu').detach().numpy()
 	uu = sample['u'][0,0,:].to('cpu').detach().numpy()
 	ff = sample['f'][0,0,:].to('cpu').detach().numpy()
@@ -130,8 +130,11 @@ def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=5, path
 		plt.close(3)
 
 
-def loss_plot(losses, file, epoch, shape, ks, best_loss, path, title='alpha'):
-	RED, BLUE, GREEN, PURPLE = color_scheme()
+def loss_plot(gparams):
+	losses, file, epoch = gparams['losses'], gparams['file'], gparams['epochs']
+	shape, ks, best_loss = SHAPE = int(file.split('N')[1]) + 1, gparams['ks'], gparams['bestLoss']
+	path, title = gparams['path'], gparams['model']
+	red, blue, green, purple = color_scheme()
 	loss_a = losses['loss_a']
 	loss_u = losses['loss_u']
 	loss_f = losses['loss_f']
@@ -144,8 +147,8 @@ def loss_plot(losses, file, epoch, shape, ks, best_loss, path, title='alpha'):
 
 	plt.figure(1, figsize=(10,6))
 	x = list(range(1, len(loss_a)+1))
-	plt.semilogy(x, np.array(loss_train), color=RED, label='Train')
-	plt.semilogy(x, np.array(loss_validate), color=BLUE, label='Validate')
+	plt.semilogy(x, np.array(loss_train), color=red, label='Train')
+	plt.semilogy(x, np.array(loss_validate), color=blue, label='Validate')
 	plt.xlabel('Epoch')
 	plt.xlim(1, epoch)
 	plt.grid(alpha=0.618)
@@ -157,30 +160,17 @@ def loss_plot(losses, file, epoch, shape, ks, best_loss, path, title='alpha'):
 	plt.savefig(f'{path}/log_loss_train.png', bbox_inches='tight')
 	# plt.show()
 	plt.close(1)
-	# plt.figure(1, figsize=(10,6))
-	# plt.plot(x, np.array(loss_train), color=RED, label='Train')
-	# plt.plot(x, np.array(loss_validate), color=BLUE, label='Validate')
-	# plt.xlabel('Epoch')
-	# plt.xlim(1, epoch)
-	# plt.grid(alpha=0.618)
-	# plt.ylabel('Loss')
-	# plt.legend(shadow=True)
-	# plt.title(f'Loss vs. Epoch\nModel: {title}\n'\
-	# 	      f'Best Loss: {best_loss}\n'\
-	# 	      f'File: {file},$\\quad$Collocation Points: {shape},$\\quad$Kernel: {ks}')
-	# plt.savefig(f'{path}/loss_train.png', bbox_inches='tight')
-	# # plt.show()
-	# plt.close(1)
+
 	plt.figure(2, figsize=(10,6))
 	x = list(range(1, len(loss_a)+1))
 	if loss_a[-1] != 0:
-		plt.semilogy(x, np.array(loss_a), color=RED, label='$\\hat{\\alpha}$')
+		plt.semilogy(x, np.array(loss_a), color=red, label='$\\hat{\\alpha}$')
 	if loss_u[-1] != 0:
-		plt.semilogy(x, np.array(loss_u), color=BLUE, label='$\\hat{u}$')
+		plt.semilogy(x, np.array(loss_u), color=blue, label='$\\hat{u}$')
 	if loss_f[-1] != 0:
-		plt.semilogy(x, np.array(loss_f), color=GREEN, label='$\\hat{f}$')
+		plt.semilogy(x, np.array(loss_f), color=green, label='$\\hat{f}$')
 	if loss_wf[-1] != 0:
-		plt.semilogy(x, np.array(loss_wf), color=PURPLE, label='Weak Form')
+		plt.semilogy(x, np.array(loss_wf), color=purple, label='Weak Form')
 	plt.xlabel('Epoch')
 	plt.xlim(1, epoch)
 	plt.grid(alpha=0.618)
@@ -191,31 +181,12 @@ def loss_plot(losses, file, epoch, shape, ks, best_loss, path, title='alpha'):
 	plt.savefig(f'{path}/log_loss_individual.png', bbox_inches='tight')
 	# plt.show()
 	plt.close(2)
-	# plt.figure(2, figsize=(10,6))
-	# if loss_a[-1] != 0:
-	# 	plt.plot(x, np.array(loss_a), color=RED, label='$\\hat{\\alpha}$')
-	# if loss_u[-1] != 0:
-	# 	plt.plot(x, np.array(loss_u), color=BLUE, label='$\\hat{u}$')
-	# if loss_f[-1] != 0:
-	# 	plt.plot(x, np.array(loss_f), color=GREEN, label='$\\hat{f}$')
-	# if loss_wf[-1] != 0:
-	# 	plt.plot(x, np.array(loss_wf), color=PURPLE, label='Weak Form')
-	# plt.xlabel('Epoch')
-	# plt.xlim(1, epoch)
-	# plt.grid(alpha=0.618)
-	# plt.ylabel('Loss')
-	# plt.legend(shadow=True)
-	# plt.title(f'Loss vs. Epoch\nModel: {title}\n'\
-	# 	      f'File: {file},$\\quad$Collocation Points: {shape},$\\quad$Kernel: {ks}')
-	# plt.savefig(f'{path}/loss_individual.png', bbox_inches='tight')
-	# # plt.show()
-	# plt.close(2)
 
 
 def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path, title='alpha'):
-	RED, BLUE, GREEN, PURPLE = color_scheme()
-	TEST  = {'color':RED, 'marker':'o', 'linestyle':'none', 'markersize': 3}
-	VAL = {'color':BLUE, 'marker':'o', 'linestyle':'solid', 'mfc':'none'}
+	red, blue, green, purple = color_scheme()
+	TEST  = {'color':red, 'marker':'o', 'linestyle':'none', 'markersize': 3}
+	VAL = {'color':blue, 'marker':'o', 'linestyle':'solid', 'mfc':'none'}
 	PATH = path
 	SHAPE = shape
 	EQUATION = equation
@@ -244,8 +215,6 @@ def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path, t
 		plt.figure(1, figsize=(10,6))
 		plt.title(f'$\\alpha$ Point-Wise Error: {np.round(np.sum(np.abs(aa-ahat))/len(xx), 9)}')
 		plt.plot(xx_, np.abs(aa-ahat), 'ro-', mfc='none', label='Error')
-		# plt.plot(x_, ahat, 'bo', mfc='none', label='$\\hat{\\alpha}$')
-		# plt.plot(xxx, ff, 'g-', label='$f$')
 		plt.xlim(xx_[0],xx_[-1])
 		plt.grid(alpha=0.618)
 		plt.xlabel('$i$')
@@ -325,8 +294,3 @@ def periodic_report(model, batch, equation, epsilon, shape, epoch, xx, phi_x, ph
 	elif equation in ('Standard', 'Helmholtz'):
 		f_pred = ODE2(epsilon, u_pred, a_pred, phi_x, phi_xx, equation=equation)
 	plotter(xx, batch, epoch, a=a_pred, u=u_pred, f=f_pred, title=model, ks=ks, path=path)
-	# a_pred = a_pred.to('cpu').detach().numpy()
-	# u_pred = u_pred.to('cpu').detach().numpy()
-	# if f_pred is not None:
-	# 	f_pred = f_pred.to('cpu').detach().numpy()
-	# out_of_sample(equation, shape, a_pred, u_pred, f_pred, batch, path, model)
