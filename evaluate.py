@@ -181,10 +181,10 @@ def model_stats(path, kind='train'):
 	plt.close()
 
 	rosetta = {
-			   'MAE_a': '$MAE$',
+			   'MAE_a': 'MAE',
 			   'MSE_a': 'Rel. $L_{2}$',
 			   'MinfE_a': '$L_{\\infty}$',
-			   'MAE_u': '$MAE$',
+			   'MAE_u': 'MAE',
 			   'MSE_u': 'Rel. $L_{2}$',
 			   'MinfE_u': '$L_{\\infty}$',
 			  }
