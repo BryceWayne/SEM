@@ -54,7 +54,7 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 			m = np.random.normal(0, sd, 4)
 			# mean = 0, sd=0.25
 			# y = np.sin(2*pi*x)
-			f =(2 + m[0])*np.sin((2 + m[1])*np.pi*x) # + 0.5*m[2]*np.cos(m[3]*np.pi*x)
+			f = (2 + m[0])*np.sin((2 + m[1])*np.pi*x) + (2 + m[2])*np.cos((2 + m[3])*np.pi*x)
 		else:
 			m = np.random.randn(4)
 			f = m[0]*np.sin(m[1]*np.pi*x) + m[2]*np.cos(m[3]*np.pi*x)

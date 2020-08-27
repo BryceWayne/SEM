@@ -30,7 +30,7 @@ torch.cuda.empty_cache()
 # ARGS
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--equation", type=str, default='Burgers', choices=['Standard', 'Burgers', 'Helmholtz']) #, 'BurgersT' 
-parser.add_argument("--model", type=str, default='NetC', choices=['ResNet', 'NetA', 'NetB', 'NetC']) # , 'Net2D' 
+parser.add_argument("--model", type=str, default='NetA', choices=['ResNet', 'NetA', 'NetB', 'NetC']) # , 'Net2D' 
 parser.add_argument("--blocks", type=int, default=5)
 parser.add_argument("--loss", type=str, default='MSE', choices=['MAE', 'MSE', 'RMSE'])
 parser.add_argument("--file", type=str, default='20000N63', help='Example: --file 2000N31')
