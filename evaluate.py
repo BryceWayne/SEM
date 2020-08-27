@@ -180,18 +180,31 @@ def model_stats(path, kind='train'):
 	# plt.show()
 	plt.close()
 
+	rosetta = {
+			   'MAE_a': '$MAE$',
+			   'MSE_a': 'Rel. $L_{2}$',
+			   'MinfE_a': '$L_{\\infty}$',
+			   'MAE_u': '$MAE$',
+			   'MSE_u': 'Rel. $L_{2}$',
+			   'MinfE_u': '$L_{\\infty}$',
+			  }
+
 	columns = df.columns
 	columns = columns[:-2]
 	plt.figure(2, figsize=(14, 4))
+	plt.suptitle("Error Histograms")
 	for i, col in enumerate(columns[:-3]):
 		if col in ('PWE_a', 'PWE_u'):
 			continue
 		plt.subplot(1, 3, i+1)
 		sns.distplot(df[[f'{col}']], kde=False, color=blue)
 		plt.grid(alpha=0.618)
-		plt.xlabel(f'{col}')
-		plt.title(f'{col} Histogram')
-		plt.ylabel('Counts')
+		# plt.xlabel(f'{col}')
+		plt.title(rosetta[f'{col}'])
+		if i == 0:
+			plt.ylabel('Counts')
+		else:
+			plt.ylabel('')
 		plt.xlim(0, df[f'{col}'].max())
 		plt.xticks(rotation=90)
 	plt.savefig('histogram_alphas.png', bbox_inches='tight')
@@ -199,15 +212,19 @@ def model_stats(path, kind='train'):
 	plt.close(2)
 
 	plt.figure(3, figsize=(14, 4))
+	plt.suptitle("Error Histograms")
 	for i, col in enumerate(columns[-3:]):
 		if col in ('PWE_a', 'PWE_u'):
 			continue
 		plt.subplot(1, 3, i+1)
 		sns.distplot(df[[f'{col}']], kde=False, color=blue)
 		plt.grid(alpha=0.618)
-		plt.xlabel(f'{col}')
-		plt.title(f'{col} Histogram')
-		plt.ylabel('Counts')
+		# plt.xlabel(f'{col}')
+		plt.title(rosetta[f'{col}'])
+		if i == 0:
+			plt.ylabel('Counts')
+		else:
+			plt.ylabel('')
 		plt.xlim(0, df[f'{col}'].max())
 		plt.xticks(rotation=90)
 	plt.savefig('histogram_solutions.png', bbox_inches='tight')
