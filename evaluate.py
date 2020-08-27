@@ -202,7 +202,7 @@ def model_stats(path, kind='train'):
 		# plt.xlabel(f'{col}')
 		plt.title(rosetta[f'{col}'])
 		if i == 0:
-			plt.ylabel('Counts')
+			plt.ylabel('Count')
 		else:
 			plt.ylabel('')
 		plt.xlim(0, df[f'{col}'].max())
@@ -222,7 +222,7 @@ def model_stats(path, kind='train'):
 		# plt.xlabel(f'{col}')
 		plt.title(rosetta[f'{col}'])
 		if i == 0:
-			plt.ylabel('Counts')
+			plt.ylabel('Count')
 		else:
 			plt.ylabel('')
 		plt.xlim(0, df[f'{col}'].max())
