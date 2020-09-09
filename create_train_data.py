@@ -52,9 +52,12 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 		# Random force: mean=0, sd=1
 		if equation == 'Burgers':
 			m = np.random.normal(0, sd, 4)
+			m = 2 + np.random.rand(2)
+			n = np.pi*(1+2*np.random.rand(2))
 			# mean = 0, sd=0.25
 			# y = np.sin(2*pi*x)
-			f = (2 + m[0])*np.sin((2 + m[1])*np.pi*x) + (2 + m[2])*np.cos((2 + m[3])*np.pi*x)
+			f = m[0]*np.sin(n[0]*x) + m[1]*np.cos(n[1]*x)
+			m = np.array([m[0], m[1], n[0], n[1]])
 		else:
 			m = np.random.randn(4)
 			f = m[0]*np.sin(m[1]*np.pi*x) + m[2]*np.cos(m[3]*np.pi*x)

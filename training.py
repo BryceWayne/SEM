@@ -30,17 +30,17 @@ torch.cuda.empty_cache()
 # ARGS
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--equation", type=str, default='Burgers', choices=['Standard', 'Burgers', 'Helmholtz']) #, 'BurgersT' 
-parser.add_argument("--model", type=str, default='NetA', choices=['ResNet', 'NetA', 'NetB', 'NetC']) # , 'Net2D' 
-parser.add_argument("--blocks", type=int, default=5)
-parser.add_argument("--loss", type=str, default='MSE', choices=['MAE', 'MSE', 'RMSE'])
-parser.add_argument("--file", type=str, default='20000N63', help='Example: --file 2000N31')
-parser.add_argument("--epochs", type=int, default=10000)
+parser.add_argument("--model", type=str, default='NetC', choices=['ResNet', 'NetA', 'NetB', 'NetC']) # , 'Net2D' 
+parser.add_argument("--blocks", type=int, default=10)
+parser.add_argument("--loss", type=str, default='MSE', choices=['MAE', 'MSE', 'RMSE', 'RelMSE'])
+parser.add_argument("--file", type=str, default='25000N63', help='Example: --file 2000N31')
+parser.add_argument("--epochs", type=int, default=20000)
 parser.add_argument("--ks", type=int, default=5, choices=[3, 5, 7, 9, 11, 13, 15, 17])
 parser.add_argument("--filters", type=int, default=32, choices=[8, 16, 32, 64])
-parser.add_argument("--nbfuncs", type=int, default=1, help='Number of basis functions to use in loss_wf')
+parser.add_argument("--nbfuncs", type=int, default=2, help='Number of basis functions to use in loss_wf')
 parser.add_argument("--A", type=float, default=0)
 parser.add_argument("--F", type=float, default=0)
-parser.add_argument("--sd", type=float, default=0.1)
+parser.add_argument("--sd", type=float, default=0)
 parser.add_argument("--transfer", type=str, default=None)
 
 args = parser.parse_args()
@@ -80,7 +80,7 @@ PATH = os.path.join('training', f"{EQUATION}", FILE, FOLDER)
 gparams['path'] = PATH
 BATCH_SIZE, D_in, Filters, D_out = DATASET, 1, FILTERS, SHAPE
 # LOSS SCALE FACTORS
-A, U, F, WF = int(gparams['A']), 1E0, int(gparams['F']), 1E0
+A, U, F, WF = int(gparams['A']), 1E6, int(gparams['F']), 1E0
 
 gparams['U'] = U
 gparams['WF'] = WF
@@ -130,7 +130,10 @@ elif args.loss == 'MSE':
 	criterion_a, criterion_u = torch.nn.MSELoss(reduction="sum"), torch.nn.MSELoss(reduction="sum")
 elif args.loss == 'RMSE':
 	criterion_a, criterion_u = RMSELoss(), RMSELoss()
+elif args.loss == 'RelMSE':
+	criterion_a, criterion_u = RelMSELoss(batch=BATCH_SIZE), RelMSELoss(batch=BATCH_SIZE)
 criterion_wf = torch.nn.MSELoss(reduction="sum")
+# criterion_wf = torch.nn.L1Loss()
 criterion_f = torch.nn.L1Loss()
 
 criterion = {

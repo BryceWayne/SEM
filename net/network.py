@@ -12,7 +12,13 @@ def weights_init(m):
         torch.nn.init.zeros_(m.bias)
 
 def init_optim(model):
-    return torch.optim.LBFGS(model.parameters(), history_size=50, tolerance_grad=1e-15, tolerance_change=1e-15, max_eval=50)
+    params = {
+              'history_size': 25,
+              'tolerance_grad': 1E-15,
+              'tolerance_change': 1E-15,
+              'max_eval': 25,
+                }
+    return torch.optim.LBFGS(model.parameters(), **params)
 
 
 def swish(x):
@@ -27,6 +33,17 @@ class RMSELoss(nn.Module):
         
     def forward(self,yhat,y):
         loss = torch.sqrt(self.mse(yhat,y) + self.eps)
+        return loss
+
+
+class RelMSELoss(nn.Module):
+    def __init__(self, batch):
+        super().__init__()
+        self.mse = nn.MSELoss()
+        self.batch = batch
+        
+    def forward(self,yhat,y):
+        loss = self.mse(yhat,y)/self.batch
         return loss
 
 

@@ -118,7 +118,7 @@ def model_stats(path, kind='train'):
 	model.eval()
 
 	test_data = get_data(gparams, kind=kind)
-	testloader = torch.utils.data.DataLoader(test_data, batch_size=BATCH_SIZE, shuffle=False)
+	testloader = torch.utils.data.DataLoader(test_data, batch_size=BATCH_SIZE, shuffle=True)
 
 	MAE_a, MSE_a, MinfE_a, MAE_u, MSE_u, MinfE_u, pwe_a, pwe_u = [], [], [], [], [], [], [], []
 	for batch_idx, sample_batch in enumerate(testloader):
@@ -173,7 +173,8 @@ def model_stats(path, kind='train'):
 		df2.to_csv('losses.csv')
 	except:
 		pass
-
+	import matplotlib
+	matplotlib.rcParams['savefig.dpi'] = 300
 	import seaborn as sns
 	sns.pairplot(df, corner=True, diag_kind="kde", kind="reg")
 	plt.savefig('confusion_matrix.png', bbox_inches='tight')
@@ -230,6 +231,10 @@ def model_stats(path, kind='train'):
 	plt.savefig('histogram_solutions.png', bbox_inches='tight')
 	# plt.show()
 	plt.close(3)
-	out_of_sample(EQUATION, SHAPE, a_pred, u_pred, f_pred, sample_batch, '.', gparams['model'])
+	if gparams['model'] == 'ResNet' and gparams['blocks'] == 0:
+		title = 'Linear'
+	else:
+		title = gparams['model']
+	out_of_sample(EQUATION, SHAPE, a_pred, u_pred, f_pred, sample_batch, '.', title)
 	os.chdir(cwd)
 	return values

@@ -34,59 +34,24 @@ def log_loss(losses, loss_a, loss_u, loss_f, loss_wf, loss_train, loss_validate,
 	losses['loss_validate'].append(loss_validate.item()/1000)
 	return losses
 
-def log_data(gparams, model):
-	equation, kernel_size, path, file = gparams['equation'], gparams['ks'], gparams['path'], gparams['file']
-	epsilon, filters, blocks, sd = gparams['epsilon'], gparams['filters'], gparams['blocks'], gparams['sd']
-	epochs, npfuncs, nparams = gparams['epochs'], gparams['nbfuncs'], gparams['nparams']
-	batch_size, loss, avgIter = gparams['batch_size'], gparams['loss'], gparams['avgIter']
-	losses, loss_type = gparams['losses'], gparams['loss_type']
-	data = model_metrics(gparams, model)
-	data['AVG IT/S'] = np.round(avgIter, 1)
-	data['LOSS'] = np.round(loss, 6)
-	data['LOSS_TYPE'] = loss_type
-	data['EPOCHS'] = epochs
-	data['BATCH'] = batch_size
-	data['BLOCKS'] = blocks
-	data['FILTERS'] = filters
-	data['EPSILON'] = epsilon
-	data['NBFUNCS'] = nbfuncs
-	data['NPARAMS'] = nparams
-
-	return df
-
-def loss_log(params, losses, df):
-	try:
-		with open('./losses.pkl', 'rb') as f:
-			data = pickle.load(f)
-	except:
-		data = {}
-
-	entry = {'losses': losses}
-	entry['EQUATION'] = params['EQUATION']
-	if params['MODEL'] == NetA:
-		entry['MODEL'] = 'NetA'
-	elif params['MODEL'] == NetB:
-		entry['MODEL'] = 'NetB'
-	elif params['MODEL'] == NetC:
-		entry['MODEL'] = 'NetC'
-	elif params['MODEL'] == ResNet:
-		entry['MODEL'] = 'ResNet'
-		
-	entry['KERNEL_SIZE'] = params['KERNEL_SIZE']
-	entry['BLOCKS'] = params['BLOCKS']
-	entry['FILTERS'] = params['FILTERS']
-	entry['EPSILON'] = params['EPSILON']
-	entry['EPOCHS'] = params['EPOCHS']
-	entry['LOSS_TYPE'] = params['LOSS_TYPE']
-	entry['NBFUNCS'] = params['NBFUNCS']
-	entry['NPARAMS'] = params['NPARAMS']
-	for _ in ['MAEa', 'MSEa', 'MIEa', 'MAEu', 'MSEu', 'MIEu']:
-		val = df[_].tolist()
-		entry[_] = val[-1]
-	data[params['PATH']] = entry
-
-	with open(f'./losses.pkl', 'wb') as f:
-		pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
+# def log_data(gparams, model):
+# 	equation, kernel_size, path, file = gparams['equation'], gparams['ks'], gparams['path'], gparams['file']
+# 	epsilon, filters, blocks, sd = gparams['epsilon'], gparams['filters'], gparams['blocks'], gparams['sd']
+# 	epochs, npfuncs, nparams = gparams['epochs'], gparams['nbfuncs'], gparams['nparams']
+# 	batch_size, loss, avgIter = gparams['batch_size'], gparams['loss'], gparams['avgIter']
+# 	losses, loss_type = gparams['losses'], gparams['loss_type']
+# 	data = model_metrics(gparams, model)
+# 	data['AVG IT/S'] = np.round(avgIter, 1)
+# 	data['LOSS'] = np.round(loss, 6)
+# 	data['LOSS_TYPE'] = loss_type
+# 	data['EPOCHS'] = epochs
+# 	data['BATCH'] = batch_size
+# 	data['BLOCKS'] = blocks
+# 	data['FILTERS'] = filters
+# 	data['EPSILON'] = epsilon
+# 	data['NBFUNCS'] = nbfuncs
+# 	data['NPARAMS'] = nparams
+# 	return df
 
 
 def log_gparams(gparams):
