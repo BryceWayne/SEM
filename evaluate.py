@@ -25,6 +25,7 @@ def validate(gparams, model, optim, criterion, lepolys, phi, phi_x, phi_xx):
 	A, F, U, WF = gparams['A'], gparams['F'], gparams['U'], gparams['WF']
 	criterion_a, criterion_u = criterion['a'], criterion['u']
 	criterion_f, criterion_wf = criterion['f'], criterion['wf']
+	forcing = gparams['forcing']
 	test_data = get_data(gparams, kind='validate')
 	testloader = torch.utils.data.DataLoader(test_data, batch_size=BATCH_SIZE, shuffle=True)
 	loss = 0
@@ -69,11 +70,15 @@ def model_stats(path, kind='train'):
 	VAL = {'color':blue, 'marker':'o', 'linestyle':'solid', 'mfc':'none'}
 	# device = get_device()
 	cwd = os.getcwd()
+	print("CWD:", cwd)
 	os.chdir(path)
+	print("CWD:", os.getcwd())
 	with open("parameters.txt", 'r') as f:
 		text = f.readlines()
+		f.close()
 	from pprint import pprint
 	os.chdir(cwd)
+	print("CWD:", os.getcwd())
 
 	for i, _ in enumerate(text):
 		text[i] = _.rstrip('\n')
@@ -103,16 +108,43 @@ def model_stats(path, kind='train'):
 		SIZE = 1000
 	FILE = f'{SIZE}N' + INPUT.split('N')[1]
 	gparams['file'] = FILE
+	try:
+		print(gparams['sd'])
+		print(path.split('sd')[-1])
+	except:
+		print('Error')
+
+	if path != gparams['path']:
+		index = path.index("training")
+		def replace_line(file_name, text):
+			os.chdir(path)
+			lines = open(file_name, 'r').readlines()
+			for i, _ in enumerate(lines):
+				if 'path:' in _:
+					line_num = i
+					print("")
+					break
+			lines[line_num] = 'path:' + text +'\n'
+			out = open(file_name, 'w')
+			out.writelines(lines)
+			out.close()
+			os.chdir(cwd)
+		replace_line('parameters.txt', path[index:])
+
 	PATH = gparams['path']
 	KERNEL_SIZE = int(gparams['ks'])
 	PADDING = (KERNEL_SIZE - 1)//2
 	SHAPE = int(FILE.split('N')[1]) + 1
 	BATCH_SIZE, D_in, Filters, D_out = SIZE, 1, int(gparams['filters']), SHAPE
 	BLOCKS = int(gparams['blocks'])
+	forcing = gparams['forcing']
 
 	xx, lepolys, lepoly_x, lepoly_xx, phi, phi_x, phi_xx = basis_vectors(D_out, equation=EQUATION)
 	# LOAD MODEL
-	device = gparams['device']
+	try:
+		device = gparams['device']
+	except:
+		device = get_device()
 	model = model(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING, blocks=BLOCKS).to(device)
 	model.load_state_dict(torch.load(PATH + '/model.pt'))
 	model.eval()
@@ -175,6 +207,7 @@ def model_stats(path, kind='train'):
 		pass
 	import matplotlib
 	matplotlib.rcParams['savefig.dpi'] = 300
+	matplotlib.rcParams['font.size'] = 14
 	import seaborn as sns
 	sns.pairplot(df, corner=True, diag_kind="kde", kind="reg")
 	plt.savefig('confusion_matrix.png', bbox_inches='tight')
@@ -183,11 +216,11 @@ def model_stats(path, kind='train'):
 
 	rosetta = {
 			   'MAE_a': 'MAE',
-			   'MSE_a': 'Rel. $L_{2}$',
-			   'MinfE_a': '$L_{\\infty}$',
+			   'MSE_a': 'Rel. $\\ell^{2}$',
+			   'MinfE_a': '$\\ell^{\\infty}$',
 			   'MAE_u': 'MAE',
-			   'MSE_u': 'Rel. $L_{2}$',
-			   'MinfE_u': '$L_{\\infty}$',
+			   'MSE_u': 'Rel. $\\ell^{2}$',
+			   'MinfE_u': '$\\ell^{\\infty}$',
 			  }
 
 	columns = df.columns

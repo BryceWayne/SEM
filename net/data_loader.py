@@ -17,29 +17,32 @@ def load_obj(name):
 def get_data(gparams, kind='train'):
     equation, file, sd = gparams['equation'], gparams['file'], gparams['sd']
     shape, epsilon = int(file.split('N')[1]) + 1, gparams['epsilon']
+    forcing = gparams['forcing']
     if kind == 'validate':
         size = 1000
         file = f'{size}N{shape-1}'
     else:
         size = int(file.split('N')[0])
     try:
-        data = LGDataset(equation=equation, pickle_file=file, shape=shape, kind=kind, sd=sd)
+        data = LGDataset(equation=equation, pickle_file=file, shape=shape, kind=kind, sd=sd, forcing=forcing)
     except:
         subprocess.call(f'python create_train_data.py --equation {equation} --size {size}'\
-                        f' --N {shape - 1} --eps {epsilon} --kind {kind} --sd {sd}', shell=True)
-        data = LGDataset(equation=equation, pickle_file=file, shape=shape, kind=kind, sd=sd)
+                        f' --N {shape - 1} --eps {epsilon} --kind {kind} --sd {sd} --forcing {forcing}', shell=True)
+        data = LGDataset(equation=equation, pickle_file=file, shape=shape, kind=kind, sd=sd, forcing=forcing)
     return data
 
 
 class LGDataset():
     """Legendre-Galerkin Dataset."""
-    def __init__(self, equation, pickle_file, shape=64, transform_f=None, transform_a=None, kind='train', sd=1):
+    def __init__(self, equation, pickle_file, shape=64, transform_f=None, transform_a=None, kind='train', sd=1, forcing='uniform'):
         """
         Args:
             pickle_file (string): Path to the pkl file with annotations.
             root_dir (string): Directory with all the images.
         """
-        if equation == 'Burgers':
+        if forcing == 'uniform':
+            pickle_file += 'uniform'
+        elif forcing == 'normal':
             pickle_file += f'sd{sd}'
         with open(f'./data/{equation}/{kind}/' + pickle_file + '.pkl', 'rb') as f:
             self.data = pickle.load(f)

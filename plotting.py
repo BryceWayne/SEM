@@ -29,6 +29,7 @@ def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=5, path
 	# http://vis.stanford.edu/papers/semantically-resonant-colors
 	# https://medialab.github.io/iwanthue/
 	matplotlib.rcParams['savefig.dpi'] = 300
+	matplotlib.rcParams['font.size'] = 14
 	red, blue, green, purple = color_scheme()
 	TEST  = {'color':red, 'marker':'o', 'linestyle':'none', 'markersize': 3}
 	VAL = {'color':blue, 'marker':'o', 'linestyle':'solid', 'mfc':'none'}
@@ -44,7 +45,7 @@ def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=5, path
 		linf_error_a = linf(ahat, aa)
 		x_ = list(range(1, len(x_) + 1))
 		plt.figure(1, figsize=(10,6))
-		plt.title(f'Model: {title},\t$\\alpha$ Example Epoch {epoch}\n'\
+		plt.title(f'Model: {title},$\\quad\\alpha$ Example Epoch {epoch}\n'\
 			      f'MAE Error: {np.round(float(mae_error_a), 9)},\t'\
 			      f'Rel. $L^2$ Error: {np.round(float(l2_error_a), 9)},\t'\
 			      f'$L^\\infty$ Error: {np.round(float(linf_error_a), 9)}')
@@ -58,8 +59,7 @@ def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=5, path
 		plt.savefig(f'{path}/pics/epoch{str(epoch).zfill(5)}_a.png', bbox_inches='tight')
 		plt.close(1)
 		plt.figure(1, figsize=(10,6))
-		plt.title(f'Example Epoch {epoch}\n'\
-			      f'$\\alpha$ Point-Wise Error: {np.round(np.sum(np.abs(aa-ahat))/len(x_), 9)}')
+		plt.title(f'Example Epoch {epoch},$\\quad\\alpha$ Point-Wise Error: {np.round(np.sum(np.abs(aa-ahat))/len(x_), 9)}')
 		plt.plot(x_, np.abs(aa-ahat), 'ro-', mfc='none', label='Error')
 		plt.xlim(x_[0], x_[-1])
 		plt.grid(alpha=0.618)
@@ -74,7 +74,7 @@ def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=5, path
 		l2_error_u = relative_l2(uhat, uu)
 		linf_error_u = linf(uhat, uu)
 		plt.figure(2, figsize=(10,6))
-		plt.title(f'Model: {title},\t$u$ Example Epoch {epoch}\n'\
+		plt.title(f'Model: {title},$\\quad u$ Example Epoch {epoch}\n'\
 			      f'MAE Error: {np.round(float(mae_error_u), 9)},\t'\
 			      f'Rel. $L^2$ Error: {np.round(float(l2_error_u), 9)},\t'\
 			      f'$L^\\infty$ Error: {np.round(float(linf_error_u), 9)}')
@@ -89,8 +89,7 @@ def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=5, path
 		# plt.show()
 		plt.close(2)
 		plt.figure(2, figsize=(10,6))
-		plt.title(f'Example Epoch {epoch}\n'\
-			      f'$u$ Point-Wise Error: {np.round(np.sum(np.abs(uu-uhat))/len(xx), 9)}')
+		plt.title(f'Example Epoch {epoch},$\\quad u$ Point-Wise Error: {np.round(np.sum(np.abs(uu-uhat))/len(xx), 9)}')
 		plt.plot(xx, np.abs(uu-uhat), 'ro-', mfc='none', label='Error')
 		plt.xlim(-1,1)
 		plt.grid(alpha=0.618)
@@ -105,10 +104,10 @@ def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=5, path
 		mae_error_de = mae(f, ff)
 		l2_error_de = relative_l2(f, ff)
 		linf_error_de = linf(f, ff)
-		plt.title(f'Model: {title},\t$f$ Example Epoch {epoch}\n'\
+		plt.title(f'Model: {title},$\\quad f$ Example Epoch {epoch}\n'\
 			      f'MAE Error: {np.round(float(mae_error_de), 9)},\t'\
-			      f'Rel. $L^2$ Error: {np.round(float(l2_error_de), 9)},\t'\
-			      f'$L^\\infty$ Error: {np.round(float(linf_error_de), 9)}')
+			      f'Rel. $\\ell^2$ Error: {np.round(float(l2_error_de), 9)},\t'\
+			      f'$\\ell^\\infty$ Error: {np.round(float(linf_error_de), 9)}')
 		plt.plot(xx[1:-1], ff[1:-1], **VAL, label='$f$')
 		plt.plot(xx[1:-1], f[1:-1], **TEST, label='$\\hat{f}$')
 		plt.xlim(xx[1], xx[-2])
@@ -120,8 +119,7 @@ def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=5, path
 		# plt.show()
 		plt.close(3)
 		plt.figure(3, figsize=(10,6))
-		plt.title(f'Example Epoch {epoch}\n'\
-			      f'$f$ Point-Wise Error: {np.round(np.sum(np.abs(ff-f))/len(xx), 9)}')
+		plt.title(f'Example Epoch {epoch},$\\quad f$ Point-Wise Error: {np.round(np.sum(np.abs(ff-f))/len(xx), 9)}')
 		plt.plot(xx, np.abs(ff-f), 'ro-', mfc='none', label='Error')
 		plt.xlim(xx[0], xx[-1])
 		plt.grid(alpha=0.618)
@@ -137,6 +135,7 @@ def loss_plot(gparams):
 	shape, ks, best_loss = SHAPE = int(file.split('N')[1]) + 1, gparams['ks'], gparams['bestLoss']
 	path, title = gparams['path'], gparams['model']
 	matplotlib.rcParams['savefig.dpi'] = 300
+	matplotlib.rcParams['font.size'] = 14
 	red, blue, green, purple = color_scheme()
 	loss_a = losses['loss_a']
 	loss_u = losses['loss_u']
@@ -144,7 +143,7 @@ def loss_plot(gparams):
 	loss_wf = losses['loss_wf']
 	loss_train = losses['loss_train']
 	loss_validate = losses['loss_validate']
-	best_loss = np.round(float(best_loss), 9)
+	best_loss = np.round(float(best_loss), 7)
 
 	N = int(file.split('N')[0])
 
@@ -157,9 +156,7 @@ def loss_plot(gparams):
 	plt.grid(alpha=0.618)
 	plt.ylabel('Log Loss')
 	plt.legend(shadow=True)
-	plt.title(f'Log Loss vs. Epoch\nModel: {title},$\\quad$'\
-		      f'Best Loss: {best_loss}\n'\
-		      f'File: {file},$\\quad$Collocation Points: {shape},$\\quad$Kernel: {ks}')
+	plt.title(f'Log Loss vs. Epoch,$\\quad$Model: {title},$\\quad$Best Loss: {best_loss}')
 	plt.savefig(f'{path}/log_loss_train.png', bbox_inches='tight')
 	# plt.show()
 	plt.close(1)
@@ -179,9 +176,7 @@ def loss_plot(gparams):
 	plt.grid(alpha=0.618)
 	plt.ylabel('Log Loss')
 	plt.legend(shadow=True)
-	plt.title(f'Log Loss vs. Epoch\n'\
-			  f'Model: {title},$\\quad$'\
-		      f'File: {file},$\\quad$Collocation Points: {shape},$\\quad$Kernel: {ks}')
+	plt.title(f'Log Loss vs. Epoch,$\\quad$Model: {title}')
 	plt.savefig(f'{path}/log_loss_individual.png', bbox_inches='tight')
 	# plt.show()
 	plt.close(2)
@@ -194,6 +189,8 @@ def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path, t
 	PATH = path
 	SHAPE = shape
 	EQUATION = equation
+	matplotlib.rcParams['savefig.dpi'] = 300
+	matplotlib.rcParams['font.size'] = 14
 	for picture in range(10):
 		xx = legslbndm(SHAPE-2)
 		ahat = a_pred[picture,0,:]
@@ -203,10 +200,10 @@ def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path, t
 		linf_error_a = linf(ahat, aa)
 		xx_ = list(range(len(xx)))
 		plt.figure(1, figsize=(10,6))
-		plt.title(f'Out of Sample, Example: {picture+1}, Model: {title}\n'\
-		      	  f'MAE Error: {np.round(float(mae_error_a), 9)},$\\quad$'\
-				  f'Rel. $L^2$ Error: {np.round(float(l2_error_a), 9)},$\\quad$'\
-				  f'$L^\\infty$ Error: {np.round(float(linf_error_a), 9)}')
+		plt.title(f'Out of Sample,$\\quad$Model: {title},$\\quad$'\
+		      	  f'MAE Error: {np.round(float(mae_error_a), 7)}\n'\
+				  f'Rel. $\\ell^2$ Error: {np.round(float(l2_error_a), 7)},$\\quad$'\
+				  f'$\\ell^\\infty$ Error: {np.round(float(linf_error_a), 7)}')
 		plt.plot(xx_, aa, **VAL, label='$\\alpha$')
 		plt.plot(xx_, ahat, **TEST, label='$\\hat{\\alpha}$')
 		plt.xlim(xx_[0],xx_[-1])
@@ -237,10 +234,10 @@ def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path, t
 		linf_error_u = linf(uhat, uu)
 		xx = legslbndm(SHAPE)
 		plt.figure(2, figsize=(10,6))
-		plt.title(f'Out of Sample, Example: {picture+1}, Model: {title}\n'\
-				  f'MAE Error: {np.round(float(mae_error_u), 9)},$\\quad$'\
-				  f'Rel. $L^2$ Error: {np.round(float(l2_error_u), 9)},$\\quad$'\
-				  f'$L^\\infty$ Error: {np.round(float(linf_error_u), 9)}')
+		plt.title(f'Out of Sample,$\\quad$Model: {title},$\\quad$'\
+				  f'MAE Error: {np.round(float(mae_error_u), 7)}\n'\
+				  f'Rel. $\\ell^2$ Error: {np.round(float(l2_error_u), 7)},$\\quad$'\
+				  f'$\\ell^\\infty$ Error: {np.round(float(linf_error_u), 7)}')
 		plt.plot(xx, uu, **VAL, label='$u$')
 		plt.plot(xx, uhat, **TEST, label='$\\hat{u}$')
 		plt.xlim(-1,1)
@@ -270,10 +267,10 @@ def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path, t
 			mae_error_f = mae(f, ff)
 			l2_error_f = relative_l2(f, ff)
 			linf_error_f = linf(f, ff)
-			plt.title(f'Out of Sample, Example: {picture+1}, Model: {title}\n'\
-					  f'MAE Error: {np.round(float(mae_error_f), 9)},$\\quad$'\
-					  f'Rel. $L^2$ Error: {np.round(float(l2_error_f), 9)},$\\quad$'\
-					  f'$L^\\infty$ Error: {np.round(float(linf_error_f), 9)}')
+			plt.title(f'Out of Sample,$\\quad$Model: {title},$\\quad$'\
+					  f'MAE Error: {np.round(float(mae_error_f), 7)}\n'\
+					  f'Rel. $\\ell^2$ Error: {np.round(float(l2_error_f), 7)},$\\quad$'\
+					  f'$\\ell^\\infty$ Error: {np.round(float(linf_error_f), 7)}')
 			plt.plot(xx[1:-1], ff[1:-1], **VAL, label='$f$')
 			plt.plot(xx[1:-1], f[1:-1], **TEST, label='$\\hat{f}$')
 			plt.xlim(-1,1)

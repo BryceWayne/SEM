@@ -13,10 +13,10 @@ def weights_init(m):
 
 def init_optim(model):
     params = {
-              'history_size': 25,
+              'history_size': 10,
               'tolerance_grad': 1E-15,
               'tolerance_change': 1E-15,
-              'max_eval': 25,
+              'max_eval': 10,
                 }
     return torch.optim.LBFGS(model.parameters(), **params)
 
@@ -145,13 +145,14 @@ class NetC(nn.Module) :
         self.blocks = blocks
         self.filters = filters
         self.d_out = d_out
+        self.swish = swish
         self.kern = kernel_size
         self.pad = padding
         self.conv1 = conv1d(d_in, filters, kernel_size=self.kern, padding=self.pad)
         self.convH = conv1d(filters, filters, kernel_size=self.kern, padding=self.pad)
         self.fcH = nn.Linear(filters*(self.d_out + 2), self.d_out, bias=True)
     def forward(self, x):
-        m = swish
+        m = self.swish
         out = m(self.conv1(x))
         if self.blocks != 0:
             for block in range(self.blocks):
