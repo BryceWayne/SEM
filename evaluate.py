@@ -15,7 +15,7 @@ import pandas as pd
 import datetime
 
 
-def validate(gparams, model, optim, criterion, lepolys, phi, phi_x, phi_xx):
+def validate(gparams, model, optim, criterion, lepolys, phi, phi_x, phi_xx, transform_f):
 	device = gparams['device']
 	VAL_SIZE = 1000
 	SHAPE, EPSILON =  int(gparams['file'].split('N')[1]) + 1, gparams['epsilon']
@@ -26,18 +26,19 @@ def validate(gparams, model, optim, criterion, lepolys, phi, phi_x, phi_xx):
 	criterion_a, criterion_u = criterion['a'], criterion['u']
 	criterion_f, criterion_wf = criterion['f'], criterion['wf']
 	forcing = gparams['forcing']
-	test_data = get_data(gparams, kind='validate')
+	test_data = get_data(gparams, kind='validate', transform_f=transform_f)
 	testloader = torch.utils.data.DataLoader(test_data, batch_size=BATCH_SIZE, shuffle=True)
 	loss = 0
 	optim.zero_grad()
 	for batch_idx, sample_batch in enumerate(testloader):
 		f = sample_batch['f'].to(device)
+		fn = sample_batch['fn'].to(device)
 		a = sample_batch['a'].to(device)
 		u = sample_batch['u'].to(device)
-		def closure(f, a, u):
+		def closure(f, a, u, fn=fn):
 			if torch.is_grad_enabled():
 				optim.zero_grad()
-			a_pred = model(f)
+			a_pred = model(fn)
 			if A != 0:
 				loss_a = A*criterion_a(a_pred, a)
 			else:
@@ -59,38 +60,41 @@ def validate(gparams, model, optim, criterion, lepolys, phi, phi_x, phi_xx):
 				loss_wf = 0
 			loss = loss_a + loss_u + loss_f + loss_wf
 			return np.round(float(loss.to('cpu').detach()), 8)
-		loss += closure(f, a, u)
+		loss += closure(f, a, u, fn)
 	optim.zero_grad()
 	return loss
 
 
-def model_stats(path, kind='train'):
+def model_stats(path, kind='train', gparams=None):
 	red, blue, green, purple = color_scheme()
 	TEST  = {'color':red, 'marker':'o', 'linestyle':'none', 'markersize': 3}
 	VAL = {'color':blue, 'marker':'o', 'linestyle':'solid', 'mfc':'none'}
-	# device = get_device()
 	cwd = os.getcwd()
-	print("CWD:", cwd)
-	os.chdir(path)
-	print("CWD:", os.getcwd())
-	with open("parameters.txt", 'r') as f:
-		text = f.readlines()
-		f.close()
-	from pprint import pprint
-	os.chdir(cwd)
-	print("CWD:", os.getcwd())
+	if gparams == None:
+		# device = get_device()
+		# print("CWD:", cwd)
+		os.chdir(path)
+		# print("CWD:", os.getcwd())
+		with open("parameters.txt", 'r') as f:
+			text = f.readlines()
+			f.close()
+		from pprint import pprint
+		os.chdir(cwd)
+		# print("CWD:", os.getcwd())
 
-	for i, _ in enumerate(text):
-		text[i] = _.rstrip('\n')
-	gparams = {}
-	for i, _ in enumerate(text):
-		_ = _.split(':')
-		k, v = _[0], _[1]
-		try:
-			gparams[k] = float(v)
-		except:
-			gparams[k] = v
+		for i, _ in enumerate(text):
+			text[i] = _.rstrip('\n')
+		gparams = {}
+		for i, _ in enumerate(text):
+			_ = _.split(':')
+			k, v = _[0], _[1]
+			try:
+				gparams[k] = float(v)
+			except:
+				gparams[k] = v
+	# from pprint import pprint
 	# pprint(gparams)	
+
 	if gparams['model'] == 'ResNet':
 		model = ResNet
 	elif gparams['model'] == 'NetA':
@@ -108,11 +112,11 @@ def model_stats(path, kind='train'):
 		SIZE = 1000
 	FILE = f'{SIZE}N' + INPUT.split('N')[1]
 	gparams['file'] = FILE
-	try:
-		print(gparams['sd'])
-		print(path.split('sd')[-1])
-	except:
-		print('Error')
+	# try:
+	# 	print(gparams['sd'])
+	# 	print(path.split('sd')[-1])
+	# except:
+	# 	print('Error')
 
 	if path != gparams['path']:
 		index = path.index("training")
@@ -138,7 +142,13 @@ def model_stats(path, kind='train'):
 	BATCH_SIZE, D_in, Filters, D_out = SIZE, 1, int(gparams['filters']), SHAPE
 	BLOCKS = int(gparams['blocks'])
 	forcing = gparams['forcing']
-
+	try:
+		mean, std = gparams['mean'], gparams['std']
+		transform_f = transforms.Normalize(mean, std)
+		norm = True
+	except:
+		transform_f = None
+		norm = False
 	xx, lepolys, lepoly_x, lepoly_xx, phi, phi_x, phi_xx = basis_vectors(D_out, equation=EQUATION)
 	# LOAD MODEL
 	try:
@@ -149,15 +159,19 @@ def model_stats(path, kind='train'):
 	model.load_state_dict(torch.load(PATH + '/model.pt'))
 	model.eval()
 
-	test_data = get_data(gparams, kind=kind)
+	test_data = get_data(gparams, kind=kind, transform_f=transform_f)
 	testloader = torch.utils.data.DataLoader(test_data, batch_size=BATCH_SIZE, shuffle=True)
 
 	MAE_a, MSE_a, MinfE_a, MAE_u, MSE_u, MinfE_u, pwe_a, pwe_u = [], [], [], [], [], [], [], []
 	for batch_idx, sample_batch in enumerate(testloader):
 		f = sample_batch['f'].to(device)
+		if norm == True:
+			fn = sample_batch['fn'].to(device)
+		else:
+			fn = sample_batch['f'].to(device)
 		u = sample_batch['u'].to(device)
 		a = sample_batch['a'].to(device)
-		a_pred = model(f)
+		a_pred = model(fn)
 		u_pred = reconstruct(a_pred, phi)
 		f_pred = ODE2(EPSILON, u_pred, a_pred, phi_x, phi_xx, equation=EQUATION)
 		a_pred = a_pred.to('cpu').detach().numpy()
@@ -207,7 +221,7 @@ def model_stats(path, kind='train'):
 		pass
 	import matplotlib
 	matplotlib.rcParams['savefig.dpi'] = 300
-	matplotlib.rcParams['font.size'] = 14
+	matplotlib.rcParams['font.size'] = 12
 	import seaborn as sns
 	sns.pairplot(df, corner=True, diag_kind="kde", kind="reg")
 	plt.savefig('confusion_matrix.png', bbox_inches='tight')

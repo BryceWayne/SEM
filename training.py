@@ -102,6 +102,14 @@ xx, lepolys, lepoly_x, lepoly_xx, phi, phi_x, phi_xx = basis_vectors(D_out, equa
 # LOAD DATASET
 lg_dataset = get_data(gparams, kind='train')
 trainloader = torch.utils.data.DataLoader(lg_dataset, batch_size=BATCH_SIZE, shuffle=True)
+
+gparams, transform_f = normalize(gparams, trainloader)
+
+# LOAD DATASET
+lg_dataset = get_data(gparams, kind='train', transform_f=transform_f)
+trainloader = torch.utils.data.DataLoader(lg_dataset, batch_size=BATCH_SIZE, shuffle=True)
+
+
 if args.model == 'FC':
 	model = MODEL(D_in, Filters, D_out - 2, layers=BLOCKS, activation='relu')
 else:
@@ -159,19 +167,14 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 	loss_a, loss_u, loss_f, loss_wf, loss_train = 0, 0, 0, 0, 0
 	for batch_idx, sample_batch in enumerate(trainloader):
 		f = sample_batch['f'].to(device)
+		fn = sample_batch['fn'].to(device)
 		a = sample_batch['a'].to(device)
 		u = sample_batch['u'].to(device)
-		def closure(a, f, u):
+		def closure(a, f, u, fn=fn):
 			if torch.is_grad_enabled():
 				optimizer.zero_grad()
-			a_pred = model(f)
-			# l2norm_loss = l2norm(a_pred)
-			# Regularization not Normalization 
-			# Can map? Reduce var of tr. data set
-			# Data aug. Incr var at test time (Better generalization power)
-			# What feature can we augment? Adding perceptually small noise to input f
+			a_pred = model(fn)
 			if A != 0:
-				#l1norm of a_pred
 				loss_a = A*criterion_a(a_pred, a)
 			else:
 				loss_a = 0
@@ -196,7 +199,7 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 				loss.backward()
 			return a_pred, u_pred, f_pred, loss_a, loss_u, loss_f, loss_wf, loss
 
-		a_pred, u_pred, f_pred, loss_a, loss_u, loss_f, loss_wf, loss = closure(a, f, u)
+		a_pred, u_pred, f_pred, loss_a, loss_u, loss_f, loss_wf, loss = closure(a, f, u, fn)
 		optimizer.step(loss.item)
 		if loss_a != 0:
 			loss_a += np.round(float(loss_a.to('cpu').detach()), 9)
@@ -222,7 +225,7 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			BEST_LOSS = loss_train/DATASET
 			gparams['best_loss'] = BEST_LOSS
 			
-		loss_validate = validate(gparams, model, optimizer, criterion, lepolys, phi, phi_x, phi_xx)	
+		loss_validate = validate(gparams, model, optimizer, criterion, lepolys, phi, phi_x, phi_xx, transform_f)
 		losses = log_loss(losses, loss_a, loss_u, loss_f, loss_wf, loss_train, loss_validate, BATCH_SIZE)
 		
 		if int(.05*EPOCHS) > 0 and EPOCHS > 10 and epoch % int(.05*EPOCHS) == 0:
@@ -245,7 +248,7 @@ with open("paths.txt", "a") as f:
 	f.write(str(PATH) + '\n')
 
 loss_plot(gparams)
-values = model_stats(PATH, kind='validate')
+values = model_stats(PATH, kind='validate', gparams=gparams)
 for k, v in values.items():
 	gparams[k] = np.mean(v)
 

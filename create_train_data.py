@@ -51,19 +51,6 @@ def create(N:int, epsilon:float):
 
 def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standard', sd=1, forcing='uniform'):
 	def func(x: np.ndarray, equation: str, sd: float, forcing: str) -> np.ndarray:
-		# Random force: mean=0, sd=1
-		# if equation == 'Burgers':
-		# 	###########################################
-		# 	m = 2 + np.random.rand(2)
-		# 	n = np.pi*(1+2*np.random.rand(2))
-		# 	f = m[0]*np.sin(n[0]*x) + m[1]*np.cos(n[1]*x)
-		# 	m = np.array([m[0], m[1], n[0], n[1]])
-		# 	###########################################
-		# 	# m = np.random.normal(0, sd, 4)
-		# 	# f = m[0]*np.sin(2*m[1]*np.pi*x) + m[2]*np.cos(2*m[3]*np.pi*x)
-		# else:
-		# 	m = np.random.randn(4)
-		# 	f = m[0]*np.sin(m[1]*np.pi*x) + m[2]*np.cos(m[3]*np.pi*x)
 		if forcing == 'uniform':
 			m = 3 + 2*np.random.rand(2)
 			n = np.pi*(1+2*np.random.rand(2))

@@ -14,7 +14,7 @@ def load_obj(name):
     return data
 
 
-def get_data(gparams, kind='train'):
+def get_data(gparams, kind='train', transform_f=None):
     equation, file, sd = gparams['equation'], gparams['file'], gparams['sd']
     shape, epsilon = int(file.split('N')[1]) + 1, gparams['epsilon']
     forcing = gparams['forcing']
@@ -24,11 +24,11 @@ def get_data(gparams, kind='train'):
     else:
         size = int(file.split('N')[0])
     try:
-        data = LGDataset(equation=equation, pickle_file=file, shape=shape, kind=kind, sd=sd, forcing=forcing)
+        data = LGDataset(equation=equation, pickle_file=file, shape=shape, kind=kind, sd=sd, forcing=forcing, transform_f=transform_f)
     except:
         subprocess.call(f'python create_train_data.py --equation {equation} --size {size}'\
                         f' --N {shape - 1} --eps {epsilon} --kind {kind} --sd {sd} --forcing {forcing}', shell=True)
-        data = LGDataset(equation=equation, pickle_file=file, shape=shape, kind=kind, sd=sd, forcing=forcing)
+        data = LGDataset(equation=equation, pickle_file=file, shape=shape, kind=kind, sd=sd, forcing=forcing, transform_f=transform_f)
     return data
 
 
@@ -61,31 +61,27 @@ class LGDataset():
         a = torch.Tensor([self.data[:,2][idx]]).reshape(1, self.shape-2)
         p = torch.Tensor([self.data[:,3][idx]]).reshape(1, L)
         if self.transform_f:
-            f = f.view(1, 1, self.shape)
-            f = self.transform_f(f).view(1, self.shape)
-        sample = {'u': u, 'f': f, 'a': a, 'p': p}
+            ff = f.view(1, 1, self.shape)
+            ff = self.transform_f(ff).view(1, self.shape)
+            sample = {'u': u, 'f': f, 'a': a, 'p': p, 'fn': ff}
+        else:
+            sample = {'u': u, 'f': f, 'a': a, 'p': p}
         return sample
 
 
-def normalize(pickle_file, dim):
-    """Compute the mean and sd in an online fashion
-        Var[x] = E[X^2] - E^2[X]
-    """
-    if dim == 'f':
-        dim = 1
-    elif dim == 'a':
-        dim = 2
-    cnt = 0
-    fst_moment = torch.empty(1)
-    snd_moment = torch.empty(1)
-    data = load_obj(pickle_file)
-    with open(f'./data/{equation}/{kind}/' + pickle_file + '.pkl', 'rb') as f:
-            self.data = pickle.load(f)
-            self.data = self.data[:,:]
-    f = torch.Tensor(data[:,dim])
-    sum_ = torch.sum(f, dim=[0])
-    sum_of_square = torch.sum(f ** 2, dim=[0])
-    fst_moment = (f.shape[0] * fst_moment + sum_) / (f.shape[0] + f.shape[1])
-    snd_moment = (f.shape[0] * snd_moment + sum_of_square) / (f.shape[0] + f.shape[1])
-    return fst_moment.mean().item(), torch.sqrt(snd_moment - fst_moment ** 2).mean().item()
+def normalize(gparams, loader):
+    from torchvision import transforms
+    channels_sum, channels_squares_sum, num_batches = 0, 0, 0
+
+    for _, data in enumerate(loader):
+        f = data['f']
+        channels_sum += torch.mean(f, dim=[0, 2])
+        channels_squares_sum += torch.mean(f**2, dim=[0,2])
+        num_batches += 1
+
+    mean = channels_sum/num_batches
+    std = (channels_squares_sum/num_batches - mean*2)**0.5
+    gparams['mean'] = float(mean[0].item())
+    gparams['std'] = float(std[0].item())
+    return gparams, transforms.Normalize(mean, std)
 
