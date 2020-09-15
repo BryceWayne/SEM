@@ -50,7 +50,7 @@ gparams = args.__dict__
 EQUATION = args.equation
 epsilons = {
 			'Standard': 1E-1,
-			'Burgers': 1,
+			'Burgers': 5E-1,
 			'BurgersT': 1,
 			'Helmholtz': 0,
 			}
@@ -99,10 +99,9 @@ elif os.path.isdir(PATH) == True:
 # CREATE BASIS VECTORS
 xx, lepolys, lepoly_x, lepoly_xx, phi, phi_x, phi_xx = basis_vectors(D_out, equation=EQUATION)
 
-# LOAD DATASET
+# NORMALIZE DATASET
 lg_dataset = get_data(gparams, kind='train')
 trainloader = torch.utils.data.DataLoader(lg_dataset, batch_size=BATCH_SIZE, shuffle=True)
-
 gparams, transform_f = normalize(gparams, trainloader)
 
 # LOAD DATASET
