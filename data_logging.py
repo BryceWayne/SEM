@@ -34,25 +34,6 @@ def log_loss(losses, loss_a, loss_u, loss_f, loss_wf, loss_train, loss_validate,
 	losses['loss_validate'].append(loss_validate.item()/1000)
 	return losses
 
-# def log_data(gparams, model):
-# 	equation, kernel_size, path, file = gparams['equation'], gparams['ks'], gparams['path'], gparams['file']
-# 	epsilon, filters, blocks, sd = gparams['epsilon'], gparams['filters'], gparams['blocks'], gparams['sd']
-# 	epochs, npfuncs, nparams = gparams['epochs'], gparams['nbfuncs'], gparams['nparams']
-# 	batch_size, loss, avgIter = gparams['batch_size'], gparams['loss'], gparams['avgIter']
-# 	losses, loss_type = gparams['losses'], gparams['loss_type']
-# 	data = model_metrics(gparams, model)
-# 	data['AVG IT/S'] = np.round(avgIter, 1)
-# 	data['LOSS'] = np.round(loss, 6)
-# 	data['LOSS_TYPE'] = loss_type
-# 	data['EPOCHS'] = epochs
-# 	data['BATCH'] = batch_size
-# 	data['BLOCKS'] = blocks
-# 	data['FILTERS'] = filters
-# 	data['EPSILON'] = epsilon
-# 	data['NBFUNCS'] = nbfuncs
-# 	data['NPARAMS'] = nparams
-# 	return df
-
 
 def log_gparams(gparams):
 	cwd = os.getcwd()

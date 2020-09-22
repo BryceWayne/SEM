@@ -14,7 +14,6 @@ def get_device():
 
 device = get_device()
 
-
 def gen_lepolys(N, x):
 	lepolys = {}
 	for i in range(N):

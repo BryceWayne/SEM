@@ -15,7 +15,7 @@ import pandas as pd
 import datetime
 
 
-def validate(gparams, model, optim, criterion, lepolys, phi, phi_x, phi_xx, transform_f):
+def validate(gparams, model, optim, criterion, lepolys, phi, phi_x, phi_xx, testloader):
 	device = gparams['device']
 	VAL_SIZE = 1000
 	SHAPE, EPSILON =  int(gparams['file'].split('N')[1]) + 1, gparams['epsilon']
@@ -26,8 +26,8 @@ def validate(gparams, model, optim, criterion, lepolys, phi, phi_x, phi_xx, tran
 	criterion_a, criterion_u = criterion['a'], criterion['u']
 	criterion_f, criterion_wf = criterion['f'], criterion['wf']
 	forcing = gparams['forcing']
-	test_data = get_data(gparams, kind='validate', transform_f=transform_f)
-	testloader = torch.utils.data.DataLoader(test_data, batch_size=BATCH_SIZE, shuffle=True)
+	# test_data = get_data(gparams, kind='validate', transform_f=transform_f)
+	# testloader = torch.utils.data.DataLoader(test_data, batch_size=BATCH_SIZE, shuffle=True)
 	loss = 0
 	optim.zero_grad()
 	for batch_idx, sample_batch in enumerate(testloader):
@@ -39,9 +39,11 @@ def validate(gparams, model, optim, criterion, lepolys, phi, phi_x, phi_xx, tran
 			if torch.is_grad_enabled():
 				optim.zero_grad()
 			a_pred = model(fn)
+			# u_pred = model(fn)
 			if A != 0:
 				loss_a = A*criterion_a(a_pred, a)
 			else:
+				# a_pred = torch.zeros(BATCH_SIZE, D_in, D_out - 2).to(device)
 				loss_a = 0
 			if U != 0:
 				u_pred = reconstruct(a_pred, phi)
@@ -62,6 +64,8 @@ def validate(gparams, model, optim, criterion, lepolys, phi, phi_x, phi_xx, tran
 			return np.round(float(loss.to('cpu').detach()), 8)
 		loss += closure(f, a, u, fn)
 	optim.zero_grad()
+	# for i in range(BATCH_SIZE):
+	# 	pass
 	return loss
 
 
@@ -71,16 +75,12 @@ def model_stats(path, kind='train', gparams=None):
 	VAL = {'color':blue, 'marker':'o', 'linestyle':'solid', 'mfc':'none'}
 	cwd = os.getcwd()
 	if gparams == None:
-		# device = get_device()
-		# print("CWD:", cwd)
 		os.chdir(path)
-		# print("CWD:", os.getcwd())
 		with open("parameters.txt", 'r') as f:
 			text = f.readlines()
 			f.close()
 		from pprint import pprint
 		os.chdir(cwd)
-		# print("CWD:", os.getcwd())
 
 		for i, _ in enumerate(text):
 			text[i] = _.rstrip('\n')
@@ -92,8 +92,6 @@ def model_stats(path, kind='train', gparams=None):
 				gparams[k] = float(v)
 			except:
 				gparams[k] = v
-	# from pprint import pprint
-	# pprint(gparams)	
 
 	if gparams['model'] == 'ResNet':
 		model = ResNet
@@ -112,11 +110,6 @@ def model_stats(path, kind='train', gparams=None):
 		SIZE = 1000
 	FILE = f'{SIZE}N' + INPUT.split('N')[1]
 	gparams['file'] = FILE
-	# try:
-	# 	print(gparams['sd'])
-	# 	print(path.split('sd')[-1])
-	# except:
-	# 	print('Error')
 
 	if path != gparams['path']:
 		index = path.index("training")
@@ -155,15 +148,18 @@ def model_stats(path, kind='train', gparams=None):
 		device = gparams['device']
 	except:
 		device = get_device()
+	# model = model(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING, blocks=BLOCKS).to(device)
 	model = model(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING, blocks=BLOCKS).to(device)
 	model.load_state_dict(torch.load(PATH + '/model.pt'))
 	model.eval()
 
-	test_data = get_data(gparams, kind=kind, transform_f=transform_f)
-	testloader = torch.utils.data.DataLoader(test_data, batch_size=BATCH_SIZE, shuffle=True)
+	# test_data = get_data(gparams, kind=kind, transform_f=transform_f)
+	# testloader = torch.utils.data.DataLoader(test_data, batch_size=BATCH_SIZE, shuffle=True)
+	lg_dataset = get_data(gparams, kind=kind, transform_f=transform_f)
+	validateloader = torch.utils.data.DataLoader(lg_dataset, batch_size=BATCH_SIZE, shuffle=True)
 
 	MAE_a, MSE_a, MinfE_a, MAE_u, MSE_u, MinfE_u, pwe_a, pwe_u = [], [], [], [], [], [], [], []
-	for batch_idx, sample_batch in enumerate(testloader):
+	for batch_idx, sample_batch in enumerate(validateloader):
 		f = sample_batch['f'].to(device)
 		if norm == True:
 			fn = sample_batch['fn'].to(device)
@@ -173,7 +169,10 @@ def model_stats(path, kind='train', gparams=None):
 		a = sample_batch['a'].to(device)
 		a_pred = model(fn)
 		u_pred = reconstruct(a_pred, phi)
-		f_pred = ODE2(EPSILON, u_pred, a_pred, phi_x, phi_xx, equation=EQUATION)
+		# a_pred = torch.zeros(BATCH_SIZE, D_in, D_out - 2).to(device)
+		# u_pred = model(fn)
+		# f_pred = ODE2(EPSILON, u_pred, a_pred, phi_x, phi_xx, equation=EQUATION)
+		f_pred = torch.zeros(BATCH_SIZE, D_in, D_out).to(device)
 		a_pred = a_pred.to('cpu').detach().numpy()
 		u_pred = u_pred.to('cpu').detach().numpy()
 		f_pred = f_pred.to('cpu').detach().numpy()
@@ -183,21 +182,15 @@ def model_stats(path, kind='train', gparams=None):
 			MAE_a.append(mae(a_pred[i,0,:], a[i,0,:]))
 			MSE_a.append(relative_l2(a_pred[i,0,:], a[i,0,:]))
 			MinfE_a.append(linf(a_pred[i,0,:], a[i,0,:]))
+			pwe_a.append(np.round(a_pred[i,0,:] - a[i,0,:], 9))
+			# MAE_a.append(0)
+			# MSE_a.append(0)
+			# MinfE_a.append(0)
+			# pwe_a.append(0)
 			MAE_u.append(mae(u_pred[i,0,:], u[i,0,:]))
 			MSE_u.append(relative_l2(u_pred[i,0,:], u[i,0,:]))
 			MinfE_u.append(linf(u_pred[i,0,:], u[i,0,:]))
-			pwe_a.append(np.round(a_pred[i,0,:] - a[i,0,:], 9))
 			pwe_u.append(np.round(u_pred[i,0,:] - u[i,0,:], 9))
-			# if relative_l2(u_pred[i,0,:], u[i,0,:]) > 0.135:
-			# 	plt.figure(figsize=(10,6))
-			# 	plt.title(f'MAE: {np.round(MAE_u[-1], 6)}, '\
-			# 			  f'Rel. MSE: {np.round(float(MSE_u[-1]), 6)}, '\
-			# 			  f'L$_\\infty$E: {np.round(float(MinfE_u[-1]), 6)}')
-			# 	plt.plot(xx, u[i,0,:], **VAL, label='True')
-			# 	plt.plot(xx, u_pred[i,0,:], **TEST, label='Pred')
-			# 	plt.legend()
-			# 	plt.xlim(-1, 1)
-			# 	plt.show()
 	
 	values = {
 		'MAE_a': MAE_a,

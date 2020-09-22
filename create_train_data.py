@@ -40,15 +40,6 @@ def save_obj(data, name, equation, kind):
 		pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
 
 
-def create(N:int, epsilon:float):
-	x, u, f, a = lg.lg_1d_standard(N, epsilon)
-	x = x.reshape(1,x.shape[0])
-	u = u.reshape(1,u.shape[0])
-	f = f.reshape(1,f.shape[0])
-	a = a.reshape(1,a.shape[0])
-	return x, u, f, a
-
-
 def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standard', sd=1, forcing='uniform'):
 	def func(x: np.ndarray, equation: str, sd: float, forcing: str) -> np.ndarray:
 		if forcing == 'uniform':
@@ -231,7 +222,6 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 			for ij in range(1,N):
 				i_ind = ij-1
 				u += alphas[i_ind]*(lepolys[i_ind] + a[i_ind]*lepolys[i_ind+1] + b[i_ind]*lepolys[i_ind+2])
-
 		return u, f, alphas, params
 
 	def loop(N, epsilon, size, lepolys, eps_flag, equation, a, b, forcing):

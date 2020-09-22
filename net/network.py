@@ -75,6 +75,7 @@ class ResNet(nn.Module):
             self.n2,
             self.relu,
             self.conv2)
+        # self.fc1 = nn.Linear(self.filters*(self.d_out + 2), self.d_out, bias=True)
         self.fc1 = nn.Linear(self.filters*(self.d_out + 2), self.d_out, bias=True)
     def forward(self, x):
         out = self.conv(x) #1
