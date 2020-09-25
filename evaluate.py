@@ -119,7 +119,6 @@ def model_stats(path, kind='train', gparams=None):
 			for i, _ in enumerate(lines):
 				if 'path:' in _:
 					line_num = i
-					print("")
 					break
 			lines[line_num] = 'path:' + text +'\n'
 			out = open(file_name, 'w')
@@ -183,10 +182,6 @@ def model_stats(path, kind='train', gparams=None):
 			MSE_a.append(relative_l2(a_pred[i,0,:], a[i,0,:]))
 			MinfE_a.append(linf(a_pred[i,0,:], a[i,0,:]))
 			pwe_a.append(np.round(a_pred[i,0,:] - a[i,0,:], 9))
-			# MAE_a.append(0)
-			# MSE_a.append(0)
-			# MinfE_a.append(0)
-			# pwe_a.append(0)
 			MAE_u.append(mae(u_pred[i,0,:], u[i,0,:]))
 			MSE_u.append(relative_l2(u_pred[i,0,:], u[i,0,:]))
 			MinfE_u.append(linf(u_pred[i,0,:], u[i,0,:]))
