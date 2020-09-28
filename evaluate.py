@@ -13,6 +13,8 @@ from data_logging import *
 import subprocess
 import pandas as pd
 import datetime
+import numpy as np
+
 
 
 def validate(gparams, model, optim, criterion, lepolys, phi, phi_x, phi_xx, testloader):
@@ -61,12 +63,21 @@ def validate(gparams, model, optim, criterion, lepolys, phi, phi_x, phi_xx, test
 			else:
 				loss_wf = 0
 			loss = loss_a + loss_u + loss_f + loss_wf
-			return np.round(float(loss.to('cpu').detach()), 8)
-		loss += closure(f, a, u, fn)
+
+			a_pred = a_pred.to('cpu').detach().numpy()
+			# f_pred = f_pred.to('cpu').detach().numpy()
+			u_pred = u_pred.to('cpu').detach().numpy()
+			a = a.to('cpu').detach().numpy()
+			u = u.to('cpu').detach().numpy()
+			avg_l2_u = 0
+			for i in range(BATCH_SIZE):
+				avg_l2_u += relative_l2(u_pred[i,0,:], u[i,0,:])
+			avg_l2_u /= BATCH_SIZE
+			# print(avg_l2_u)
+			return avg_l2_u, np.round(float(loss.to('cpu').detach()), 12)
+		avg_l2_u, loss = closure(f, a, u, fn)
 	optim.zero_grad()
-	# for i in range(BATCH_SIZE):
-	# 	pass
-	return loss
+	return avg_l2_u, loss
 
 
 def model_stats(path, kind='train', gparams=None):
@@ -181,10 +192,10 @@ def model_stats(path, kind='train', gparams=None):
 			MAE_a.append(mae(a_pred[i,0,:], a[i,0,:]))
 			MSE_a.append(relative_l2(a_pred[i,0,:], a[i,0,:]))
 			MinfE_a.append(linf(a_pred[i,0,:], a[i,0,:]))
-			pwe_a.append(np.round(a_pred[i,0,:] - a[i,0,:], 9))
 			MAE_u.append(mae(u_pred[i,0,:], u[i,0,:]))
 			MSE_u.append(relative_l2(u_pred[i,0,:], u[i,0,:]))
 			MinfE_u.append(linf(u_pred[i,0,:], u[i,0,:]))
+			pwe_a.append(np.round(a_pred[i,0,:] - a[i,0,:], 9))
 			pwe_u.append(np.round(u_pred[i,0,:] - u[i,0,:], 9))
 	
 	values = {

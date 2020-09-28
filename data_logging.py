@@ -13,7 +13,7 @@ def record_path(path):
 		f.write(entry)
 
 
-def log_loss(losses, loss_a, loss_u, loss_f, loss_wf, loss_train, loss_validate, dataset):
+def log_loss(losses, loss_a, loss_u, loss_f, loss_wf, loss_train, loss_validate, dataset, avg_l2_u):
 	if type(loss_a) == int:
 		losses['loss_a'].append(loss_a/dataset)
 	else:
@@ -32,6 +32,7 @@ def log_loss(losses, loss_a, loss_u, loss_f, loss_wf, loss_train, loss_validate,
 		losses['loss_wf'].append(loss_wf.item()/dataset)
 	losses['loss_train'].append(loss_train.item()/dataset)
 	losses['loss_validate'].append(loss_validate.item()/1000)
+	losses['avg_l2_u'].append(np.mean(avg_l2_u))
 	return losses
 
 
@@ -47,3 +48,9 @@ def log_gparams(gparams):
 				entry = f"{k}:{v}\n"
 				f.write(entry)
 	os.chdir(cwd)
+
+
+def log_path(path):
+	with open("paths.txt", "a") as f:
+		f.write(str(path) + '\n')
+		f.close()

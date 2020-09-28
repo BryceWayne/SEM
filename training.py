@@ -33,14 +33,16 @@ parser.add_argument("--equation", type=str, default='Burgers', choices=['Standar
 parser.add_argument("--model", type=str, default='NetC', choices=['ResNet', 'NetA', 'NetB', 'NetC']) # , 'Net2D' 
 parser.add_argument("--blocks", type=int, default=5)
 parser.add_argument("--loss", type=str, default='MSE', choices=['MAE', 'MSE', 'RMSE', 'RelMSE'])
-parser.add_argument("--file", type=str, default='10000N63', help='Example: --file 2000N31')
+parser.add_argument("--file", type=str, default='15000N63', help='Example: --file 2000N31')
 parser.add_argument("--forcing", type=str, default='uniform', choices=['normal', 'uniform'])
-parser.add_argument("--epochs", type=int, default=25000)
+parser.add_argument("--epochs", type=int, default=50000)
 parser.add_argument("--ks", type=int, default=5, choices=[3, 5, 7, 9, 11, 13, 15, 17])
 parser.add_argument("--filters", type=int, default=32, choices=[8, 16, 32, 64])
-parser.add_argument("--nbfuncs", type=int, default=1)
+parser.add_argument("--nbfuncs", type=int, default=3)
 parser.add_argument("--A", type=float, default=0)
 parser.add_argument("--F", type=float, default=0)
+parser.add_argument("--U", type=float, default=1)
+parser.add_argument("--WF", type=float, default=1)
 parser.add_argument("--sd", type=float, default=0.1)
 parser.add_argument("--transfer", type=str, default=None)
 
@@ -82,10 +84,8 @@ PATH = os.path.join('training', f"{EQUATION}", FILE, FOLDER)
 gparams['path'] = PATH
 BATCH_SIZE, D_in, Filters, D_out = DATASET, 1, FILTERS, SHAPE
 # LOSS SCALE FACTORS
-A, U, F, WF = int(gparams['A']), 1E0, int(gparams['F']), 1E0
+A, U, F, WF = int(gparams['A']), int(gparams['U']), int(gparams['F']), int(gparams['WF'])
 
-gparams['U'] = U
-gparams['WF'] = WF
 gparams['epsilon'] = EPSILON
 
 # CREATE PATHING
@@ -158,7 +158,8 @@ losses = {
 		  'loss_f': [], 
 		  'loss_wf':[], 
 		  'loss_train':[], 
-		  'loss_validate':[]
+		  'loss_validate':[],
+		  'avg_l2_u': []
 		  }
 
 log_gparams(gparams)
@@ -219,16 +220,26 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			optimizer = init_optim(model)
 			print('Model diverged! Optimizer reinitialized')
 		except:
+			model = MODEL(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING, blocks=BLOCKS)
+			model.to(device)
+			optimizer = init_optim(model)
+			print('Model diverged! Model & Optimizer reinitialized')
+		finally:
 			raise Exception("Model diverged! Unable to load a previous state.")
 	else:
 		if loss_train/DATASET < BEST_LOSS:
 			torch.save(model.state_dict(), PATH + '/model.pt')
 			BEST_LOSS = loss_train/DATASET
 			gparams['best_loss'] = BEST_LOSS
+		# elif loss_train/DATASET == BEST_LOSS:
+		# 	print(f'\n\nModel converged at epoch {epoch}.\n\n')
+		# 	break
 			
-		loss_validate = validate(gparams, model, optimizer, criterion, lepolys, phi, phi_x, phi_xx, validateloader)
-		losses = log_loss(losses, loss_a, loss_u, loss_f, loss_wf, loss_train, loss_validate, BATCH_SIZE)
-		
+		avg_l2_u, loss_validate = validate(gparams, model, optimizer, criterion, lepolys, phi, phi_x, phi_xx, validateloader)
+		losses = log_loss(losses, loss_a, loss_u, loss_f, loss_wf, loss_train, loss_validate, BATCH_SIZE, avg_l2_u)
+		df = pd.DataFrame(losses)
+		df.to_csv(PATH + '/losses.csv')
+		del df
 		if int(.05*EPOCHS) > 0 and EPOCHS > 10 and epoch % int(.05*EPOCHS) == 0:
 			periodic_report(args.model, sample_batch, EQUATION, EPSILON, SHAPE, epoch, xx, phi_x, phi_xx, losses, a_pred, u_pred, f_pred, KERNEL_SIZE, PATH)
 
@@ -245,8 +256,11 @@ gparams['bestLoss'] = BEST_LOSS
 gparams['losses'] = losses
 gparams['lossType'] = LOSS_TYPE
 
-with open("paths.txt", "a") as f:
-	f.write(str(PATH) + '\n')
+# with open("paths.txt", "a") as f:
+# 	f.write(str(PATH) + '\n')
+# 	f.close()
+log_path(PATH)
+
 
 loss_plot(gparams)
 values = model_stats(PATH, kind='validate', gparams=gparams)
