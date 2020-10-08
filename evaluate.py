@@ -28,8 +28,6 @@ def validate(gparams, model, optim, criterion, lepolys, phi, phi_x, phi_xx, test
 	criterion_a, criterion_u = criterion['a'], criterion['u']
 	criterion_f, criterion_wf = criterion['f'], criterion['wf']
 	forcing = gparams['forcing']
-	# test_data = get_data(gparams, kind='validate', transform_f=transform_f)
-	# testloader = torch.utils.data.DataLoader(test_data, batch_size=BATCH_SIZE, shuffle=True)
 	loss = 0
 	optim.zero_grad()
 	for batch_idx, sample_batch in enumerate(testloader):
@@ -112,7 +110,10 @@ def model_stats(path, kind='train', gparams=None):
 		model = NetB
 	elif gparams['model'] == 'NetC':
 		model = NetC
-	
+	elif gparams['model'] == 'NetD':
+		model = NetD
+
+
 	EQUATION, EPSILON, INPUT = gparams['equation'], gparams['epsilon'], gparams['file']
 	
 	if kind == 'train':
@@ -147,26 +148,26 @@ def model_stats(path, kind='train', gparams=None):
 	forcing = gparams['forcing']
 	try:
 		mean, std = gparams['mean'], gparams['std']
-		transform_f = transforms.Normalize(mean, std)
 		norm = True
+		transform_f = transforms.Normalize(mean, std)
+		lg_dataset = get_data(gparams, kind=kind, transform_f=transform_f)
 	except:
-		transform_f = None
 		norm = False
+		lg_dataset = get_data(gparams, kind=kind)
+
+	validateloader = torch.utils.data.DataLoader(lg_dataset, batch_size=BATCH_SIZE, shuffle=True)
+
 	xx, lepolys, lepoly_x, lepoly_xx, phi, phi_x, phi_xx = basis_vectors(D_out, equation=EQUATION)
+
 	# LOAD MODEL
 	try:
 		device = gparams['device']
 	except:
 		device = get_device()
-	# model = model(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING, blocks=BLOCKS).to(device)
 	model = model(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING, blocks=BLOCKS).to(device)
 	model.load_state_dict(torch.load(PATH + '/model.pt'))
 	model.eval()
 
-	# test_data = get_data(gparams, kind=kind, transform_f=transform_f)
-	# testloader = torch.utils.data.DataLoader(test_data, batch_size=BATCH_SIZE, shuffle=True)
-	lg_dataset = get_data(gparams, kind=kind, transform_f=transform_f)
-	validateloader = torch.utils.data.DataLoader(lg_dataset, batch_size=BATCH_SIZE, shuffle=True)
 
 	MAE_a, MSE_a, MinfE_a, MAE_u, MSE_u, MinfE_u, pwe_a, pwe_u = [], [], [], [], [], [], [], []
 	for batch_idx, sample_batch in enumerate(validateloader):
@@ -223,7 +224,7 @@ def model_stats(path, kind='train', gparams=None):
 	matplotlib.rcParams['font.size'] = 12
 	import seaborn as sns
 	sns.pairplot(df, corner=True, diag_kind="kde", kind="reg")
-	plt.savefig('confusion_matrix.png', bbox_inches='tight')
+	plt.savefig('confusion_matrix.pdf', bbox_inches='tight', dpi=300)
 	# plt.show()
 	plt.close()
 
@@ -254,7 +255,7 @@ def model_stats(path, kind='train', gparams=None):
 			plt.ylabel('')
 		plt.xlim(0, df[f'{col}'].max())
 		plt.xticks(rotation=90)
-	plt.savefig('histogram_alphas.png', bbox_inches='tight')
+	plt.savefig('histogram_alphas.pdf', bbox_inches='tight', dpi=300)
 	# plt.show()
 	plt.close(2)
 
@@ -274,7 +275,7 @@ def model_stats(path, kind='train', gparams=None):
 			plt.ylabel('')
 		plt.xlim(0, df[f'{col}'].max())
 		plt.xticks(rotation=90)
-	plt.savefig('histogram_solutions.png', bbox_inches='tight')
+	plt.savefig('histogram_solutions.pdf', bbox_inches='tight', dpi=300)
 	# plt.show()
 	plt.close(3)
 	if gparams['model'] == 'ResNet' and gparams['blocks'] == 0:

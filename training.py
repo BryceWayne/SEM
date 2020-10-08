@@ -30,15 +30,15 @@ torch.cuda.empty_cache()
 # ARGS
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--equation", type=str, default='Burgers', choices=['Standard', 'Burgers', 'Helmholtz']) #, 'BurgersT' 
-parser.add_argument("--model", type=str, default='NetC', choices=['ResNet', 'NetA', 'NetB', 'NetC']) # , 'Net2D' 
-parser.add_argument("--blocks", type=int, default=5)
+parser.add_argument("--model", type=str, default='NetD', choices=['ResNet', 'NetA', 'NetB', 'NetC', 'NetD']) # , 'Net2D' 
+parser.add_argument("--blocks", type=int, default=10)
 parser.add_argument("--loss", type=str, default='MSE', choices=['MAE', 'MSE', 'RMSE', 'RelMSE'])
-parser.add_argument("--file", type=str, default='15000N63', help='Example: --file 2000N31')
+parser.add_argument("--file", type=str, default='5000N63', help='Example: --file 2000N31')
 parser.add_argument("--forcing", type=str, default='uniform', choices=['normal', 'uniform'])
-parser.add_argument("--epochs", type=int, default=50000)
+parser.add_argument("--epochs", type=int, default=5000)
 parser.add_argument("--ks", type=int, default=5, choices=[3, 5, 7, 9, 11, 13, 15, 17])
 parser.add_argument("--filters", type=int, default=32, choices=[8, 16, 32, 64])
-parser.add_argument("--nbfuncs", type=int, default=3)
+parser.add_argument("--nbfuncs", type=int, default=1)
 parser.add_argument("--A", type=float, default=0)
 parser.add_argument("--F", type=float, default=0)
 parser.add_argument("--U", type=float, default=1)
@@ -63,6 +63,7 @@ models = {
 		  'NetA': NetA,
 		  'NetB': NetB,
 		  'NetC': NetC,
+		  'NetD': NetD,
 		  'Net2D': Net2D,
 		  }
 MODEL = models[args.model]
@@ -141,8 +142,8 @@ elif args.loss == 'RMSE':
 	criterion_a, criterion_u = RMSELoss(), RMSELoss()
 elif args.loss == 'RelMSE':
 	criterion_a, criterion_u = RelMSELoss(batch=BATCH_SIZE), RelMSELoss(batch=BATCH_SIZE)
-criterion_wf = torch.nn.MSELoss(reduction="sum")
-# criterion_wf = torch.nn.L1Loss()
+# criterion_wf = torch.nn.MSELoss(reduction="sum")
+criterion_wf = torch.nn.L1Loss()
 criterion_f = torch.nn.L1Loss()
 
 criterion = {
@@ -231,16 +232,17 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			torch.save(model.state_dict(), PATH + '/model.pt')
 			BEST_LOSS = loss_train/DATASET
 			gparams['best_loss'] = BEST_LOSS
-		# elif loss_train/DATASET == BEST_LOSS:
-		# 	print(f'\n\nModel converged at epoch {epoch}.\n\n')
-		# 	break
-			
+
 		avg_l2_u, loss_validate = validate(gparams, model, optimizer, criterion, lepolys, phi, phi_x, phi_xx, validateloader)
 		losses = log_loss(losses, loss_a, loss_u, loss_f, loss_wf, loss_train, loss_validate, BATCH_SIZE, avg_l2_u)
-		df = pd.DataFrame(losses)
-		df.to_csv(PATH + '/losses.csv')
-		del df
+
 		if int(.05*EPOCHS) > 0 and EPOCHS > 10 and epoch % int(.05*EPOCHS) == 0:
+			try:
+				df = pd.DataFrame(losses)
+				df.to_csv(PATH + '/losses.csv')
+				del df
+			except:
+				print('Unable to save losses.')
 			periodic_report(args.model, sample_batch, EQUATION, EPSILON, SHAPE, epoch, xx, phi_x, phi_xx, losses, a_pred, u_pred, f_pred, KERNEL_SIZE, PATH)
 
 time1 = time.time()
@@ -256,11 +258,7 @@ gparams['bestLoss'] = BEST_LOSS
 gparams['losses'] = losses
 gparams['lossType'] = LOSS_TYPE
 
-# with open("paths.txt", "a") as f:
-# 	f.write(str(PATH) + '\n')
-# 	f.close()
 log_path(PATH)
-
 
 loss_plot(gparams)
 values = model_stats(PATH, kind='validate', gparams=gparams)

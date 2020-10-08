@@ -73,7 +73,7 @@ def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=5, path
 		mae_error_u = mae(uhat, uu)
 		l2_error_u = relative_l2(uhat, uu)
 		linf_error_u = linf(uhat, uu)
-		plt.figure(2, figsize=(10,6))
+		plt.figure(2, figsize=(10, 6))
 		plt.title(f'Model: {title},$\\quad u$ Example Epoch {epoch}\n'\
 			      f'MAE Error: {np.round(float(mae_error_u), 7)},\t'\
 			      f'Rel. $L^2$ Error: {np.round(float(l2_error_u), 7)},\t'\

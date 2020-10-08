@@ -165,6 +165,33 @@ class NetC(nn.Module) :
         return out
 
 
+class NetD(nn.Module) :
+    def __init__(self, d_in, filters, d_out, kernel_size=5, padding=2, blocks=0) :
+        super(NetD, self).__init__()
+        self.d_in = d_in
+        self.blocks = blocks
+        self.filters = filters
+        self.d_out = d_out
+        self.swish = swish
+        self.kern = kernel_size
+        self.pad = padding
+        self.conv1 = conv1d(d_in, filters, kernel_size=self.kern, padding=1)
+        self.convH = conv1d(filters, filters, kernel_size=self.kern, padding=0)
+        self.dim = d_in*(d_out - 4*(self.blocks+1))*filters
+        self.fcH = nn.Linear(self.dim, self.d_out, bias=True)
+    def forward(self, x):
+        m = self.swish
+        out = m(self.conv1(x))
+        if self.blocks != 0:
+            for block in range(self.blocks):
+                out = m(self.convH(out))
+        out = self.convH(out)
+        out = out.flatten(start_dim=1)
+        out = self.fcH(out)
+        out = out.view(out.shape[0], 1, self.d_out)
+        return out
+
+
 class FC(nn.Module):
     def __init__(self, d_in, hidden, d_out, layers=1, activation='relu') :
         super(FC, self).__init__()
