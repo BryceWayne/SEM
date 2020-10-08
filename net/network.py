@@ -166,11 +166,18 @@ class NetC(nn.Module) :
 
 
 class NetD(nn.Module) :
-    def __init__(self, d_in, filters, d_out, kernel_size=5, padding=2, blocks=0) :
+    def __init__(self, d_in, filters, d_out, kernel_size=5, padding=2, blocks=0): #, activation='relu'
         super(NetD, self).__init__()
         self.d_in = d_in
         self.blocks = blocks
         self.filters = filters
+        # if activation == 'relu':
+        #     self.m = F.relu()
+        # elif activation == 'sigmoid':
+        #     self.m = nn.Sigmoid()
+        # elif activation == 'swish':
+        #     self.m = self.swish
+        self.m = swish
         self.d_out = d_out
         self.swish = swish
         self.kern = kernel_size
@@ -180,7 +187,7 @@ class NetD(nn.Module) :
         self.dim = d_in*(d_out - 4*(self.blocks+1))*filters
         self.fcH = nn.Linear(self.dim, self.d_out, bias=True)
     def forward(self, x):
-        m = self.swish
+        m = self.m
         out = m(self.conv1(x))
         if self.blocks != 0:
             for block in range(self.blocks):

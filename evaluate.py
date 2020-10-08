@@ -17,7 +17,7 @@ import numpy as np
 
 
 
-def validate(gparams, model, optim, criterion, lepolys, phi, phi_x, phi_xx, testloader):
+def validate(gparams, model, optim, criterion, lepolys, phi, phi_x, phi_xx, validateloader):
 	device = gparams['device']
 	VAL_SIZE = 1000
 	SHAPE, EPSILON =  int(gparams['file'].split('N')[1]) + 1, gparams['epsilon']
@@ -30,7 +30,7 @@ def validate(gparams, model, optim, criterion, lepolys, phi, phi_x, phi_xx, test
 	forcing = gparams['forcing']
 	loss = 0
 	optim.zero_grad()
-	for batch_idx, sample_batch in enumerate(testloader):
+	for batch_idx, sample_batch in enumerate(validateloader):
 		f = sample_batch['f'].to(device)
 		fn = sample_batch['fn'].to(device)
 		a = sample_batch['a'].to(device)
