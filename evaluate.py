@@ -167,7 +167,8 @@ def model_stats(path, kind='train', gparams=None):
 	model = model(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING, blocks=BLOCKS).to(device)
 	model.load_state_dict(torch.load(PATH + '/model.pt'))
 	model.eval()
-
+	for k, v in model.state_dict().items():
+		print(k)
 
 	MAE_a, MSE_a, MinfE_a, MAE_u, MSE_u, MinfE_u, pwe_a, pwe_u = [], [], [], [], [], [], [], []
 	for batch_idx, sample_batch in enumerate(validateloader):

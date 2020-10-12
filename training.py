@@ -29,21 +29,22 @@ torch.cuda.empty_cache()
 
 # ARGS
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--equation", type=str, default='Burgers', choices=['Standard', 'Burgers', 'Helmholtz']) #, 'BurgersT' 
-parser.add_argument("--model", type=str, default='NetD', choices=['ResNet', 'NetA', 'NetB', 'NetC', 'NetD']) # , 'Net2D' 
-parser.add_argument("--blocks", type=int, default=10)
+parser.add_argument("--equation", type=str, default='Helmholtz', choices=['Standard', 'Burgers', 'Helmholtz']) #, 'BurgersT' 
+parser.add_argument("--model", type=str, default='ResNet', choices=['ResNet', 'NetA', 'NetB', 'NetC', 'NetD']) # , 'Net2D' 
+parser.add_argument("--blocks", type=int, default=0)
 parser.add_argument("--loss", type=str, default='MSE', choices=['MAE', 'MSE', 'RMSE', 'RelMSE'])
-parser.add_argument("--file", type=str, default='20000N63', help='Example: --file 2000N31')
-parser.add_argument("--forcing", type=str, default='uniform', choices=['normal', 'uniform'])
-parser.add_argument("--epochs", type=int, default=20000)
+parser.add_argument("--file", type=str, default='10000N63', help='Example: --file 2000N31')
+parser.add_argument("--forcing", type=str, default='normal', choices=['normal', 'uniform'])
+parser.add_argument("--epochs", type=int, default=100000)
 parser.add_argument("--ks", type=int, default=5, choices=[3, 5, 7, 9, 11, 13, 15, 17])
 parser.add_argument("--filters", type=int, default=32, choices=[8, 16, 32, 64])
-parser.add_argument("--nbfuncs", type=int, default=1)
+parser.add_argument("--nbfuncs", type=int, default=1, choices=[1, 2, 3])
 parser.add_argument("--A", type=float, default=0)
 parser.add_argument("--F", type=float, default=0)
 parser.add_argument("--U", type=float, default=1)
 parser.add_argument("--WF", type=float, default=1)
 parser.add_argument("--sd", type=float, default=0.1)
+parser.add_argument("--norm", type=bool, default=True, choices=[True, False])
 parser.add_argument("--transfer", type=str, default=None)
 
 args = parser.parse_args()
@@ -126,8 +127,10 @@ gparams['device'] = device
 # SEND TO GPU (or CPU)
 model.to(device)
 #KAIMING HE INIT
-if args.transfer is None:
+if args.transfer is None and args.model != 'NetB':
 	model.apply(weights_init)
+elif args.model == 'NetB':
+	model.apply(weights_xavier)
 
 #INIT OPTIMIZER
 optimizer = init_optim(model)
@@ -157,7 +160,9 @@ losses = {
 		  'loss_a':[],
 		  'loss_u':[], 
 		  'loss_f': [], 
-		  'loss_wf':[], 
+		  'loss_wf1':[],
+		  'loss_wf2':[],
+		  'loss_wf3':[],
 		  'loss_train':[], 
 		  'loss_validate':[],
 		  'avg_l2_u': []
@@ -193,16 +198,22 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 				f_pred, loss_f = None, 0
 			if WF != 0 and EQUATION != 'BurgersT':
 				LHS, RHS = weak_form2(EPSILON, SHAPE, f, u_pred, a_pred, lepolys, phi, phi_x, equation=EQUATION, nbfuncs=NBFUNCS)
-				loss_wf = WF*criterion_wf(LHS, RHS)
+				# print("Nbfuncs:", NBFUNCS, "\nLHS:", LHS.shape, "\nRHS:",  RHS.shape)
+				if NBFUNCS == 1:
+					loss_wf1, loss_wf2, loss_wf3 = WF*criterion_wf(LHS, RHS), 0, 0
+				elif NBFUNCS == 2:
+					loss_wf1, loss_wf2, loss_wf3 = WF*criterion_wf(LHS[:,0,0], RHS[:,0,0]), WF*criterion_wf(LHS[:,1,0], RHS[:,1,0]), 0
+				elif NBFUNCS == 3:
+					loss_wf1, loss_wf2, loss_wf3 = WF*criterion_wf(LHS[:,0,0], RHS[:,0,0]), WF*criterion_wf(LHS[:,1,0], RHS[:,1,0]), WF*criterion_wf(LHS[:,2,0], RHS[:,2,0])
 			else:
-				loss_wf = 0
+				loss_wf1, loss_wf2, loss_wf3 = 0, 0, 0
 			# NET LOSS
-			loss = loss_a + loss_u + loss_f + loss_wf
+			loss = loss_a + loss_u + loss_f + loss_wf1 + loss_wf2 + loss_wf3
 			if loss.requires_grad:
 				loss.backward()
-			return a_pred, u_pred, f_pred, loss_a, loss_u, loss_f, loss_wf, loss
+			return a_pred, u_pred, f_pred, loss_a, loss_u, loss_f, loss_wf1, loss_wf2, loss_wf3, loss
 
-		a_pred, u_pred, f_pred, loss_a, loss_u, loss_f, loss_wf, loss = closure(a, f, u, fn)
+		a_pred, u_pred, f_pred, loss_a, loss_u, loss_f, loss_wf1, loss_wf2, loss_wf3, loss = closure(a, f, u, fn)
 		optimizer.step(loss.item)
 		if loss_a != 0:
 			loss_a += np.round(float(loss_a.to('cpu').detach()), 12)
@@ -210,8 +221,18 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			loss_u += np.round(float(loss_u.to('cpu').detach()), 12)
 		if loss_f != 0:
 			loss_f += np.round(float(loss_f.to('cpu').detach()), 12)
-		if loss_wf != 0:
-			loss_wf += np.round(float(loss_wf.to('cpu').detach()), 12)
+		if loss_wf1 != 0:
+			loss_wf1 += np.round(float(loss_wf1.to('cpu').detach()), 12)
+		else:
+			loss_wf1 += 0
+		if loss_wf2 > 0:
+			loss_wf2 += np.round(float(loss_wf2.to('cpu').detach()), 12)
+		else:
+			loss_wf2 += 0	
+		if loss_wf3 > 0:
+			loss_wf3 += np.round(float(loss_wf3.to('cpu').detach()), 12)
+		else:
+			loss_wf3 += 0
 		loss_train += np.round(float(loss.to('cpu').detach()), 12)
 
 	if np.isnan(loss_train):
@@ -234,7 +255,7 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			gparams['best_loss'] = BEST_LOSS
 
 		avg_l2_u, loss_validate = validate(gparams, model, optimizer, criterion, lepolys, phi, phi_x, phi_xx, validateloader)
-		losses = log_loss(losses, loss_a, loss_u, loss_f, loss_wf, loss_train, loss_validate, BATCH_SIZE, avg_l2_u)
+		losses = log_loss(losses, loss_a, loss_u, loss_f, loss_wf1, loss_wf2, loss_wf3, loss_train, loss_validate, BATCH_SIZE, avg_l2_u)
 
 		if int(.05*EPOCHS) > 0 and EPOCHS > 10 and epoch % int(.05*EPOCHS) == 0:
 			try:

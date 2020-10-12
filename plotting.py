@@ -20,7 +20,7 @@ def mae(measured, theoretical):
 
 def color_scheme():
 	# http://tableaufriction.blogspot.com/2012/11/finally-you-can-use-tableau-data-colors.html
-	red, blue, green, purple = '#ff265c', '#265cff', '#5cff26', '#ff5d26'
+	red, blue, green, purple = '#ff265c', '#265cff', '#5cff26', '#800080'
 	return red, blue, green, purple
 
 def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=5, path='.'):
@@ -140,7 +140,9 @@ def loss_plot(gparams):
 	loss_a = losses['loss_a']
 	loss_u = losses['loss_u']
 	loss_f = losses['loss_f']
-	loss_wf = losses['loss_wf']
+	loss_wf1 = losses['loss_wf1']
+	loss_wf2 = losses['loss_wf2']
+	loss_wf3 = losses['loss_wf3']
 	loss_train = losses['loss_train']
 	loss_validate = losses['loss_validate']
 	best_loss = np.round(float(best_loss), 7)
@@ -169,8 +171,12 @@ def loss_plot(gparams):
 		plt.semilogy(x, np.array(loss_u), color=blue, label='$\\hat{u}$')
 	if loss_f[-1] != 0:
 		plt.semilogy(x, np.array(loss_f), color=green, label='$\\hat{f}$')
-	if loss_wf[-1] != 0:
-		plt.semilogy(x, np.array(loss_wf), color=purple, label='Weak Form')
+	if loss_wf1[-1] != 0:
+		plt.semilogy(x, np.array(loss_wf1), color=purple, label='Weak Form$_1$')
+	if loss_wf2[-1] != 0:
+		plt.semilogy(x, np.array(loss_wf2), color=purple, alpha=0.667, label='Weak Form$_2$')
+	if loss_wf3[-1] != 0:
+		plt.semilogy(x, np.array(loss_wf3), color=purple, alpha=0.333, label='Weak Form$_3$')
 	plt.xlabel('Epoch')
 	plt.xlim(1, epoch)
 	plt.grid(alpha=0.618)
@@ -234,6 +240,8 @@ def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path, t
 		linf_error_u = linf(uhat, uu)
 		xx = legslbndm(SHAPE)
 		plt.figure(2, figsize=(10,6))
+		# plt.title('Input Sample')
+		
 		plt.title(f'Out of Sample,$\\quad$Model: {title},$\\quad$'\
 				  f'MAE Error: {np.round(float(mae_error_u), 7)}\n'\
 				  f'Rel. $\\ell^2$ Error: {np.round(float(l2_error_u), 7)},$\\quad$'\
@@ -246,19 +254,20 @@ def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path, t
 		plt.ylabel('$u(x)$')
 		plt.legend(shadow=True)
 		# plt.savefig(f'{PATH}/Out of Sample_0{picture}_u.eps', bbox_inches='tight')
+		# plt.savefig(f'{PATH}/Input.png', bbox_inches='tight')
 		plt.savefig(f'{PATH}/Out of Sample_0{picture+1}_u.png', bbox_inches='tight')
 		plt.close(2)
-		plt.figure(2, figsize=(10,6))
-		plt.title(f'$u$ Point-Wise Error: {np.round(np.sum(np.abs(uu-uhat))/len(xx), 9)}')
-		plt.plot(xx, np.abs(uu-uhat), 'ro-', mfc='none', label='Error')
-		plt.xlim(-1,1)
-		plt.grid(alpha=0.618)
-		plt.xlabel('$x$')
-		plt.ylabel('Point-Wise Error')
-		plt.legend(shadow=True)
-		# plt.savefig(f'{PATH}/Out of Sample_0{picture}_u_pwe.eps', bbox_inches='tight')
-		plt.savefig(f'{PATH}/Out of Sample_0{picture+1}_u_pwe.png', bbox_inches='tight')
-		plt.close(2)
+		# plt.figure(2, figsize=(10,6))
+		# plt.title(f'$u$ Point-Wise Error: {np.round(np.sum(np.abs(uu-uhat))/len(xx), 9)}')
+		# plt.plot(xx, np.abs(uu-uhat), 'ro-', mfc='none', label='Error')
+		# plt.xlim(-1,1)
+		# plt.grid(alpha=0.618)
+		# plt.xlabel('$x$')
+		# plt.ylabel('Point-Wise Error')
+		# plt.legend(shadow=True)
+		# # plt.savefig(f'{PATH}/Out of Sample_0{picture}_u_pwe.eps', bbox_inches='tight')
+		# plt.savefig(f'{PATH}/Out of Sample_0{picture+1}_u_pwe.png', bbox_inches='tight')
+		# plt.close(2)
 
 		# if f_pred is not None:
 		# 	plt.figure(3, figsize=(10,6))

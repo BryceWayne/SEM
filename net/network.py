@@ -11,6 +11,12 @@ def weights_init(m):
         torch.nn.init.kaiming_normal_(m.weight.data)
         torch.nn.init.zeros_(m.bias)
 
+def weights_xavier(m):
+    if isinstance(m, nn.Conv1d):
+        torch.nn.init.xavier_uniform_(m.weight)
+        # torch.nn.init.kaiming_normal_(m.weight.data)
+        torch.nn.init.zeros_(m.bias)    
+
 def init_optim(model):
     params = {
               'history_size': 10,
@@ -82,6 +88,40 @@ class ResNet(nn.Module):
         if self.blocks != 0:
             for block in range(self.blocks):
                 out = F.relu(out + self.residual(out))
+        # out = self.n1(out)
+        out = out.flatten(start_dim=1)
+        out = self.fc1(out)
+        out = out.view(out.shape[0], 1, self.d_out)
+        return out
+
+
+class ResNetD(nn.Module):
+    def __init__(self, d_in, filters, d_out, kernel_size=5, padding=2, blocks=5):
+        super(ResNetD, self).__init__()
+        self.d_in = d_in
+        self.d_out = d_out
+        self.blocks = blocks
+        self.filters = filters
+        self.conv = conv1d(d_in, self.filters, kernel_size=kernel_size, padding=1)
+        self.n1 = nn.GroupNorm(1, self.filters)
+        self.relu = nn.ReLU(inplace=True)
+        self.conv1 = conv1d(self.filters, self.filters, kernel_size=kernel_size, padding=0)
+        self.n2 = nn.GroupNorm(1, self.filters)
+        self.conv2 = conv1d(self.filters, self.filters, kernel_size=kernel_size, padding=0)
+        self.residual = nn.Sequential(
+            self.n1,
+            self.relu,
+            self.conv1,
+            self.n2,
+            self.relu,
+            self.conv2)
+        # self.fc1 = nn.Linear(self.filters*(self.d_out + 2), self.d_out, bias=True)
+        self.fc1 = nn.Linear(self.filters*(self.d_out + 2), self.d_out, bias=True)
+    def forward(self, x):
+        out = self.conv(x) #1
+        if self.blocks != 0:
+            for block in range(self.blocks):
+                out = self.relu(out + self.residual(out))
         # out = self.n1(out)
         out = out.flatten(start_dim=1)
         out = self.fc1(out)
