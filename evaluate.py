@@ -20,6 +20,7 @@ import numpy as np
 def validate(gparams, model, optim, criterion, lepolys, phi, phi_x, phi_xx, validateloader):
 	device = gparams['device']
 	VAL_SIZE = 1000
+	NORM = bool(gparams['norm'])
 	SHAPE, EPSILON =  int(gparams['file'].split('N')[1]) + 1, gparams['epsilon']
 	FILE, EQUATION = f'{VAL_SIZE}N{SHAPE-1}', gparams['equation']
 	BATCH_SIZE, D_in, Filters, D_out = VAL_SIZE, 1, gparams['filters'], SHAPE
@@ -32,7 +33,10 @@ def validate(gparams, model, optim, criterion, lepolys, phi, phi_x, phi_xx, vali
 	optim.zero_grad()
 	for batch_idx, sample_batch in enumerate(validateloader):
 		f = sample_batch['f'].to(device)
-		fn = sample_batch['fn'].to(device)
+		if NORM == True:
+			fn = sample_batch['fn'].to(device)
+		else:
+			fn = sample_batch['f'].to(device)
 		a = sample_batch['a'].to(device)
 		u = sample_batch['u'].to(device)
 		def closure(f, a, u, fn=fn):
@@ -154,7 +158,7 @@ def model_stats(path, kind='train', gparams=None):
 	except:
 		norm = False
 		lg_dataset = get_data(gparams, kind=kind)
-
+	
 	validateloader = torch.utils.data.DataLoader(lg_dataset, batch_size=BATCH_SIZE, shuffle=True)
 
 	xx, lepolys, lepoly_x, lepoly_xx, phi, phi_x, phi_xx = basis_vectors(D_out, equation=EQUATION)

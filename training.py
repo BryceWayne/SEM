@@ -70,6 +70,7 @@ models = {
 MODEL = models[args.model]
 
 #GLOBALS
+NORM = gparams['norm']
 FILE = gparams['file']
 DATASET = int(FILE.split('N')[0])
 SHAPE = int(FILE.split('N')[1]) + 1
@@ -102,11 +103,17 @@ elif os.path.isdir(PATH) == True:
 # CREATE BASIS VECTORS
 xx, lepolys, lepoly_x, lepoly_xx, phi, phi_x, phi_xx = basis_vectors(D_out, equation=EQUATION)
 
-# NORMALIZE DATASET
-lg_dataset = get_data(gparams, kind='train')
-trainloader = torch.utils.data.DataLoader(lg_dataset, batch_size=BATCH_SIZE, shuffle=True)
-gparams, transform_f = normalize(gparams, trainloader)
-
+if args.model != 'ResNet':
+	# NORMALIZE DATASET
+	NORM = True
+	gparams['norm'] = True
+	lg_dataset = get_data(gparams, kind='train')
+	trainloader = torch.utils.data.DataLoader(lg_dataset, batch_size=BATCH_SIZE, shuffle=True)
+	gparams, transform_f = normalize(gparams, trainloader)
+else:
+	NORM = False
+	gparams['norm'] = False
+	transform_f = None
 # LOAD DATASET
 lg_dataset = get_data(gparams, kind='train', transform_f=transform_f)
 trainloader = torch.utils.data.DataLoader(lg_dataset, batch_size=BATCH_SIZE, shuffle=True)
@@ -175,7 +182,10 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 	loss_a, loss_u, loss_f, loss_wf, loss_train = 0, 0, 0, 0, 0
 	for batch_idx, sample_batch in enumerate(trainloader):
 		f = sample_batch['f'].to(device)
-		fn = sample_batch['fn'].to(device)
+		if NORM is False:
+			fn = f
+		elif NOPM == True:
+			fn = sample_batch['fn'].to(device)
 		a = sample_batch['a'].to(device)
 		u = sample_batch['u'].to(device)
 		def closure(a, f, u, fn=fn):
