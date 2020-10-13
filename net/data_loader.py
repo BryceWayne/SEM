@@ -16,6 +16,8 @@ def load_obj(name):
 
 def get_data(gparams, kind='train', transform_f=None):
     equation, file, sd = gparams['equation'], gparams['file'], gparams['sd']
+    if sd == 1:
+        sd = 1.0
     shape, epsilon = int(file.split('N')[1]) + 1, gparams['epsilon']
     forcing = gparams['forcing']
     if kind == 'validate':

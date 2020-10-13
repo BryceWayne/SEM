@@ -43,7 +43,7 @@ parser.add_argument("--A", type=float, default=0)
 parser.add_argument("--F", type=float, default=0)
 parser.add_argument("--U", type=float, default=1)
 parser.add_argument("--WF", type=float, default=1)
-parser.add_argument("--sd", type=float, default=0.1)
+parser.add_argument("--sd", type=float, default=1)
 parser.add_argument("--norm", type=bool, default=True, choices=[True, False])
 parser.add_argument("--transfer", type=str, default=None)
 
