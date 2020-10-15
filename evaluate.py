@@ -20,7 +20,11 @@ import numpy as np
 def validate(gparams, model, optim, criterion, lepolys, phi, phi_x, phi_xx, validateloader):
 	device = gparams['device']
 	VAL_SIZE = 1000
-	NORM = bool(gparams['norm'])
+	NORM = gparams['norm']
+	if NORM == 'False':
+		NORM = False
+	elif NORM == 'True':
+		NORM = True
 	SHAPE, EPSILON =  int(gparams['file'].split('N')[1]) + 1, gparams['epsilon']
 	FILE, EQUATION = f'{VAL_SIZE}N{SHAPE-1}', gparams['equation']
 	BATCH_SIZE, D_in, Filters, D_out = VAL_SIZE, 1, gparams['filters'], SHAPE
@@ -83,6 +87,7 @@ def validate(gparams, model, optim, criterion, lepolys, phi, phi_x, phi_xx, vali
 
 
 def model_stats(path, kind='train', gparams=None):
+	from torchsummary import summary
 	red, blue, green, purple = color_scheme()
 	TEST  = {'color':red, 'marker':'o', 'linestyle':'none', 'markersize': 3}
 	VAL = {'color':blue, 'marker':'o', 'linestyle':'solid', 'mfc':'none'}
@@ -171,8 +176,7 @@ def model_stats(path, kind='train', gparams=None):
 	model = model(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING, blocks=BLOCKS).to(device)
 	model.load_state_dict(torch.load(PATH + '/model.pt'))
 	model.eval()
-	for k, v in model.state_dict().items():
-		print(k)
+	summary(model)
 
 	MAE_a, MSE_a, MinfE_a, MAE_u, MSE_u, MinfE_u, pwe_a, pwe_u = [], [], [], [], [], [], [], []
 	for batch_idx, sample_batch in enumerate(validateloader):
@@ -288,5 +292,9 @@ def model_stats(path, kind='train', gparams=None):
 	else:
 		title = gparams['model']
 	out_of_sample(EQUATION, SHAPE, a_pred, u_pred, f_pred, sample_batch, '.', title)
+	try:
+		loss_plot(gparams)
+	except:
+		print("Could not create loss plots.")
 	os.chdir(cwd)
 	return values

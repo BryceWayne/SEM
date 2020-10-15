@@ -44,7 +44,6 @@ parser.add_argument("--F", type=float, default=0)
 parser.add_argument("--U", type=float, default=1)
 parser.add_argument("--WF", type=float, default=1)
 parser.add_argument("--sd", type=float, default=1)
-parser.add_argument("--norm", type=bool, default=True, choices=[True, False])
 parser.add_argument("--transfer", type=str, default=None)
 
 args = parser.parse_args()
@@ -70,7 +69,6 @@ models = {
 MODEL = models[args.model]
 
 #GLOBALS
-NORM = gparams['norm']
 FILE = gparams['file']
 DATASET = int(FILE.split('N')[0])
 SHAPE = int(FILE.split('N')[1]) + 1
@@ -152,8 +150,8 @@ elif args.loss == 'RMSE':
 	criterion_a, criterion_u = RMSELoss(), RMSELoss()
 elif args.loss == 'RelMSE':
 	criterion_a, criterion_u = RelMSELoss(batch=BATCH_SIZE), RelMSELoss(batch=BATCH_SIZE)
-# criterion_wf = torch.nn.MSELoss(reduction="sum")
-criterion_wf = torch.nn.L1Loss()
+criterion_wf = torch.nn.MSELoss(reduction="sum")
+# criterion_wf = torch.nn.L1Loss()
 criterion_f = torch.nn.L1Loss()
 
 criterion = {
@@ -184,7 +182,7 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 		f = sample_batch['f'].to(device)
 		if NORM is False:
 			fn = f
-		elif NOPM == True:
+		elif NORM == True:
 			fn = sample_batch['fn'].to(device)
 		a = sample_batch['a'].to(device)
 		u = sample_batch['u'].to(device)

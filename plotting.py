@@ -1,4 +1,5 @@
 #plotting.py
+import os
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
@@ -131,21 +132,35 @@ def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=5, path
 
 
 def loss_plot(gparams):
-	losses, file, epoch = gparams['losses'], gparams['file'], gparams['epochs']
-	shape, ks, best_loss = SHAPE = int(file.split('N')[1]) + 1, gparams['ks'], gparams['bestLoss']
+	try:
+		losses = gparams['losses']
+	except:
+		df = pd.read_csv('losses.csv')
+		losses = df.to_dict('list')
+	file, epoch = gparams['file'], gparams['epochs']
+	shape, ks, best_loss = SHAPE = int(file.split('N')[1]) + 1, gparams['ks']
+	try:
+		best_loss = gparams['bestLoss']
+	except:
+		best_loss = np.nan
 	path, title = gparams['path'], gparams['model']
+	if title == 'ResNet':
+		title = 'Linear'
 	matplotlib.rcParams['savefig.dpi'] = 300
 	matplotlib.rcParams['font.size'] = 14
 	red, blue, green, purple = color_scheme()
 	loss_a = losses['loss_a']
 	loss_u = losses['loss_u']
 	loss_f = losses['loss_f']
-	loss_wf1 = losses['loss_wf1']
-	loss_wf2 = losses['loss_wf2']
-	loss_wf3 = losses['loss_wf3']
+	try:
+		loss_wf1 = losses['loss_wf1']
+		loss_wf2 = losses['loss_wf2']
+		loss_wf3 = losses['loss_wf3']
+	except:
+		loss_wf = losses['loss_wf']
 	loss_train = losses['loss_train']
 	loss_validate = losses['loss_validate']
-	best_loss = np.round(float(best_loss), 7)
+	best_loss = np.round(float(best_loss), 9)
 
 	N = int(file.split('N')[0])
 
@@ -159,8 +174,13 @@ def loss_plot(gparams):
 	plt.ylabel('Log Loss')
 	plt.legend(shadow=True)
 	plt.title(f'Log Loss vs. Epoch,$\\quad$Model: {title},$\\quad$Best Loss: {best_loss}')
-	plt.savefig(f'{path}/log_loss_train.png', bbox_inches='tight')
-	# plt.show()
+	try:
+		plt.savefig(f'./{path}/log_loss_train.png', bbox_inches='tight')
+	except:
+		print("Could not savefig...")
+		plt.savefig(f'./log_loss_train.png', bbox_inches='tight', dpi=300)
+		plt.savefig(f'./log_loss_train.pdf', bbox_inches='tight', dpi=300)
+		plt.show()
 	plt.close(1)
 
 	plt.figure(2, figsize=(10,6))
@@ -171,20 +191,29 @@ def loss_plot(gparams):
 		plt.semilogy(x, np.array(loss_u), color=blue, label='$\\hat{u}$')
 	if loss_f[-1] != 0:
 		plt.semilogy(x, np.array(loss_f), color=green, label='$\\hat{f}$')
-	if loss_wf1[-1] != 0:
-		plt.semilogy(x, np.array(loss_wf1), color=purple, label='Weak Form$_1$')
-	if loss_wf2[-1] != 0:
-		plt.semilogy(x, np.array(loss_wf2), color=purple, alpha=0.667, label='Weak Form$_2$')
-	if loss_wf3[-1] != 0:
-		plt.semilogy(x, np.array(loss_wf3), color=purple, alpha=0.333, label='Weak Form$_3$')
+	try:
+		if loss_wf1[-1] != 0:
+			plt.semilogy(x, np.array(loss_wf1), color=red, label='Weak Form$_1$')
+		if loss_wf2[-1] != 0:
+			plt.semilogy(x, np.array(loss_wf2), color=red, alpha=0.667, label='Weak Form$_2$')
+		if loss_wf3[-1] != 0:
+			plt.semilogy(x, np.array(loss_wf3), color=red, alpha=0.333, label='Weak Form$_3$')
+	except:
+		if loss_wf[-1] != 0:
+			plt.semilogy(x, np.array(loss_wf), color=red, label='Weak Form')
 	plt.xlabel('Epoch')
 	plt.xlim(1, epoch)
 	plt.grid(alpha=0.618)
 	plt.ylabel('Log Loss')
 	plt.legend(shadow=True)
 	plt.title(f'Log Loss vs. Epoch,$\\quad$Model: {title}')
-	plt.savefig(f'{path}/log_loss_individual.png', bbox_inches='tight')
-	# plt.show()
+	try:
+		plt.savefig(f'./{path}/log_loss_individual.png', bbox_inches='tight')
+	except:
+		print("Could not savefig...")
+		plt.savefig(f'./log_loss_individual.png', bbox_inches='tight', dpi=300)
+		plt.savefig(f'./log_loss_individual.pdf', bbox_inches='tight', dpi=300)
+		plt.show()
 	plt.close(2)
 
 
@@ -255,7 +284,7 @@ def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path, t
 		plt.legend(shadow=True)
 		# plt.savefig(f'{PATH}/Out of Sample_0{picture}_u.eps', bbox_inches='tight')
 		# plt.savefig(f'{PATH}/Input.png', bbox_inches='tight')
-		plt.savefig(f'{PATH}/Out of Sample_0{picture+1}_u.png', bbox_inches='tight')
+		plt.savefig(f'{PATH}/Out of Sample_0{picture+1}_u.png', bbox_inches='tight', dpi=300)
 		plt.close(2)
 		# plt.figure(2, figsize=(10,6))
 		# plt.title(f'$u$ Point-Wise Error: {np.round(np.sum(np.abs(uu-uhat))/len(xx), 9)}')
@@ -301,6 +330,25 @@ def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path, t
 		# 	# plt.savefig(f'{PATH}/Out of Sample_0{picture}_f_pwe.eps', bbox_inches='tight')
 		# 	plt.savefig(f'{PATH}/Out of Sample_0{picture+1}_f_pwe.png', bbox_inches='tight')
 		# 	plt.close(3)
+
+	plt.figure(3, figsize=(10,6))
+	# f = f_pred[picture,0,:]
+	ff = sample_batch['f'][picture,0,:].to('cpu').detach().numpy()
+	# mae_error_f = mae(f, ff)
+	# l2_error_f = relative_l2(f, ff)
+	# linf_error_f = linf(f, ff)
+	plt.title('Input Sample')
+	plt.plot(xx, ff, **VAL, label='$f$')
+	# plt.plot(xx[1:-1], f[1:-1], **TEST, label='$\\hat{f}$')
+	plt.xlim(-1,1)
+	plt.grid(alpha=0.618)
+	plt.xlabel('$x$')
+	plt.ylabel('$f(x)$')
+	plt.legend(shadow=True)
+	# plt.savefig(f'{PATH}/Out of Sample_0{picture}_f.png', bbox_inches='tight')
+	plt.savefig(f'{PATH}/Input_f.png', bbox_inches='tight', dpi=300)
+	plt.close(3)
+
 
 def periodic_report(model, batch, equation, epsilon, shape, epoch, xx, phi_x, phi_xx, losses, a_pred, u_pred, f_pred, ks, path):
 	print(f"\nT. Loss: {np.round(losses['loss_train'][-1], 9)}, "\

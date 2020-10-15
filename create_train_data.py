@@ -48,7 +48,7 @@ def create_fast(N:int, epsilon:float, size:int, eps_flag=False, equation='Standa
 			f = m[0]*np.sin(n[0]*x) + m[1]*np.cos(n[1]*x)
 			m = np.array([m[0], m[1], n[0], n[1]])
 		elif forcing == 'normal':
-			m = 2+np.random.normal(0, sd, 4)
+			m = np.random.normal(0, sd, 4)
 			f = m[0]*np.sin(m[1]*np.pi*x) + m[2]*np.cos(m[3]*np.pi*x)
 		return f, m
 
