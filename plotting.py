@@ -137,12 +137,11 @@ def loss_plot(gparams):
 	except:
 		df = pd.read_csv('losses.csv')
 		losses = df.to_dict('list')
+
 	file, epoch = gparams['file'], gparams['epochs']
-	shape, ks, best_loss = SHAPE = int(file.split('N')[1]) + 1, gparams['ks']
-	try:
-		best_loss = gparams['bestLoss']
-	except:
-		best_loss = np.nan
+
+	shape, ks = SHAPE = int(file.split('N')[1]) + 1, gparams['ks']
+	
 	path, title = gparams['path'], gparams['model']
 	if title == 'ResNet':
 		title = 'Linear'
@@ -158,6 +157,14 @@ def loss_plot(gparams):
 		loss_wf3 = losses['loss_wf3']
 	except:
 		loss_wf = losses['loss_wf']
+	try:
+		best_loss = gparams['bestLoss']
+	except:
+		print(loss_wf1[-1])
+		# print(loss_wf[-1])
+		best_loss = loss_wf1[-1]
+	
+	
 	loss_train = losses['loss_train']
 	loss_validate = losses['loss_validate']
 	best_loss = np.round(float(best_loss), 9)
@@ -165,54 +172,58 @@ def loss_plot(gparams):
 	N = int(file.split('N')[0])
 
 	plt.figure(1, figsize=(10,6))
-	x = list(range(1, len(loss_a)+1))
-	plt.semilogy(x, np.array(loss_train), color=red, label='Train')
-	plt.semilogy(x, np.array(loss_validate), color=blue, label='Validate')
+	LEN = len(loss_train)
+	LEN = 65000
+	x = list(range(1, LEN+1))
+	plt.semilogy(x, np.array(loss_train[:LEN]), color=red, label='Train')
+	plt.semilogy(x, np.array(loss_validate[:LEN]), color=blue, label='Validate')
 	plt.xlabel('Epoch')
-	plt.xlim(1, epoch)
+	plt.xlim(1, LEN)
 	plt.grid(alpha=0.618)
 	plt.ylabel('Log Loss')
 	plt.legend(shadow=True)
 	plt.title(f'Log Loss vs. Epoch,$\\quad$Model: {title},$\\quad$Best Loss: {best_loss}')
 	try:
-		plt.savefig(f'./{path}/log_loss_train.png', bbox_inches='tight')
+		plt.savefig(f'./{path}/loss_train.png', bbox_inches='tight')
 	except:
+		plt.savefig(f'./loss_train.png', bbox_inches='tight', dpi=300)
+		plt.savefig(f'./loss_train.pdf', bbox_inches='tight', dpi=300)
 		print("Could not savefig...")
-		plt.savefig(f'./log_loss_train.png', bbox_inches='tight', dpi=300)
-		plt.savefig(f'./log_loss_train.pdf', bbox_inches='tight', dpi=300)
 		plt.show()
 	plt.close(1)
-
+	
 	plt.figure(2, figsize=(10,6))
-	x = list(range(1, len(loss_a)+1))
+	x = list(range(1, LEN+1))
 	if loss_a[-1] != 0:
-		plt.semilogy(x, np.array(loss_a), color=red, label='$\\hat{\\alpha}$')
+		plt.semilogy(x, np.array(loss_a[:LEN]), color=red, label='$\\hat{\\alpha}$')
 	if loss_u[-1] != 0:
-		plt.semilogy(x, np.array(loss_u), color=blue, label='$\\hat{u}$')
+		plt.semilogy(x, np.array(loss_u[:LEN]), color=blue, label='$\\hat{u}$')
 	if loss_f[-1] != 0:
-		plt.semilogy(x, np.array(loss_f), color=green, label='$\\hat{f}$')
+		plt.semilogy(x, np.array(loss_f[:LEN]), color=green, label='$\\hat{f}$')
 	try:
+	
 		if loss_wf1[-1] != 0:
-			plt.semilogy(x, np.array(loss_wf1), color=red, label='Weak Form$_1$')
+			plt.semilogy(x, np.array(loss_wf1[:LEN]), color=red, label='Weak Form')
 		if loss_wf2[-1] != 0:
-			plt.semilogy(x, np.array(loss_wf2), color=red, alpha=0.667, label='Weak Form$_2$')
+			plt.semilogy(x, np.array(loss_wf2[:LEN]), color=red, alpha=0.667, label='Weak Form$_2$')
 		if loss_wf3[-1] != 0:
-			plt.semilogy(x, np.array(loss_wf3), color=red, alpha=0.333, label='Weak Form$_3$')
+			plt.semilogy(x, np.array(loss_wf3[:LEN]), color=red, alpha=0.333, label='Weak Form$_3$')
 	except:
+	
 		if loss_wf[-1] != 0:
-			plt.semilogy(x, np.array(loss_wf), color=red, label='Weak Form')
+			plt.semilogy(x, np.array(loss_wf[:LEN]), color=red, label='Weak Form')
 	plt.xlabel('Epoch')
-	plt.xlim(1, epoch)
+	plt.xlim(1, LEN)
 	plt.grid(alpha=0.618)
 	plt.ylabel('Log Loss')
 	plt.legend(shadow=True)
 	plt.title(f'Log Loss vs. Epoch,$\\quad$Model: {title}')
 	try:
-		plt.savefig(f'./{path}/log_loss_individual.png', bbox_inches='tight')
+		plt.savefig(f'./{path}/loss_individual.png', bbox_inches='tight')
 	except:
+		plt.savefig(f'./loss_individual.png', bbox_inches='tight', dpi=300)
+		plt.savefig(f'./loss_individual.pdf', bbox_inches='tight', dpi=300)
 		print("Could not savefig...")
-		plt.savefig(f'./log_loss_individual.png', bbox_inches='tight', dpi=300)
-		plt.savefig(f'./log_loss_individual.pdf', bbox_inches='tight', dpi=300)
 		plt.show()
 	plt.close(2)
 

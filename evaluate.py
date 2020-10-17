@@ -147,7 +147,6 @@ def model_stats(path, kind='train', gparams=None):
 			out.close()
 			os.chdir(cwd)
 		replace_line('parameters.txt', path[index:])
-
 	PATH = gparams['path']
 	KERNEL_SIZE = int(gparams['ks'])
 	PADDING = (KERNEL_SIZE - 1)//2
@@ -291,7 +290,9 @@ def model_stats(path, kind='train', gparams=None):
 		title = 'Linear'
 	else:
 		title = gparams['model']
+
 	out_of_sample(EQUATION, SHAPE, a_pred, u_pred, f_pred, sample_batch, '.', title)
+	
 	try:
 		loss_plot(gparams)
 	except:

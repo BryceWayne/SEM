@@ -29,13 +29,13 @@ torch.cuda.empty_cache()
 
 # ARGS
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--equation", type=str, default='Helmholtz', choices=['Standard', 'Burgers', 'Helmholtz']) #, 'BurgersT' 
-parser.add_argument("--model", type=str, default='ResNet', choices=['ResNet', 'NetA', 'NetB', 'NetC', 'NetD']) # , 'Net2D' 
-parser.add_argument("--blocks", type=int, default=0)
+parser.add_argument("--equation", type=str, default='Burgers', choices=['Standard', 'Burgers', 'Helmholtz']) #, 'BurgersT' 
+parser.add_argument("--model", type=str, default='NetC', choices=['ResNet', 'NetA', 'NetB', 'NetC', 'NetD']) # , 'Net2D' 
+parser.add_argument("--blocks", type=int, default=4)
 parser.add_argument("--loss", type=str, default='MSE', choices=['MAE', 'MSE', 'RMSE', 'RelMSE'])
 parser.add_argument("--file", type=str, default='10000N63', help='Example: --file 2000N31')
-parser.add_argument("--forcing", type=str, default='normal', choices=['normal', 'uniform'])
-parser.add_argument("--epochs", type=int, default=100000)
+parser.add_argument("--forcing", type=str, default='uniform', choices=['normal', 'uniform'])
+parser.add_argument("--epochs", type=int, default=50000)
 parser.add_argument("--ks", type=int, default=5, choices=[3, 5, 7, 9, 11, 13, 15, 17])
 parser.add_argument("--filters", type=int, default=32, choices=[8, 16, 32, 64])
 parser.add_argument("--nbfuncs", type=int, default=1, choices=[1, 2, 3])
