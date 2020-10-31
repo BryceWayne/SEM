@@ -47,7 +47,6 @@ class RelMSELoss(nn.Module):
         super().__init__()
         self.mse = nn.MSELoss()
         self.batch = batch
-        
     def forward(self,yhat,y):
         loss = self.mse(yhat,y)/self.batch
         return loss
@@ -57,8 +56,21 @@ def conv1d(in_planes, out_planes, stride=1, bias=True, kernel_size=5, padding=2,
     return nn.Conv1d(in_planes, out_planes, kernel_size=kernel_size, stride=stride, padding=padding, bias=bias)
 
 
-def conv2d(in_planes, out_planes, stride=1, bias=True, kernel_size=5, padding=2, dialation=1) :
-    return nn.Conv2d(in_planes, out_planes, kernel_size=kernel_size, stride=stride, padding=padding, bias=bias)
+class Linear(nn.Module):
+    def __init__(self, d_in, filters, d_out, kernel_size=5, padding=2, blocks=0):
+        super(ResNet, self).__init__()
+        self.d_in = d_in
+        self.d_out = d_out
+        self.blocks = blocks
+        self.filters = filters
+        self.conv = conv1d(d_in, self.filters, kernel_size=kernel_size, padding=padding)
+        self.fc1 = nn.Linear(self.filters*(self.d_out + 2), self.d_out, bias=True)
+    def forward(self, x):
+        out = self.conv(x)
+        out = out.flatten(start_dim=1)
+        out = self.fc1(out)
+        out = out.view(out.shape[0], 1, self.d_out)
+        return out
 
 
 class ResNet(nn.Module):
@@ -81,7 +93,6 @@ class ResNet(nn.Module):
         #     self.n2,
         #     self.relu,
         #     self.conv2)
-        # self.fc1 = nn.Linear(self.filters*(self.d_out + 2), self.d_out, bias=True)
         self.fc1 = nn.Linear(self.filters*(self.d_out + 2), self.d_out, bias=True)
     def forward(self, x):
         out = self.conv(x)
@@ -202,17 +213,12 @@ class NetC(nn.Module) :
 
 
 class NetD(nn.Module) :
-    def __init__(self, d_in, filters, d_out, kernel_size=5, padding=2, blocks=0): #, activation='relu'
+    def __init__(self, d_in, filters, d_out, kernel_size=5, padding=0, blocks=0, activation='swish'):
         super(NetD, self).__init__()
         self.d_in = d_in
         self.blocks = blocks
         self.filters = filters
-        # if activation == 'relu':
-        #     self.m = F.relu()
-        # elif activation == 'sigmoid':
-        #     self.m = nn.Sigmoid()
-        # elif activation == 'swish':
-        #     self.m = self.swish
+        self.activation = activation.lower()
         self.m = swish
         self.d_out = d_out
         self.swish = swish
@@ -220,14 +226,21 @@ class NetD(nn.Module) :
         self.pad = padding
         self.conv1 = conv1d(d_in, filters, kernel_size=self.kern, padding=1)
         self.convH = conv1d(filters, filters, kernel_size=self.kern, padding=0)
-        self.dim = d_in*(d_out - 4*(self.blocks+1))*filters
+        self.dim = d_in*(d_out - 4*(self.blocks + 1))*filters
         self.fcH = nn.Linear(self.dim, self.d_out, bias=True)
     def forward(self, x):
-        m = self.m
+        if self.activation == 'relu':
+            m = self.relu
+        elif self.activation == 'sigmoid':
+            m = self.sigmoid
+        elif self.activation == 'swish':
+            m = self.swish
+
         out = m(self.conv1(x))
         if self.blocks != 0:
             for block in range(self.blocks):
                 out = m(self.convH(out))
+
         out = self.convH(out)
         out = out.flatten(start_dim=1)
         out = self.fcH(out)
@@ -262,6 +275,10 @@ class FC(nn.Module):
         out = self.layer3(out)
         out = out.view(out.shape[0], self.d_in, self.d_out)
         return out
+
+
+def conv2d(in_planes, out_planes, stride=1, bias=True, kernel_size=5, padding=2, dialation=1) :
+    return nn.Conv2d(in_planes, out_planes, kernel_size=kernel_size, stride=stride, padding=padding, bias=bias)
 
 
 class Net2D(nn.Module) :

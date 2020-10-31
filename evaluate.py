@@ -14,6 +14,10 @@ import subprocess
 import pandas as pd
 import datetime
 import numpy as np
+import matplotlib
+matplotlib.rcParams['savefig.dpi'] = 300
+matplotlib.rcParams['font.size'] = 12
+import seaborn as sns
 
 
 
@@ -122,7 +126,6 @@ def model_stats(path, kind='train', gparams=None):
 	elif gparams['model'] == 'NetD':
 		model = NetD
 
-
 	EQUATION, EPSILON, INPUT = gparams['equation'], gparams['epsilon'], gparams['file']
 	
 	if kind == 'train':
@@ -227,10 +230,7 @@ def model_stats(path, kind='train', gparams=None):
 		df2.to_csv('losses.csv')
 	except:
 		pass
-	import matplotlib
-	matplotlib.rcParams['savefig.dpi'] = 300
-	matplotlib.rcParams['font.size'] = 12
-	import seaborn as sns
+
 	sns.pairplot(df, corner=True, diag_kind="kde", kind="reg")
 	plt.savefig('confusion_matrix.pdf', bbox_inches='tight', dpi=300)
 	# plt.show()
@@ -291,11 +291,11 @@ def model_stats(path, kind='train', gparams=None):
 	else:
 		title = gparams['model']
 
-	out_of_sample(EQUATION, SHAPE, a_pred, u_pred, f_pred, sample_batch, '.', title)
+	# out_of_sample(EQUATION, SHAPE, a_pred, u_pred, f_pred, sample_batch, '.', title)
 	
-	try:
-		loss_plot(gparams)
-	except:
-		print("Could not create loss plots.")
+	# try:
+	# 	loss_plot(gparams)
+	# except:
+	# 	print("Could not create loss plots.")
 	os.chdir(cwd)
 	return values

@@ -160,7 +160,7 @@ def loss_plot(gparams):
 	try:
 		best_loss = gparams['bestLoss']
 	except:
-		print(loss_wf1[-1])
+		# print(loss_wf1[-1])
 		# print(loss_wf[-1])
 		best_loss = loss_wf1[-1]
 	
@@ -173,10 +173,10 @@ def loss_plot(gparams):
 
 	plt.figure(1, figsize=(10,6))
 	LEN = len(loss_train)
-	LEN = 65000
+	# LEN = 65000
 	x = list(range(1, LEN+1))
 	plt.semilogy(x, np.array(loss_train[:LEN]), color=red, label='Train')
-	plt.semilogy(x, np.array(loss_validate[:LEN]), color=blue, label='Validate')
+	plt.semilogy(x, np.array(loss_validate[:LEN]), color=blue, label='Test')
 	plt.xlabel('Epoch')
 	plt.xlim(1, LEN)
 	plt.grid(alpha=0.618)
@@ -296,18 +296,20 @@ def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path, t
 		# plt.savefig(f'{PATH}/Out of Sample_0{picture}_u.eps', bbox_inches='tight')
 		# plt.savefig(f'{PATH}/Input.png', bbox_inches='tight')
 		plt.savefig(f'{PATH}/Out of Sample_0{picture+1}_u.png', bbox_inches='tight', dpi=300)
+		plt.savefig(f'{PATH}/Out of Sample_0{picture+1}_u.pdf', bbox_inches='tight', dpi=300)
 		plt.close(2)
-		# plt.figure(2, figsize=(10,6))
-		# plt.title(f'$u$ Point-Wise Error: {np.round(np.sum(np.abs(uu-uhat))/len(xx), 9)}')
-		# plt.plot(xx, np.abs(uu-uhat), 'ro-', mfc='none', label='Error')
-		# plt.xlim(-1,1)
-		# plt.grid(alpha=0.618)
-		# plt.xlabel('$x$')
-		# plt.ylabel('Point-Wise Error')
-		# plt.legend(shadow=True)
-		# # plt.savefig(f'{PATH}/Out of Sample_0{picture}_u_pwe.eps', bbox_inches='tight')
-		# plt.savefig(f'{PATH}/Out of Sample_0{picture+1}_u_pwe.png', bbox_inches='tight')
-		# plt.close(2)
+		plt.figure(2, figsize=(10,6))
+		plt.title(f'$u$ Point-Wise Error: {np.round(np.sum(np.abs(uu-uhat))/len(xx), 9)}')
+		plt.plot(xx, np.abs(uu-uhat), 'ro-', mfc='none', label='Error')
+		plt.xlim(-1,1)
+		plt.grid(alpha=0.618)
+		plt.xlabel('$x$')
+		plt.ylabel('Point-Wise Error')
+		plt.legend(shadow=True)
+		# plt.savefig(f'{PATH}/Out of Sample_0{picture}_u_pwe.eps', bbox_inches='tight')
+		plt.savefig(f'{PATH}/Out of Sample_0{picture+1}_u_pwe.png', bbox_inches='tight', dpi=300)
+		plt.savefig(f'{PATH}/Out of Sample_0{picture+1}_u_pwe.pdf', bbox_inches='tight', dpi=300)
+		plt.close(2)
 
 		# if f_pred is not None:
 		# 	plt.figure(3, figsize=(10,6))
