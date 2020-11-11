@@ -364,8 +364,8 @@ def out_of_sample(equation, shape, a_pred, u_pred, f_pred, sample_batch, path, t
 
 
 def periodic_report(model, batch, equation, epsilon, shape, epoch, xx, phi_x, phi_xx, losses, a_pred, u_pred, f_pred, ks, path):
-	print(f"\nT. Loss: {np.round(losses['loss_train'][-1], 9)}, "\
-		  f"V. Loss: {np.round(losses['loss_validate'][-1], 9)}")
+	print(f"\nTrain Loss: {np.round(losses['loss_train'][-1], 9)}, "\
+		  f"Test Loss: {np.round(losses['loss_validate'][-1], 9)}")
 	if equation in ('Burgers', 'BurgersT'):
 		f_pred = None
 	elif equation in ('Standard', 'Helmholtz'):

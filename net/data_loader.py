@@ -82,7 +82,7 @@ def normalize(gparams, loader):
         num_batches += 1
 
     mean = channels_sum/num_batches
-    std = (channels_squares_sum/num_batches - mean*2)**0.5
+    std = (channels_squares_sum/num_batches - mean**2)**0.5
     gparams['mean'] = float(mean[0].item())
     gparams['std'] = float(std[0].item())
     return gparams, transforms.Normalize(mean, std)

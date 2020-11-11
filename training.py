@@ -32,11 +32,11 @@ torch.cuda.empty_cache()
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--equation", type=str, default='Burgers', choices=['Standard', 'Burgers', 'Helmholtz']) #, 'BurgersT' 
 parser.add_argument("--model", type=str, default='NetD', choices=['ResNet', 'NetA', 'NetB', 'NetC', 'NetD']) # , 'Net2D' 
-parser.add_argument("--blocks", type=int, default=4)
+parser.add_argument("--blocks", type=int, default=0)
 parser.add_argument("--loss", type=str, default='MSE', choices=['MAE', 'MSE', 'RMSE', 'RelMSE'])
-parser.add_argument("--file", type=str, default='10000N31', help='Example: --file 2000N31')
-parser.add_argument("--forcing", type=str, default='uniform', choices=['normal', 'uniform'])
-parser.add_argument("--epochs", type=int, default=50)
+parser.add_argument("--file", type=str, default='1000N31', help='Example: --file 2000N31') # 2^5-1, 2^6-1
+parser.add_argument("--forcing", type=str, default='normal', choices=['normal', 'uniform'])
+parser.add_argument("--epochs", type=int, default=20)
 parser.add_argument("--ks", type=int, default=5, choices=[3, 5, 7, 9, 11, 13, 15, 17])
 parser.add_argument("--filters", type=int, default=32, choices=[8, 16, 32, 64])
 parser.add_argument("--nbfuncs", type=int, default=3, choices=[1, 2, 3])
@@ -178,6 +178,7 @@ losses = {
 
 log_gparams(gparams)
 
+################################################
 time0 = time.time()
 for epoch in tqdm(range(1, EPOCHS+1)):
 	loss_a, loss_u, loss_f, loss_wf, loss_train = 0, 0, 0, 0, 0
@@ -193,23 +194,30 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			if torch.is_grad_enabled():
 				optimizer.zero_grad()
 			a_pred = model(fn)
-			if A != 0:
-				loss_a = A*criterion_a(a_pred, a)
-			else:
-				loss_a = 0
+			# if A != 0:
+			# 	loss_a = A*criterion_a(a_pred, a)
+			# else:
+			loss_a = 0
 			if U != 0:
 				u_pred = reconstruct(a_pred, phi)
 				loss_u = U*criterion_u(u_pred, u)
 			else:
 				u_pred, loss_u = None, 0
-			if F != 0:
-				f_pred = ODE2(EPSILON, u_pred, a_pred, phi_x, phi_xx, equation=EQUATION)
-				loss_f = F*criterion_f(f_pred, f)
-			else:
-				f_pred, loss_f = None, 0
+			# if F != 0:
+			# 	f_pred = ODE2(EPSILON, u_pred, a_pred, phi_x, phi_xx, equation=EQUATION)
+			# 	loss_f = F*criterion_f(f_pred, f)
+			# else:
+			f_pred, loss_f = None, 0
 			if WF != 0 and EQUATION != 'BurgersT':
 				LHS, RHS = weak_form2(EPSILON, SHAPE, f, u_pred, a_pred, lepolys, phi, phi_x, equation=EQUATION, nbfuncs=NBFUNCS)
 				# print("Nbfuncs:", NBFUNCS, "\nLHS:", LHS.shape, "\nRHS:",  RHS.shape)
+				"""
+					for i in range(nbfuncs):
+						LHS, RHS = weak_form2(EPSILON, SHAPE, f, u_pred, a_pred, lepolys, phi, phi_x, equation=EQUATION, nbfuncs=NBFUNCS, index=i)
+						loss_wf[i] = (LHS, RHS)
+					# for k,v in loss_wf.items():
+					# 	loss_wf += criterion_wf(v[0], v[1])
+				"""
 				if NBFUNCS == 1:
 					loss_wf1, loss_wf2, loss_wf3 = WF*criterion_wf(LHS, RHS), 0, 0
 				elif NBFUNCS == 2:
@@ -227,7 +235,7 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 		a_pred, u_pred, f_pred, loss_a, loss_u, loss_f, loss_wf1, loss_wf2, loss_wf3, loss = closure(a, f, u, fn)
 		optimizer.step(loss.item)
 		if loss_a != 0:
-			loss_a += np.round(float(loss_a.to('cpu').detach()), 12)
+			loss_a += np.round(float(loss_a.to('cpu').detach()), 12) #.item()
 		if loss_u != 0:
 			loss_u += np.round(float(loss_u.to('cpu').detach()), 12)
 		if loss_f != 0:

@@ -139,7 +139,7 @@ def weak_form1(eps, N, f, u, alphas, lepolys, phi, phi_x):
 	return LHS, RHS
 
 
-def weak_form2(eps, N, f, u, alphas, lepolys, phi, phi_x, equation, nbfuncs):
+def weak_form2(eps, N, f, u, alphas, lepolys, phi, phi_x, equation, nbfuncs, index=0):
 	B, i, j = u.shape
 	N -= 1
 	LHS = torch.zeros((B, nbfuncs, 1)).to(device).float()

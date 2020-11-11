@@ -13,8 +13,8 @@ def weights_init(m):
 
 def weights_xavier(m):
     if isinstance(m, nn.Conv1d):
-        torch.nn.init.xavier_uniform_(m.weight)
         # torch.nn.init.kaiming_normal_(m.weight.data)
+        torch.nn.init.xavier_uniform_(m.weight)
         torch.nn.init.zeros_(m.bias)    
 
 def init_optim(model):
