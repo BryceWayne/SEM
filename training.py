@@ -32,20 +32,20 @@ torch.cuda.empty_cache()
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--equation", type=str, default='Burgers', choices=['Standard', 'Burgers', 'Helmholtz']) #, 'BurgersT' 
 parser.add_argument("--model", type=str, default='NetD', choices=['ResNet', 'NetA', 'NetB', 'NetC', 'NetD']) # , 'Net2D' 
-parser.add_argument("--blocks", type=int, default=0)
+parser.add_argument("--blocks", type=int, default=3)
 parser.add_argument("--loss", type=str, default='MSE', choices=['MAE', 'MSE', 'RMSE', 'RelMSE'])
-parser.add_argument("--file", type=str, default='1000N31', help='Example: --file 2000N31') # 2^5-1, 2^6-1
-parser.add_argument("--forcing", type=str, default='normal', choices=['normal', 'uniform'])
-parser.add_argument("--epochs", type=int, default=20)
+parser.add_argument("--file", type=str, default='10000N31', help='Example: --file 2000N31') # 2^5-1, 2^6-1
+parser.add_argument("--forcing", type=str, default='uniform', choices=['normal', 'uniform'])
+parser.add_argument("--epochs", type=int, default=50000)
 parser.add_argument("--ks", type=int, default=5, choices=[3, 5, 7, 9, 11, 13, 15, 17])
 parser.add_argument("--filters", type=int, default=32, choices=[8, 16, 32, 64])
-parser.add_argument("--nbfuncs", type=int, default=3, choices=[1, 2, 3])
+parser.add_argument("--nbfuncs", type=int, default=2, choices=[1, 2, 3])
 parser.add_argument("--A", type=float, default=0)
 parser.add_argument("--F", type=float, default=0)
 parser.add_argument("--U", type=float, default=1)
 parser.add_argument("--WF", type=float, default=1)
 parser.add_argument("--sd", type=float, default=1)
-parser.add_argument("--transfer", type=str, default=None)
+parser.add_argument("--pretrained", type=str, default=None)
 
 args = parser.parse_args()
 gparams = args.__dict__
@@ -93,10 +93,10 @@ gparams['epsilon'] = EPSILON
 # CREATE PATHING
 if os.path.isdir(PATH) == False: os.makedirs(PATH); os.makedirs(os.path.join(PATH, 'pics'))
 elif os.path.isdir(PATH) == True:
-	if args.transfer is None:
+	if args.pretrained is None:
 		print("\n\nPATH ALREADY EXISTS!\n\nEXITING\n\n")
 		exit()
-	elif args.transfer is not None:
+	else:
 		print("\n\nPATH ALREADY EXISTS!\n\nLOADING MODEL\n\n")
 
 # CREATE BASIS VECTORS
@@ -120,12 +120,11 @@ trainloader = torch.utils.data.DataLoader(lg_dataset, batch_size=BATCH_SIZE, shu
 lg_dataset = get_data(gparams, kind='validate', transform_f=transform_f)
 validateloader = torch.utils.data.DataLoader(lg_dataset, batch_size=BATCH_SIZE, shuffle=True)
 
-if args.model == 'FC':
-	model = MODEL(D_in, Filters, D_out - 2, layers=BLOCKS, activation='relu')
-else:
-	model = MODEL(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING, blocks=BLOCKS)
-if args.transfer is not None:
-	model.load_state_dict(torch.load(f'./{args.transfer}.pt'))
+
+model = MODEL(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING, blocks=BLOCKS)
+if args.pretrained is not None:
+	args.pretrained = 'N' + args.file.split('N')[-1] + '_' + args.model + '_' + args.forcing
+	model.load_state_dict(torch.load(f'./pretrained/{args.pretrained}.pt'), strict=False)
 	model.train()	
 
 # Check if CUDA is available and then use it.
@@ -134,9 +133,9 @@ gparams['device'] = device
 
 # SEND TO GPU (or CPU)
 model.to(device)
-
+print(model)
 #KAIMING HE INIT
-if args.transfer is None and args.model != 'NetB':
+if args.preterained is None and args.model != 'NetB':
 	model.apply(weights_init)
 elif args.model == 'NetB':
 	model.apply(weights_xavier)
@@ -167,7 +166,8 @@ BEST_LOSS = float('inf')
 losses = {
 		  'loss_a':[],
 		  'loss_u':[], 
-		  'loss_f': [], 
+		  'loss_f': [],
+		  # 'loss_wf': {}, 
 		  'loss_wf1':[],
 		  'loss_wf2':[],
 		  'loss_wf3':[],
@@ -198,32 +198,34 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			# 	loss_a = A*criterion_a(a_pred, a)
 			# else:
 			loss_a = 0
-			if U != 0:
-				u_pred = reconstruct(a_pred, phi)
-				loss_u = U*criterion_u(u_pred, u)
-			else:
-				u_pred, loss_u = None, 0
+			# if U != 0:
+			# 	u_pred = reconstruct(a_pred, phi)
+			# 	loss_u = U*criterion_u(u_pred, u)
+			# else:
+			# 	u_pred, loss_u = None, 0
+			u_pred = reconstruct(a_pred, phi)
+			loss_u = U*criterion_u(u_pred, u)
 			# if F != 0:
 			# 	f_pred = ODE2(EPSILON, u_pred, a_pred, phi_x, phi_xx, equation=EQUATION)
 			# 	loss_f = F*criterion_f(f_pred, f)
 			# else:
 			f_pred, loss_f = None, 0
-			if WF != 0 and EQUATION != 'BurgersT':
-				LHS, RHS = weak_form2(EPSILON, SHAPE, f, u_pred, a_pred, lepolys, phi, phi_x, equation=EQUATION, nbfuncs=NBFUNCS)
-				# print("Nbfuncs:", NBFUNCS, "\nLHS:", LHS.shape, "\nRHS:",  RHS.shape)
-				"""
-					for i in range(nbfuncs):
-						LHS, RHS = weak_form2(EPSILON, SHAPE, f, u_pred, a_pred, lepolys, phi, phi_x, equation=EQUATION, nbfuncs=NBFUNCS, index=i)
-						loss_wf[i] = (LHS, RHS)
-					# for k,v in loss_wf.items():
-					# 	loss_wf += criterion_wf(v[0], v[1])
-				"""
-				if NBFUNCS == 1:
-					loss_wf1, loss_wf2, loss_wf3 = WF*criterion_wf(LHS, RHS), 0, 0
-				elif NBFUNCS == 2:
-					loss_wf1, loss_wf2, loss_wf3 = WF*criterion_wf(LHS[:,0,0], RHS[:,0,0]), WF*criterion_wf(LHS[:,1,0], RHS[:,1,0]), 0
-				elif NBFUNCS == 3:
-					loss_wf1, loss_wf2, loss_wf3 = WF*criterion_wf(LHS[:,0,0], RHS[:,0,0]), WF*criterion_wf(LHS[:,1,0], RHS[:,1,0]), WF*criterion_wf(LHS[:,2,0], RHS[:,2,0])
+			# if WF != 0 and EQUATION != 'BurgersT':
+			LHS, RHS = weak_form2(EPSILON, SHAPE, f, u_pred, a_pred, lepolys, phi, phi_x, equation=EQUATION, nbfuncs=NBFUNCS)
+			# print("Nbfuncs:", NBFUNCS, "\nLHS:", LHS.shape, "\nRHS:",  RHS.shape)
+			"""
+				for i in range(nbfuncs):
+					LHS, RHS = weak_form2(EPSILON, SHAPE, f, u_pred, a_pred, lepolys, phi, phi_x, equation=EQUATION, nbfuncs=NBFUNCS, index=i)
+					loss_wf[i] = (LHS, RHS)
+				# for k,v in loss_wf.items():
+				# 	loss_wf += criterion_wf(v[0], v[1])
+			"""
+			if NBFUNCS == 1:
+				loss_wf1, loss_wf2, loss_wf3 = WF*criterion_wf(LHS, RHS), 0, 0
+			elif NBFUNCS == 2:
+				loss_wf1, loss_wf2, loss_wf3 = WF*criterion_wf(LHS[:,0,0], RHS[:,0,0]), WF*criterion_wf(LHS[:,1,0], RHS[:,1,0]), 0
+			elif NBFUNCS == 3:
+				loss_wf1, loss_wf2, loss_wf3 = WF*criterion_wf(LHS[:,0,0], RHS[:,0,0]), WF*criterion_wf(LHS[:,1,0], RHS[:,1,0]), WF*criterion_wf(LHS[:,2,0], RHS[:,2,0])
 			else:
 				loss_wf1, loss_wf2, loss_wf3 = 0, 0, 0
 			# NET LOSS
@@ -234,25 +236,25 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 
 		a_pred, u_pred, f_pred, loss_a, loss_u, loss_f, loss_wf1, loss_wf2, loss_wf3, loss = closure(a, f, u, fn)
 		optimizer.step(loss.item)
-		if loss_a != 0:
-			loss_a += np.round(float(loss_a.to('cpu').detach()), 12) #.item()
+		# if loss_a != 0:
+		# 	loss_a += np.round(float(loss_a.item()), 12) #.item()
 		if loss_u != 0:
-			loss_u += np.round(float(loss_u.to('cpu').detach()), 12)
-		if loss_f != 0:
-			loss_f += np.round(float(loss_f.to('cpu').detach()), 12)
+			loss_u += np.round(float(loss_u.item()), 12)
+		# if loss_f != 0:
+		# 	loss_f += np.round(float(loss_f.item()), 12)
 		if loss_wf1 != 0:
-			loss_wf1 += np.round(float(loss_wf1.to('cpu').detach()), 12)
+			loss_wf1 += np.round(float(loss_wf1.item()), 12)
 		else:
 			loss_wf1 += 0
 		if loss_wf2 > 0:
-			loss_wf2 += np.round(float(loss_wf2.to('cpu').detach()), 12)
+			loss_wf2 += np.round(float(loss_wf2.item()), 12)
 		else:
 			loss_wf2 += 0	
 		if loss_wf3 > 0:
-			loss_wf3 += np.round(float(loss_wf3.to('cpu').detach()), 12)
+			loss_wf3 += np.round(float(loss_wf3.item()), 12)
 		else:
 			loss_wf3 += 0
-		loss_train += np.round(float(loss.to('cpu').detach()), 12)
+		loss_train += np.round(float(loss.item()), 12)
 
 	if np.isnan(loss_train):
 		try:
@@ -278,6 +280,7 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 
 		if int(.05*EPOCHS) > 0 and EPOCHS > 10 and epoch % int(.05*EPOCHS) == 0:
 			try:
+				# pprint(losses)
 				df = pd.DataFrame(losses)
 				df.to_csv(PATH + '/losses.csv')
 				del df

@@ -13,7 +13,7 @@ def record_path(path):
 		f.write(entry)
 
 
-def log_loss(losses, loss_a, loss_u, loss_f, loss_wf1, loss_wf2, loss_wf3, loss_train, loss_validate, dataset, avg_l2_u):
+def log_loss(losses, loss_a, loss_u, loss_f, loss_wf1, loss_wf2, loss_wf3,  loss_train, loss_validate, dataset, avg_l2_u): #loss_wf1, loss_wf2, loss_wf3, 
 	if type(loss_a) == int:
 		losses['loss_a'].append(loss_a/dataset)
 	else:

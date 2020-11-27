@@ -131,6 +131,43 @@ def ODE2(eps, u, alphas, phi_x, phi_xx, equation):
 		return uxx + ku*u
 
 
+def weak_form(eps, N, f, u, alphas, lepolys, phi, phi_x, equation, nbfuncs, index=0):
+	B, i, j = u.shape
+	N -= 1
+	LHS = torch.zeros((B, 1, 1)).to(device).float()
+	RHS = torch.zeros((B, 1, 1)).to(device).float()
+	phi = torch.transpose(phi, 0, 1)
+	denom = torch.square(torch.from_numpy(lepolys[N]).to(device).float())
+	denom = torch.transpose(denom, 0, 1)
+	diffusion = 6*eps*alphas[:,:,index]
+	if equation == 'Standard':
+		u_x = reconstruct(alphas, phi_x)
+		ux_phi = u_x*phi[:,index]
+		convection = torch.sum(ux_phi*2/(N*(N+1))/denom, axis=2)
+		LHS[:,0] = diffusion - convection
+		RHS[:,0] = torch.sum(2*f*phi[:,index]/(N*(N+1))/denom, axis=2)
+	elif equation == 'Burgers':
+		phi_x = torch.transpose(phi_x, 0, 1)
+		convection = torch.sum(u**2*phi_x[:,index]/(N*(N+1))/denom, axis=2)
+		LHS[:,0] = diffusion - convection
+		RHS[:,0] = torch.sum(2*f*phi[:,index]/(N*(N+1))/denom, axis=2)
+	elif equation == 'Helmholtz':
+		ku = 3.5
+		x = legslbndm(N+1)
+		D_ = torch.from_numpy(legslbdiff(N+1, x)).to(device).float()
+		D = torch.zeros((B, N+1, N+1)).to(device).float()
+		D[:,:,:] = D_
+		phi_x = torch.transpose(phi_x, 0, 1)
+		u_ = torch.transpose(u, 1, 2)
+		temp = torch.bmm(D,u_)
+		temp = torch.transpose(temp, 1, 2)
+		diffusion = torch.sum(2*temp*phi_x[:,index]/(N*(N+1))/denom, axis=2)
+		reaction = ku*torch.sum(2*u*phi[:,index]/(N*(N+1))/denom, axis=2)
+		LHS[:,0] = -diffusion + reaction 
+		RHS[:,0] = torch.sum(2*f*phi[:,index]/(N*(N+1))/denom, axis=2)
+	return LHS, RHS
+
+
 def weak_form1(eps, N, f, u, alphas, lepolys, phi, phi_x):
 	denom = torch.square(torch.from_numpy(lepolys[N-1]).to(device).float())
 	u_x = reconstruct(alphas, phi_x)

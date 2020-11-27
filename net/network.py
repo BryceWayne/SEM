@@ -58,7 +58,7 @@ def conv1d(in_planes, out_planes, stride=1, bias=True, kernel_size=5, padding=2,
 
 class Linear(nn.Module):
     def __init__(self, d_in, filters, d_out, kernel_size=5, padding=2, blocks=0):
-        super(ResNet, self).__init__()
+        super(Linear, self).__init__()
         self.d_in = d_in
         self.d_out = d_out
         self.blocks = blocks
@@ -225,9 +225,11 @@ class NetD(nn.Module) :
         self.kern = kernel_size
         self.pad = padding
         self.conv1 = conv1d(d_in, filters, kernel_size=self.kern, padding=1)
+        # self.pool = nn.AdaptiveMaxPool1d(1)
         self.convH = conv1d(filters, filters, kernel_size=self.kern, padding=0)
         self.dim = d_in*(d_out - 4*(self.blocks + 1))*filters
         self.fcH = nn.Linear(self.dim, self.d_out, bias=True)
+        # self.fcH = nn.Linear(32, self.d_out, bias=True)        
     def forward(self, x):
         if self.activation == 'relu':
             m = self.relu
@@ -242,7 +244,9 @@ class NetD(nn.Module) :
                 out = m(self.convH(out))
 
         out = self.convH(out)
+        # out = self.pool(out)
         out = out.flatten(start_dim=1)
+        # print(out.shape)
         out = self.fcH(out)
         out = out.view(out.shape[0], 1, self.d_out)
         return out
