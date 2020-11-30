@@ -146,14 +146,14 @@ optimizer = init_optim(model)
 # Construct our loss function and an Optimizer.
 LOSS_TYPE = args.loss
 if args.loss == 'MAE':
-	criterion_a, criterion_u = torch.nn.L1Loss(), torch.nn.L1Loss()
+	criterion_a, criterion_u, criterion_wf = torch.nn.L1Loss(), torch.nn.L1Loss(), torch.nn.L1Loss()
 elif args.loss == 'MSE':
-	criterion_a, criterion_u = torch.nn.MSELoss(reduction="sum"), torch.nn.MSELoss(reduction="sum")
+	criterion_a, criterion_u, criterion_wf = torch.nn.MSELoss(reduction="sum"), torch.nn.MSELoss(reduction="sum"), torch.nn.MSELoss(reduction="sum")
 elif args.loss == 'RMSE':
-	criterion_a, criterion_u = RMSELoss(), RMSELoss()
+	criterion_a, criterion_u, criterion_wf = RMSELoss(), RMSELoss(), RMSELoss()
 elif args.loss == 'RelMSE':
-	criterion_a, criterion_u = RelMSELoss(batch=BATCH_SIZE), RelMSELoss(batch=BATCH_SIZE)
-criterion_wf = torch.nn.MSELoss(reduction="sum")
+	criterion_a, criterion_u, criterion_wf = RelMSELoss(batch=BATCH_SIZE), RelMSELoss(batch=BATCH_SIZE), RelMSELoss(batch=BATCH_SIZE)
+# criterion_wf = torch.nn.MSELoss(reduction="sum")
 criterion_f = torch.nn.L1Loss()
 
 criterion = {
