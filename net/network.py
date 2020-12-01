@@ -287,18 +287,20 @@ def conv2d(in_planes, out_planes, stride=1, bias=True, kernel_size=5, padding=2,
 
 class Net2D(nn.Module) :
     def __init__(self, d_in, filters, d_out, kernel_size=7, padding=3, blocks=0) :
-        super(Net2D,self).__init__()
+        super(Net2D, self).__init__()
         self.d_in = d_in
         self.blocks = blocks
         self.filters = filters
         self.d_out = d_out
+        self.swish = swish
         self.kern = kernel_size
         self.pad = padding
-        self.conv1 = conv2d(d_in, filters, kernel_size=self.kern, padding=self.pad)
-        self.convH = conv2d(filters, filters, kernel_size=self.kern, padding=self.pad)
+        self.conv1 = conv1d(d_in, filters, kernel_size=self.kern, padding=self.pad)
+        self.convH = conv1d(filters, filters, kernel_size=self.kern, padding=self.pad)
         self.fcH = nn.Linear(filters*(self.d_out + 2), self.d_out, bias=True)
+
     def forward(self, x):
-        m = nn.Sigmoid()
+        m = self.swish
         out = m(self.conv1(x))
         if self.blocks != 0:
             for block in range(self.blocks):
@@ -306,5 +308,5 @@ class Net2D(nn.Module) :
         out = self.convH(out)
         out = out.flatten(start_dim=1)
         out = self.fcH(out)
-        out = out.view(out.shape[0], self.d_in, self.d_out)
+        out = out.view(out.shape[0], 2, self.d_out)
         return out

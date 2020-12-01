@@ -30,11 +30,11 @@ torch.cuda.empty_cache()
 # ARGS
 # python training.py --equation Burgers --model NetC --blocks 4 --file 10000N63 --forcing uniform --epochs 50000
 parser = argparse.ArgumentParser("SEM")
-parser.add_argument("--equation", type=str, default='Burgers', choices=['Standard', 'Burgers', 'Helmholtz']) #, 'BurgersT' 
-parser.add_argument("--model", type=str, default='NetC', choices=['ResNet', 'NetA', 'NetB', 'NetC', 'NetD']) # , 'Net2D' 
+parser.add_argument("--equation", type=str, default='Standard2D', choices=['Standard', 'Burgers', 'Helmholtz', 'Standard2D']) #, 'BurgersT' 
+parser.add_argument("--model", type=str, default='Net2D', choices=['ResNet', 'NetA', 'NetB', 'NetC', 'NetD', 'Net2D']) 
 parser.add_argument("--blocks", type=int, default=5)
 parser.add_argument("--loss", type=str, default='MSE', choices=['MAE', 'MSE', 'RMSE', 'RelMSE'])
-parser.add_argument("--file", type=str, default='10000N31', help='Example: --file 2000N31') # 2^5-1, 2^6-1
+parser.add_argument("--file", type=str, default='1000N15', help='Example: --file 2000N31') # 2^5-1, 2^6-1
 parser.add_argument("--forcing", type=str, default='uniform', choices=['normal', 'uniform'])
 parser.add_argument("--epochs", type=int, default=50)
 parser.add_argument("--ks", type=int, default=5, choices=[3, 5, 7, 9, 11, 13, 15, 17])
@@ -54,6 +54,7 @@ pprint(gparams)
 EQUATION = args.equation
 epsilons = {
 			'Standard': 1E-1,
+			'Standard2D': 1,
 			'Burgers': 5E-1,
 			'BurgersT': 1,
 			'Helmholtz': 0,
@@ -125,7 +126,7 @@ model = MODEL(D_in, Filters, D_out - 2, kernel_size=KERNEL_SIZE, padding=PADDING
 if args.pretrained is not None:
 	args.pretrained = 'N' + args.file.split('N')[-1] + '_' + args.equation + '_' + args.forcing
 	model.load_state_dict(torch.load(f'./pretrained/{args.pretrained}.pt'), strict=False)
-	model.train()	
+	model.train()
 
 # Check if CUDA is available and then use it.
 device = get_device()

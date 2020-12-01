@@ -23,7 +23,7 @@ def gen_lepolys(N, x):
 
 def basis(N, lepolys, equation):
 	phi = torch.zeros((N-2,N))
-	if equation == 'Standard':
+	if equation in ('Standard', 'Standard2D'):
 		a, b = np.zeros((N,)), np.ones((N,))
 		b *= -1
 	elif equation in ('Burgers', 'BurgersT'):
@@ -53,7 +53,7 @@ def dx(N, x, lepolys):
 
 def basis_x(N, phi, Dx, equation):
 	phi_x = phi.clone()
-	if equation == 'Standard':
+	if equation in ('Standard', 'Standard2D'):
 		a, b = np.zeros((N,)), np.ones((N,))
 		b *= -1
 	elif equation in ('Burgers', 'BurgersT'):
@@ -83,7 +83,7 @@ def dxx(N, x, lepolys):
 
 def basis_xx(N, phi, Dxx, equation):
 	phi_xx = phi.clone()
-	if equation == 'Standard':
+	if equation in ('Standard', 'Standard2D'):
 		a, b = np.zeros((N,)), np.ones((N,))
 		b *= -1
 	elif equation in ('Burgers', 'BurgersT'):

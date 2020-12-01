@@ -79,8 +79,6 @@ def validate(gparams, model, optim, criterion, lepolys, phi, phi_x, phi_xx, vali
 					loss_wf1, loss_wf2, loss_wf3 = WF*criterion_wf(LHS[:,0,0], RHS[:,0,0]), WF*criterion_wf(LHS[:,1,0], RHS[:,1,0]), WF*criterion_wf(LHS[:,2,0], RHS[:,2,0])
 				else:
 					loss_wf1, loss_wf2, loss_wf3 = 0, 0, 0
-				else:
-					loss_wf = 0
 			loss = loss_a + loss_u + loss_f + loss_wf1 + loss_wf2 + loss_wf3
 
 			# a_pred = a_pred.to('cpu').detach().numpy()
