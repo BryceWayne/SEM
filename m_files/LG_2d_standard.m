@@ -15,7 +15,6 @@ D = legslbdiff(N+1,x);
 y = x;
 
 
-
 % Set up grids and tensor product Laplacian, and solve for u:
 [x1,y1] = meshgrid(x,y);
 [xx,yy] = meshgrid(x(2:N),y(2:N));

@@ -32,9 +32,9 @@ torch.cuda.empty_cache()
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--equation", type=str, default='Standard2D', choices=['Standard', 'Burgers', 'Helmholtz', 'Standard2D']) #, 'BurgersT' 
 parser.add_argument("--model", type=str, default='Net2D', choices=['ResNet', 'NetA', 'NetB', 'NetC', 'NetD', 'Net2D']) 
-parser.add_argument("--blocks", type=int, default=5)
+parser.add_argument("--blocks", type=int, default=0)
 parser.add_argument("--loss", type=str, default='MSE', choices=['MAE', 'MSE', 'RMSE', 'RelMSE'])
-parser.add_argument("--file", type=str, default='1000N15', help='Example: --file 2000N31') # 2^5-1, 2^6-1
+parser.add_argument("--file", type=str, default='100N15', help='Example: --file 2000N31') # 2^5-1, 2^6-1
 parser.add_argument("--forcing", type=str, default='uniform', choices=['normal', 'uniform'])
 parser.add_argument("--epochs", type=int, default=50)
 parser.add_argument("--ks", type=int, default=5, choices=[3, 5, 7, 9, 11, 13, 15, 17])
@@ -43,7 +43,7 @@ parser.add_argument("--nbfuncs", type=int, default=1, choices=[1, 2, 3])
 parser.add_argument("--A", type=float, default=0)
 parser.add_argument("--F", type=float, default=0)
 parser.add_argument("--U", type=float, default=1)
-parser.add_argument("--WF", type=float, default=1)
+parser.add_argument("--WF", type=float, default=0)
 parser.add_argument("--sd", type=float, default=1)
 parser.add_argument("--pretrained", type=str, default=None)
 
@@ -103,7 +103,7 @@ elif os.path.isdir(PATH) == True:
 # CREATE BASIS VECTORS
 xx, lepolys, lepoly_x, lepoly_xx, phi, phi_x, phi_xx = basis_vectors(D_out, equation=EQUATION)
 
-if args.model != 'ResNet':
+if args.model != 'ResNet' and args.model != 'Net2D':
 	# NORMALIZE DATASET
 	NORM = True
 	gparams['norm'] = True

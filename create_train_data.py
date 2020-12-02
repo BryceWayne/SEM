@@ -14,11 +14,11 @@ from multiprocessing import Pool # TODO
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--equation", type=str, default='Standard2D', choices=['Standard', 'Standard2D', 'Burgers', 'Helmholtz', 'BurgersT'])
 parser.add_argument("--size", type=int, default=1) # BEFORE N
-parser.add_argument("--N", type=int, default=63, choices=[int(2**i-1) for i in [4, 5, 6, 7, 8]]) 
+parser.add_argument("--N", type=int, default=31, choices=[int(2**i-1) for i in [4, 5, 6, 7, 8]]) 
 parser.add_argument("--eps", type=float, default=1)
 parser.add_argument("--kind", type=str, default='train', choices=['train', 'validate'])
 parser.add_argument("--sd", type=float, default=1)
-parser.add_argument("--forcing", type=str, default='uniform', choices=['normal', 'uniform'])
+parser.add_argument("--forcing", type=str, default='normal', choices=['normal', 'uniform'])
 parser.add_argument("--rand_eps", type=bool, default=False)
 args = parser.parse_args()
 
@@ -31,15 +31,6 @@ eps_flag = args.rand_eps
 kind = args.kind
 sd = args.sd
 forcing = args.forcing
-
-
-def save_obj(data, name, equation, kind):
-	cwd = os.getcwd()
-	path = os.path.join(cwd,'data', equation, kind)
-	if os.path.isdir(path) == False:
-		os.makedirs(f'data/{equation}/{kind}')
-	with open(f'data/{equation}/{kind}/'+ name + '.pkl', 'wb') as f:
-		pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
 
 
 def gen_lepolys(N, x):
@@ -73,10 +64,12 @@ def func2D(x, y, equation, sd, forcing):
 		w = np.random.rand(4)*(np.pi/2)
 	elif forcing == 'normal':
 		m = np.random.normal(0, sd, 2)
+
 		w = np.random.normal(0, sd, 4)*(np.pi/2)
 
-	w *= 2
+	# w = 2
 	f = m[0]*np.cos(w[0]*x + w[1]*y) + m[1]*np.sin(w[2]*x + w[3]*y)
+	# f = np.sin(x + y)
 	m = np.array([m[0], m[1], w[0], w[1], w[2], w[3]])
 	return f, m
 
@@ -128,12 +121,20 @@ def standard(x, D, a, b, lepolys, epsilon, equation, sd, forcing, f, params, s_d
 
 
 def standard2D(x, D, a, b, lepolys, lepolysx, epsilon, equation, sd, forcing, f, params, s_diag):
-	D2 = D**2
+	D2 = D@D
 	D2 = D2[1:-1, 1:-1]
 	I = np.eye(x.shape[0]-2)
 	L = np.kron(I, D2) + np.kron(D2, I)
+	# print(f)
 	f_ = f[1:-1, 1:-1]
-	u = np.linalg.solve(-L, f_.ravel())
+	f_ = f_.reshape(-1)
+	# print(*f_, sep='\n')
+	# print(D)
+	# print(L)
+	# print('\n')
+	u = np.linalg.solve(-L, f_)
+
+	# print(*u, sep='\n')
 	x1, y1 = np.meshgrid(x, x)
 	xx, yy = np.meshgrid(x[1:-1], x[1:-1])
 	uu = np.zeros_like(x1)
@@ -146,36 +147,41 @@ def standard2D(x, D, a, b, lepolys, lepolysx, epsilon, equation, sd, forcing, f,
 	fx = np.zeros_like(x)
 
 	lhs, rhs = 10*[0], 10*[0]
-	m = 1
-	for l in range(m+1):
-	    for j in range(m+1):
+	m = 2
+	for l in range(3):
+	    for j in range(3):
 	        
 	        phi1 = lepolys[l] - lepolys[l+2]
 	        phi1_x = lepolysx[l] - lepolysx[l+2]
 	        
 	        phi2 = lepolys[j] - lepolys[j+2]
-	        phi2_x = lepolysx[j] - lepolysx[j+2]
+	        phi2_y = lepolysx[j] - lepolysx[j+2]
 	        
 	        
 	        for i in range(N+1):
-	            u_x[i, :] = D@uu[i, :].T
+	            u_x[i, :] = D@(uu[i, :].T)
 	            u_y[:, i] = D@uu[:, i]
 	            
 	            ux[i] = np.sum(u_x[i, :].T*(phi1_x)*2/(N*(N+1))/(lepolys[N]**2))
-	            uy[i] = np.sum(u_y[:, i]*(phi2_x)*2/(N*(N+1))/(lepolys[N]**2))
+	            uy[i] = np.sum(u_y[:, i]*(phi2_y)*2/(N*(N+1))/(lepolys[N]**2))
 	            
-	            fx[i] = np.sum(f[i,:].T*(phi1)*2/(N*(N+1))/(lepolys[N]**2))
+	            fx[i] = np.sum(f[i, :].T*(phi1)*2/(N*(N+1))/(lepolys[N]**2))
+	        	
 	        
-	        
-	        lhs[(m+1)*l+j] = np.sum(ux.T*phi2*2/(N*(N+1))/(lepolys[N]**2)) + np.sum(uy.T*phi1*2/(N*(N+1))/(lepolys[N]**2))
+	        lhs[(m+1)*l+j] = np.sum(ux.T*phi2*2/(N*(N+1))/(lepolys[N]**2))
+	        lhs[(m+1)*l+j] += np.sum(uy.T*phi1*2/(N*(N+1))/(lepolys[N]**2))
 	        rhs[(m+1)*l+j] = np.sum(fx.T*phi2*2/(N*(N+1))/(lepolys[N]**2))
 
+	# print(phi1)
+	# print("FX:", *fx, sep='\n')
 	lhs = np.array(lhs)
+	# print("LHS:", *lhs, sep='\n')
 	rhs = np.array(rhs)
+	# print("RHS:", *rhs, sep='\n')
 	err = lhs - rhs
-	# print(err)
+	# print(*err, sep='\n')
 	alphas = 0
-	return u, f, alphas, params
+	return uu, f, alphas, params
 
 
 def burgers(x, D, a, b, lepolys, epsilon, equation, sd, forcing, f, params, s_diag):
@@ -313,7 +319,7 @@ def generate(x, D, a, b, lepolys, epsilon, equation, sd, forcing):
 		u, f, alphas, params = standard(x, D, a, b, lepolys, epsilon, equation, sd, forcing, f, params, s_diag)
 	elif equation == 'Standard2D':
 		u, f, alphas, params = standard2D(x, D, a, b, lepolys, lepolysx, epsilon, equation, sd, forcing, f, params, s_diag)
-		# plot3D(x, u)
+		plot3D(u)
 	elif equation == 'Burgers':
 		u, f, alphas, params = burgers(x, D, a, b, lepolys, epsilon, equation, sd, forcing, f, params, s_diag)
 	elif equation == 'BurgersT':
@@ -323,19 +329,21 @@ def generate(x, D, a, b, lepolys, epsilon, equation, sd, forcing):
 	return u, f, alphas, params
 
 
-def plot3D(x, u):
+def plot3D(u):
 	# This import registers the 3D projection, but is otherwise unused.
 	from mpl_toolkits.mplot3d import Axes3D  # noqa: F401 unused import
 	import matplotlib.pyplot as plt
 	from matplotlib import cm
 	from matplotlib.ticker import LinearLocator, FormatStrFormatter
 	
-	u = np.reshape(u, (N-1, N-1))
-	fig = plt.figure()
+	# u = np.reshape(u, (N-1, N-1))
+	fig = plt.figure(figsize=(10,6))
 	ax = fig.gca(projection='3d')
 	X, Y = np.meshgrid(x, x)
-	Z = 0*X.copy()
-	Z[1:-1,1:-1] = u
+	# Z = 0*X.copy()
+	# Z[1:-1,1:-1] = u
+	Z = u
+	# print(u[0,:])
 	# Plot the surface.
 	surf = ax.plot_surface(X, Y, Z, cmap=cm.coolwarm,
 	                       linewidth=0, antialiased=False)
@@ -416,6 +424,17 @@ if equation == 'Standard2D':
 
 data = create_fast(N, epsilon, size, eps_flag, equation, sd, forcing)
 data = np.array(data, dtype=object)
+
+
+
+def save_obj(data, name, equation, kind):
+	cwd = os.getcwd()
+	path = os.path.join(cwd,'data', equation, kind)
+	if os.path.isdir(path) == False:
+		os.makedirs(f'data/{equation}/{kind}')
+	with open(f'data/{equation}/{kind}/'+ name + '.pkl', 'wb') as f:
+		pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
+
 
 if forcing == 'normal':
 	save_obj(data, f'{size}N{N}sd{sd}', equation, kind)
