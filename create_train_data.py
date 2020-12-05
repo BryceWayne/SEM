@@ -9,11 +9,11 @@ import matplotlib.pyplot as plt
 from pprint import pprint
 from mpl_toolkits import mplot3d 
 from reconstruct import dx
-from multiprocessing import Pool # TODO	
+from pprint import pprint
 
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--equation", type=str, default='Standard2D', choices=['Standard', 'Standard2D', 'Burgers', 'Helmholtz', 'BurgersT'])
-parser.add_argument("--size", type=int, default=1) # BEFORE N
+parser.add_argument("--size", type=int, default=1000) # BEFORE N
 parser.add_argument("--N", type=int, default=31, choices=[int(2**i-1) for i in [4, 5, 6, 7, 8]]) 
 parser.add_argument("--eps", type=float, default=1)
 parser.add_argument("--kind", type=str, default='train', choices=['train', 'validate'])
@@ -35,15 +35,22 @@ forcing = args.forcing
 
 def gen_lepolys(N, x):
 	lepolys = {}
-	for i in range(N+3):
+	for i in range(N+1):
 		lepolys[i] = sem.lepoly(i, x)
 	return lepolys
 
-def gen_lepolysx(N, x, D):
-	lepolysx = {}
-	for i in range(N+3):
-		lepolysx[i] = D@sem.lepoly(i, x)
-	return lepolysx
+def gen_lepolysx(N, x, lepolys):
+	def gen_diff_lepoly(N, n, x, lepolys):
+		lepoly_x = np.zeros((N, 1))
+		for i in range(n):
+			if ((i+n) % 2) != 0:
+				lepoly_x += (2*i+1)*lepolys[i]
+		return lepoly_x
+	Dx = {}
+	for i in range(N+1):
+		temp = gen_diff_lepoly(N+1, i, x, lepolys)
+		Dx[i] = temp.reshape(1, N+1)
+	return Dx
 
 
 def func(x, equation, sd, forcing):
@@ -64,7 +71,6 @@ def func2D(x, y, equation, sd, forcing):
 		w = np.random.rand(4)*(np.pi/2)
 	elif forcing == 'normal':
 		m = np.random.normal(0, sd, 2)
-
 		w = np.random.normal(0, sd, 4)*(np.pi/2)
 
 	# w = 2
@@ -123,63 +129,55 @@ def standard(x, D, a, b, lepolys, epsilon, equation, sd, forcing, f, params, s_d
 def standard2D(x, D, a, b, lepolys, lepolysx, epsilon, equation, sd, forcing, f, params, s_diag):
 	D2 = D@D
 	D2 = D2[1:-1, 1:-1]
+
 	I = np.eye(x.shape[0]-2)
+
 	L = np.kron(I, D2) + np.kron(D2, I)
-	# print(f)
+	
 	f_ = f[1:-1, 1:-1]
 	f_ = f_.reshape(-1)
-	# print(*f_, sep='\n')
-	# print(D)
-	# print(L)
-	# print('\n')
+	
 	u = np.linalg.solve(-L, f_)
-
-	# print(*u, sep='\n')
+	
 	x1, y1 = np.meshgrid(x, x)
 	xx, yy = np.meshgrid(x[1:-1], x[1:-1])
 	uu = np.zeros_like(x1)
 
 	uu[1:-1, 1:-1] = np.reshape(u, (x.shape[0]-2, x.shape[0]-2))
+	
 	ux = np.zeros_like(x)
 	uy = ux.copy()
 	u_x = np.zeros_like(uu)
 	u_y = u_x.copy()
 	fx = np.zeros_like(x)
 
-	lhs, rhs = 10*[0], 10*[0]
-	m = 2
-	for l in range(3):
-	    for j in range(3):
-	        
-	        phi1 = lepolys[l] - lepolys[l+2]
-	        phi1_x = lepolysx[l] - lepolysx[l+2]
-	        
-	        phi2 = lepolys[j] - lepolys[j+2]
-	        phi2_y = lepolysx[j] - lepolysx[j+2]
-	        
-	        
-	        for i in range(N+1):
-	            u_x[i, :] = D@(uu[i, :].T)
-	            u_y[:, i] = D@uu[:, i]
-	            
-	            ux[i] = np.sum(u_x[i, :].T*(phi1_x)*2/(N*(N+1))/(lepolys[N]**2))
-	            uy[i] = np.sum(u_y[:, i]*(phi2_y)*2/(N*(N+1))/(lepolys[N]**2))
-	            
-	            fx[i] = np.sum(f[i, :].T*(phi1)*2/(N*(N+1))/(lepolys[N]**2))
-	        	
-	        
-	        lhs[(m+1)*l+j] = np.sum(ux.T*phi2*2/(N*(N+1))/(lepolys[N]**2))
-	        lhs[(m+1)*l+j] += np.sum(uy.T*phi1*2/(N*(N+1))/(lepolys[N]**2))
-	        rhs[(m+1)*l+j] = np.sum(fx.T*phi2*2/(N*(N+1))/(lepolys[N]**2))
+	m = 3
+	size = m*m
+	lhs, rhs = size*[0], size*[0]
 
-	# print(phi1)
-	# print("FX:", *fx, sep='\n')
+	for l in range(m):
+		for j in range(m):
+			phi1 = lepolys[l] - lepolys[l+2]
+			phi1_x = lepolysx[l] - lepolysx[l+2]
+			phi1 = phi1.T[0]
+			phi1_x = phi1_x[0]
+			phi2 = lepolys[j] - lepolys[j+2]
+			phi2_y = lepolysx[j] - lepolysx[j+2]
+			phi2 = phi2.T[0]
+			phi2_y = phi2_y[0]
+			for i in range(N+1):
+				u_x[i, :] = D@uu[i, :]
+				u_y[:, i] = D@uu[:, i]
+				ux[i] = np.sum(np.diag(u_x[i, :]*(phi1_x)*2/(N*(N+1))/((lepolys[N].T[0])**2)))
+				uy[i] = np.sum(np.diag(u_y[:, i]*(phi2_y)*2/(N*(N+1))/((lepolys[N].T[0])**2)))
+				fx[i] = np.sum(np.diag(f[i, :]*(phi1)*2/(N*(N+1))/((lepolys[N].T[0])**2)))
+
+			lhs[m*l+j] = np.sum(ux.T[0]*phi2*2/(N*(N+1))/((lepolys[N].T[0])**2)) + np.sum(uy.T[0]*phi1*2/(N*(N+1))/((lepolys[N].T[0])**2))
+			rhs[m*l+j] = np.sum(fx.T[0]*phi2*2/(N*(N+1))/((lepolys[N].T[0])**2))
+
 	lhs = np.array(lhs)
-	# print("LHS:", *lhs, sep='\n')
 	rhs = np.array(rhs)
-	# print("RHS:", *rhs, sep='\n')
 	err = lhs - rhs
-	# print(*err, sep='\n')
 	alphas = 0
 	return uu, f, alphas, params
 
@@ -319,7 +317,7 @@ def generate(x, D, a, b, lepolys, epsilon, equation, sd, forcing):
 		u, f, alphas, params = standard(x, D, a, b, lepolys, epsilon, equation, sd, forcing, f, params, s_diag)
 	elif equation == 'Standard2D':
 		u, f, alphas, params = standard2D(x, D, a, b, lepolys, lepolysx, epsilon, equation, sd, forcing, f, params, s_diag)
-		plot3D(u)
+		# plot3D(u)
 	elif equation == 'Burgers':
 		u, f, alphas, params = burgers(x, D, a, b, lepolys, epsilon, equation, sd, forcing, f, params, s_diag)
 	elif equation == 'BurgersT':
@@ -418,9 +416,10 @@ def loop(N, epsilon, size, lepolys, eps_flag, equation, a, b, forcing):
 x = sem.legslbndm(N+1)
 D = sem.legslbdiff(N+1, x)
 lepolys = gen_lepolys(N, x)
+# pprint(lepolys)
 if equation == 'Standard2D':
-	lepolysx = gen_lepolysx(N, x, D)
-# print(equation)
+	lepolysx = gen_lepolysx(N, x, lepolys)
+# pprint(lepolysx)
 
 data = create_fast(N, epsilon, size, eps_flag, equation, sd, forcing)
 data = np.array(data, dtype=object)

@@ -49,6 +49,7 @@ class LGDataset():
         with open(f'./data/{equation}/{kind}/' + pickle_file + '.pkl', 'rb') as f:
             self.data = pickle.load(f)
             self.data = self.data[:,:]
+        self.equation = equation
         self.transform_f = transform_f
         self.transform_a = transform_a
         self.shape = shape
@@ -58,16 +59,29 @@ class LGDataset():
         L = len(self.data[:,3][idx])
         if torch.is_tensor(idx):
             idx = idx.tolist()
-        u = torch.Tensor([self.data[:,0][idx]]).reshape(1, self.shape)
-        f = torch.Tensor([self.data[:,1][idx]]).reshape(1, self.shape)
-        a = torch.Tensor([self.data[:,2][idx]]).reshape(1, self.shape-2)
-        p = torch.Tensor([self.data[:,3][idx]]).reshape(1, L)
-        if self.transform_f:
-            ff = f.view(1, 1, self.shape)
-            ff = self.transform_f(ff).view(1, self.shape)
-            sample = {'u': u, 'f': f, 'a': a, 'p': p, 'fn': ff}
+        if self.equation == 'Standard2D':
+            u = torch.Tensor([self.data[:,0][idx]]).reshape(1, self.shape, self.shape)
+            f = torch.Tensor([self.data[:,1][idx]]).reshape(1, self.shape, self.shape)
+            a = torch.Tensor([0])
+            p = torch.Tensor([self.data[:,3][idx]]).reshape(1, L)
+            if self.transform_f:
+                # ff = f.view(1, 1, self.shape, self.shape)
+                # ff = self.transform_f(ff).view(1, self.shape)
+                ff = f
+                sample = {'u': u, 'f': f, 'a': a, 'p': p, 'fn': ff}
+            else:
+                sample = {'u': u, 'f': f, 'a': a, 'p': p}
         else:
-            sample = {'u': u, 'f': f, 'a': a, 'p': p}
+            u = torch.Tensor([self.data[:,0][idx]]).reshape(1, self.shape)
+            f = torch.Tensor([self.data[:,1][idx]]).reshape(1, self.shape)
+            a = torch.Tensor([self.data[:,2][idx]]).reshape(1, self.shape-2)
+            p = torch.Tensor([self.data[:,3][idx]]).reshape(1, L)
+            if self.transform_f:
+                ff = f.view(1, 1, self.shape)
+                ff = self.transform_f(ff).view(1, self.shape)
+                sample = {'u': u, 'f': f, 'a': a, 'p': p, 'fn': ff}
+            else:
+                sample = {'u': u, 'f': f, 'a': a, 'p': p}
         return sample
 
 
