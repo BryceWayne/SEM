@@ -323,7 +323,7 @@ class Net2D(nn.Module) : # Linear
         self.filters = filters
         self.d_out = d_out
         # self.swish = swish
-        self.swish = nn. ReLU()
+        self.swish = nn.ReLU()
         self.kern = kernel_size
         self.pad = padding
         self.conv1 = conv2d(d_in, filters, kernel_size=self.kern, padding=self.pad)
