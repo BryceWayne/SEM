@@ -13,7 +13,7 @@ from pprint import pprint
 
 parser = argparse.ArgumentParser("SEM")
 parser.add_argument("--equation", type=str, default='Standard2D', choices=['Standard', 'Standard2D', 'Burgers', 'Helmholtz', 'BurgersT'])
-parser.add_argument("--size", type=int, default=1000) # BEFORE N
+parser.add_argument("--size", type=int, default=5) # BEFORE N
 parser.add_argument("--N", type=int, default=31, choices=[int(2**i-1) for i in [4, 5, 6, 7, 8]]) 
 parser.add_argument("--eps", type=float, default=1)
 parser.add_argument("--kind", type=str, default='train', choices=['train', 'validate'])
@@ -138,46 +138,47 @@ def standard2D(x, D, a, b, lepolys, lepolysx, epsilon, equation, sd, forcing, f,
 	f_ = f_.reshape(-1)
 	
 	u = np.linalg.solve(-L, f_)
-	
+
 	x1, y1 = np.meshgrid(x, x)
 	xx, yy = np.meshgrid(x[1:-1], x[1:-1])
 	uu = np.zeros_like(x1)
-
+	
+	# uu = np.zeros((u.shape[0]+2, u.shape[0]+2))
 	uu[1:-1, 1:-1] = np.reshape(u, (x.shape[0]-2, x.shape[0]-2))
 	
-	ux = np.zeros_like(x)
-	uy = ux.copy()
-	u_x = np.zeros_like(uu)
-	u_y = u_x.copy()
-	fx = np.zeros_like(x)
+	# ux = np.zeros_like(x)
+	# uy = ux.copy()
+	# u_x = np.zeros_like(uu)
+	# u_y = u_x.copy()
+	# fx = np.zeros_like(x)
 
-	m = 3
-	size = m*m
-	lhs, rhs = size*[0], size*[0]
+	# m = 3
+	# size = m*m
+	# lhs, rhs = size*[0], size*[0]
+	# denom = (lepolys[N].T[0])**2
+	# for l in range(m):
+	# 	for j in range(m):
+	# 		phi1 = lepolys[l] - lepolys[l+2]
+	# 		phi1_x = lepolysx[l] - lepolysx[l+2]
+	# 		phi1 = phi1.T[0]
+	# 		phi1_x = phi1_x[0]
+	# 		phi2 = lepolys[j] - lepolys[j+2]
+	# 		phi2_y = lepolysx[j] - lepolysx[j+2]
+	# 		phi2 = phi2.T[0]
+	# 		phi2_y = phi2_y[0]
+	# 		for i in range(N+1):
+	# 			u_x[i, :] = D@uu[i, :]
+	# 			u_y[:, i] = D@uu[:, i]
+	# 			ux[i] = np.sum(np.diag(u_x[i, :]*(phi1_x)*2/(N*(N+1))/(denom)))
+	# 			uy[i] = np.sum(np.diag(u_y[:, i]*(phi2_y)*2/(N*(N+1))/(denom)))
+	# 			fx[i] = np.sum(np.diag(f[i, :]*(phi1)*2/(N*(N+1))/(denom)))
 
-	for l in range(m):
-		for j in range(m):
-			phi1 = lepolys[l] - lepolys[l+2]
-			phi1_x = lepolysx[l] - lepolysx[l+2]
-			phi1 = phi1.T[0]
-			phi1_x = phi1_x[0]
-			phi2 = lepolys[j] - lepolys[j+2]
-			phi2_y = lepolysx[j] - lepolysx[j+2]
-			phi2 = phi2.T[0]
-			phi2_y = phi2_y[0]
-			for i in range(N+1):
-				u_x[i, :] = D@uu[i, :]
-				u_y[:, i] = D@uu[:, i]
-				ux[i] = np.sum(np.diag(u_x[i, :]*(phi1_x)*2/(N*(N+1))/((lepolys[N].T[0])**2)))
-				uy[i] = np.sum(np.diag(u_y[:, i]*(phi2_y)*2/(N*(N+1))/((lepolys[N].T[0])**2)))
-				fx[i] = np.sum(np.diag(f[i, :]*(phi1)*2/(N*(N+1))/((lepolys[N].T[0])**2)))
+	# 		lhs[m*l+j] = np.sum(ux.T[0]*phi2*2/(N*(N+1))/(denom)) + np.sum(uy.T[0]*phi1*2/(N*(N+1))/(denom))
+	# 		rhs[m*l+j] = np.sum(fx.T[0]*phi2*2/(N*(N+1))/(denom))
 
-			lhs[m*l+j] = np.sum(ux.T[0]*phi2*2/(N*(N+1))/((lepolys[N].T[0])**2)) + np.sum(uy.T[0]*phi1*2/(N*(N+1))/((lepolys[N].T[0])**2))
-			rhs[m*l+j] = np.sum(fx.T[0]*phi2*2/(N*(N+1))/((lepolys[N].T[0])**2))
-
-	lhs = np.array(lhs)
-	rhs = np.array(rhs)
-	err = lhs - rhs
+	# lhs = np.array(lhs)
+	# rhs = np.array(rhs)
+	# err = lhs - rhs
 	alphas = 0
 	return uu, f, alphas, params
 

@@ -110,10 +110,38 @@ def basis_vectors(N, equation):
 
 
 def reconstruct(alphas, phi):
-	B, i, j = alphas.shape
-	P = torch.zeros((B, j, j+2), requires_grad=False).to(device)
-	P[:,:,:] = phi
-	T = torch.bmm(alphas,P)
+	alphas.to(device)
+	phi.to(device)
+	# 1D case
+	if len(alphas.shape) == 3:
+		# Dim alphas: (B, 1, N-1)
+		B, i, j = alphas.shape
+		P = torch.zeros((B, j, j+2), requires_grad=False).to(device)
+		# phi = (B, j, j+2)
+		P[:,:,:] = phi
+		T = torch.bmm(alphas, P)
+		# (B, 1, j) x (B, j, j+2) = (B, 1, j+2)
+	# 2D case
+	elif len(alphas.shape) == 4:
+		# Dim alphas: (B, 1, N-1, N-1)
+		# print(alphas.shape)
+		B, _, i, j = alphas.shape
+		alphas = alphas[:,0,:,:].to(device)
+		# print(alphas.shape)
+		P = torch.zeros((B, j, j+2), requires_grad=False).to(device)
+		P[:,:,:] = phi
+		# print(P.shape)
+		# print(phi.shape)
+		PT = P.permute(0, 2, 1)
+		# print(PT.shape)
+		# alphasP = alphas.permute(1, 2, 0)
+		T = torch.bmm(PT, alphas)
+		# print(T.shape)
+		# T = T.permute(2, 0, 1)
+		T = torch.bmm(T, P)
+		# print(T.shape)
+		T = T.reshape(B, 1, j+2, j+2)
+		# print(T.shape)
 	return T
 
 

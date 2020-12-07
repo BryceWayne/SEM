@@ -34,9 +34,9 @@ parser.add_argument("--equation", type=str, default='Standard2D', choices=['Stan
 parser.add_argument("--model", type=str, default='Net2D', choices=['ResNet', 'NetA', 'NetB', 'NetC', 'NetD', 'Net2D']) 
 parser.add_argument("--blocks", type=int, default=0)
 parser.add_argument("--loss", type=str, default='MSE', choices=['MAE', 'MSE', 'RMSE', 'RelMSE'])
-parser.add_argument("--file", type=str, default='1000N31', help='Example: --file 2000N31') # 2^5-1, 2^6-1
+parser.add_argument("--file", type=str, default='10000N15', help='Example: --file 2000N31') # 2^5-1, 2^6-1
 parser.add_argument("--forcing", type=str, default='normal', choices=['normal', 'uniform'])
-parser.add_argument("--epochs", type=int, default=50)
+parser.add_argument("--epochs", type=int, default=75000)
 parser.add_argument("--ks", type=int, default=5, choices=[3, 5, 7, 9, 11, 13, 15, 17])
 parser.add_argument("--filters", type=int, default=32, choices=[8, 16, 32, 64])
 parser.add_argument("--nbfuncs", type=int, default=1, choices=[1, 2, 3])
@@ -47,9 +47,11 @@ parser.add_argument("--WF", type=float, default=0)
 parser.add_argument("--sd", type=float, default=1)
 parser.add_argument("--pretrained", type=str, default=None)
 
+
 args = parser.parse_args()
 gparams = args.__dict__
 pprint(gparams)
+
 
 EQUATION = args.equation
 epsilons = {
@@ -82,10 +84,12 @@ KERNEL_SIZE = int(gparams['ks'])
 PADDING = (KERNEL_SIZE - 1)//2
 cur_time = str(datetime.datetime.now()).replace(' ', 'T')
 cur_time = cur_time.replace(':','').split('.')[0].replace('-','')
-FOLDER = f'{gparams["model"]}_epochs{EPOCHS}_{cur_time}'
+FOLDER = f'{gparams["model"]}_{args.forcing}_epochs{EPOCHS}_{cur_time}'
 PATH = os.path.join('training', f"{EQUATION}", FILE, FOLDER)
 gparams['path'] = PATH
-BATCH_SIZE, D_in, Filters, D_out = DATASET, 1, FILTERS, SHAPE
+D_in = 1
+
+BATCH_SIZE, Filters, D_out = DATASET, FILTERS, SHAPE
 # LOSS SCALE FACTORS
 A, U, F, WF = int(gparams['A']), int(gparams['U']), int(gparams['F']), int(gparams['WF'])
 
@@ -179,6 +183,34 @@ losses = {
 
 log_gparams(gparams)
 
+
+def closure(a, f, u, fn=0):
+	model.train()
+	if torch.is_grad_enabled():
+		optimizer.zero_grad()
+	a_pred = model(fn)
+	loss_a = 0
+	u_pred = reconstruct(a_pred, phi)
+	# print('\n', u_pred.shape, u.shape)
+	loss_u = U*criterion_u(u_pred, u)
+	f_pred, loss_f = None, 0
+	if WF != 0:
+		LHS, RHS = weak_form2(EPSILON, SHAPE, f, u_pred, a_pred, lepolys, phi, phi_x, equation=EQUATION, nbfuncs=NBFUNCS)
+		if NBFUNCS == 1:
+			loss_wf1, loss_wf2, loss_wf3 = WF*criterion_wf(LHS, RHS), 0, 0
+		elif NBFUNCS == 2:
+			loss_wf1, loss_wf2, loss_wf3 = WF*criterion_wf(LHS[:,0,0], RHS[:,0,0]), WF*criterion_wf(LHS[:,1,0], RHS[:,1,0]), 0
+		elif NBFUNCS == 3:
+			loss_wf1, loss_wf2, loss_wf3 = WF*criterion_wf(LHS[:,0,0], RHS[:,0,0]), WF*criterion_wf(LHS[:,1,0], RHS[:,1,0]), WF*criterion_wf(LHS[:,2,0], RHS[:,2,0])
+	else:
+		loss_wf1, loss_wf2, loss_wf3 = 0, 0, 0
+	# NET LOSS
+	loss = loss_a + loss_u + loss_f + loss_wf1 + loss_wf2 + loss_wf3
+	if loss.requires_grad:
+		loss.backward()
+	return a_pred, u_pred, f_pred, loss_a, loss_u, loss_f, loss_wf1, loss_wf2, loss_wf3, loss
+
+
 ################################################
 time0 = time.time()
 for epoch in tqdm(range(1, EPOCHS+1)):
@@ -191,29 +223,6 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			fn = sample_batch['fn'].to(device)
 		a = sample_batch['a'].to(device)
 		u = sample_batch['u'].to(device)
-		def closure(a, f, u, fn=fn):
-			if torch.is_grad_enabled():
-				optimizer.zero_grad()
-			a_pred = model(fn)
-			loss_a = 0
-			u_pred = reconstruct(a_pred, phi)
-			loss_u = U*criterion_u(u_pred, u)
-			f_pred, loss_f = None, 0
-			LHS, RHS = weak_form2(EPSILON, SHAPE, f, u_pred, a_pred, lepolys, phi, phi_x, equation=EQUATION, nbfuncs=NBFUNCS)
-			if NBFUNCS == 1:
-				loss_wf1, loss_wf2, loss_wf3 = WF*criterion_wf(LHS, RHS), 0, 0
-			elif NBFUNCS == 2:
-				loss_wf1, loss_wf2, loss_wf3 = WF*criterion_wf(LHS[:,0,0], RHS[:,0,0]), WF*criterion_wf(LHS[:,1,0], RHS[:,1,0]), 0
-			elif NBFUNCS == 3:
-				loss_wf1, loss_wf2, loss_wf3 = WF*criterion_wf(LHS[:,0,0], RHS[:,0,0]), WF*criterion_wf(LHS[:,1,0], RHS[:,1,0]), WF*criterion_wf(LHS[:,2,0], RHS[:,2,0])
-			else:
-				loss_wf1, loss_wf2, loss_wf3 = 0, 0, 0
-			# NET LOSS
-			loss = loss_a + loss_u + loss_f + loss_wf1 + loss_wf2 + loss_wf3
-			if loss.requires_grad:
-				loss.backward()
-			return a_pred, u_pred, f_pred, loss_a, loss_u, loss_f, loss_wf1, loss_wf2, loss_wf3, loss
-
 		a_pred, u_pred, f_pred, loss_a, loss_u, loss_f, loss_wf1, loss_wf2, loss_wf3, loss = closure(a, f, u, fn)
 		optimizer.step(loss.item)
 		if loss_u != 0:
@@ -245,12 +254,13 @@ for epoch in tqdm(range(1, EPOCHS+1)):
 			print('Model diverged! Model & Optimizer reinitialized')
 		finally:
 			raise Exception("Model diverged! Unable to load a previous state.")
+			exit()
 	else:
 		if loss_train/DATASET < BEST_LOSS:
 			torch.save(model.state_dict(), PATH + '/model.pt')
 			BEST_LOSS = loss_train/DATASET
 			gparams['best_loss'] = BEST_LOSS
-
+		
 		avg_l2_u, loss_validate = validate(gparams, model, optimizer, criterion, lepolys, phi, phi_x, phi_xx, validateloader)
 		losses = log_loss(losses, loss_a, loss_u, loss_f, loss_wf1, loss_wf2, loss_wf3, loss_train, loss_validate, BATCH_SIZE, avg_l2_u)
 
@@ -280,9 +290,6 @@ log_path(PATH)
 
 loss_plot(gparams)
 values = model_stats(PATH, kind='validate', gparams=gparams)
-for k, v in values.items():
-	gparams[k] = np.mean(v)
-
 log_gparams(gparams)
 
 # EVERYONE APRECIATES A CLEAN WORKSPACE

@@ -51,25 +51,11 @@ def validate(gparams, model, optim, criterion, lepolys, phi, phi_x, phi_xx, vali
 			if torch.is_grad_enabled():
 				optim.zero_grad()
 			a_pred = model(fn)
-			# u_pred = model(fn)
-			if A != 0:
-				loss_a = A*criterion_a(a_pred, a)
-			else:
-				# a_pred = torch.zeros(BATCH_SIZE, D_in, D_out - 2).to(device)
-				loss_a = 0
-			if U != 0:
-				u_pred = reconstruct(a_pred, phi)
-				loss_u = U*criterion_u(u_pred, u)
-			else:
-				u_pred, loss_u = None, 0
-			if F != 0:
-				f_pred = ODE2(EPSILON, u_pred, a_pred, phi_x, phi_xx, equation=EQUATION)
-				loss_f = F*criterion_f(f_pred, f)
-			else:
-				f_pred, loss_f = None, 0
-			if WF != 0 and EQUATION != 'BurgersT':
-				# LHS, RHS = weak_form2(EPSILON, SHAPE, f, u_pred, a_pred, lepolys, phi, phi_x, equation=EQUATION, nbfuncs=NBFUNCS)
-				# loss_wf = WF*criterion_wf(LHS, RHS)
+			loss_a = 0
+			u_pred = reconstruct(a_pred, phi)
+			loss_u = U*criterion_u(u_pred, u)
+			f_pred, loss_f = None, 0
+			if WF != 0:
 				LHS, RHS = weak_form2(EPSILON, SHAPE, f, u_pred, a_pred, lepolys, phi, phi_x, equation=EQUATION, nbfuncs=NBFUNCS)
 				if NBFUNCS == 1:
 					loss_wf1, loss_wf2, loss_wf3 = WF*criterion_wf(LHS, RHS), 0, 0
@@ -77,20 +63,20 @@ def validate(gparams, model, optim, criterion, lepolys, phi, phi_x, phi_xx, vali
 					loss_wf1, loss_wf2, loss_wf3 = WF*criterion_wf(LHS[:,0,0], RHS[:,0,0]), WF*criterion_wf(LHS[:,1,0], RHS[:,1,0]), 0
 				elif NBFUNCS == 3:
 					loss_wf1, loss_wf2, loss_wf3 = WF*criterion_wf(LHS[:,0,0], RHS[:,0,0]), WF*criterion_wf(LHS[:,1,0], RHS[:,1,0]), WF*criterion_wf(LHS[:,2,0], RHS[:,2,0])
-				else:
-					loss_wf1, loss_wf2, loss_wf3 = 0, 0, 0
+			else:
+				loss_wf1, loss_wf2, loss_wf3 = 0, 0, 0
 			loss = loss_a + loss_u + loss_f + loss_wf1 + loss_wf2 + loss_wf3
-
-			# a_pred = a_pred.to('cpu').detach().numpy()
-			# f_pred = f_pred.to('cpu').detach().numpy()
 			u_pred = u_pred.to('cpu').detach().numpy()
-			# a = a.to('cpu').detach().numpy()
 			u = u.to('cpu').detach().numpy()
 			avg_l2_u = 0
 			for i in range(BATCH_SIZE):
-				avg_l2_u += relative_l2(u_pred[i,0,:], u[i,0,:])
+				if len(u_pred) == 3:
+					avg_l2_u += relative_l2(u_pred[i,0,:], u[i,0,:])
+				else:
+					# print(i, avg_l2_u)
+					# avg_l2_u += relative_l2(u_pred[i,0,:,:], u[i,0,:,:])
+					avg_l2_u = 0
 			avg_l2_u /= BATCH_SIZE
-			# print(avg_l2_u)
 			return avg_l2_u, np.round(float(loss.item()), 12)
 		avg_l2_u, loss = closure(f, a, u, fn)
 	optim.zero_grad()

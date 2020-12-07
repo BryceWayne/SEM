@@ -8,6 +8,9 @@ import numpy as np
 import pandas as pd
 import matplotlib
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D  # noqa: F401 unused import
+from matplotlib import cm
+from matplotlib.ticker import LinearLocator, FormatStrFormatter
 from sem.sem import *
 from reconstruct import *
 
@@ -129,6 +132,71 @@ def plotter(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=5, path
 	# 	plt.legend(shadow=True)
 	# 	plt.savefig(f'{path}/pics/epoch{str(epoch).zfill(5)}_f_pwe.png', bbox_inches='tight')
 	# 	plt.close(3)
+
+
+def plotter2D(xx, sample, epoch, a=None, u=None, f=None, title='alpha', ks=5, path='.'):
+	matplotlib.rcParams['savefig.dpi'] = 300
+	# matplotlib.rcParams['font.size'] = 14
+	red, blue, green, purple = color_scheme()
+	TEST  = {'color':red, 'marker':'o', 'linestyle':'none', 'markersize': 3}
+	VAL = {'color':blue, 'marker':'o', 'linestyle':'solid', 'mfc':'none'}
+	uu = sample['u'][0,0,:,:].to('cpu').detach().numpy()
+	X, Y = np.meshgrid(xx, xx)
+	uhat = u[0,0,:,:].to('cpu').detach().numpy()
+	mae_error_u = mae(uhat, uu)
+	l2_error_u = relative_l2(uhat, uu)
+	linf_error_u = linf(uhat, uu)
+	fig = plt.figure(figsize=plt.figaspect(0.5))
+	plt.suptitle(f'Model: {title},$\\quad u$ Example Epoch {epoch}\n'\
+		      f'MAE Error: {np.round(float(mae_error_u), 7)},\t'\
+		      f'Rel. $L^2$ Error: {np.round(float(l2_error_u), 7)},\t'\
+		      f'$L^\\infty$ Error: {np.round(float(linf_error_u), 7)}'\
+		      )
+	ax = fig.add_subplot(1, 2, 1, projection='3d')
+	surf = ax.plot_surface(X, Y, uhat, cmap=cm.coolwarm,
+	                       linewidth=0, antialiased=False)
+	plt.xlim(-1,1)
+	plt.ylim(-1,1)
+	plt.grid(alpha=0.618)
+	plt.xlabel('$x$')
+	plt.ylabel('$y$')
+	# ax.set_zlim(-1, 1)
+	ax.set_zlabel('$u(x,y)$')
+	plt.title("$\\hat{u}$")
+	ax = fig.add_subplot(1, 2, 2, projection='3d')
+	surf = ax.plot_surface(X, Y, uu, cmap=cm.coolwarm,
+	                       linewidth=0, antialiased=False)
+	plt.xlim(-1,1)
+	plt.ylim(-1,1)
+	plt.grid(alpha=0.618)
+	plt.xlabel('$x$')
+	plt.ylabel('$y$')
+	ax.set_zlabel('$u(x,y)$')
+	plt.title("$u$")
+	plt.tight_layout()
+	plt.savefig(f'{path}/pics/epoch{str(epoch).zfill(5)}_u.png', bbox_inches='tight')
+	# plt.show()
+	plt.close()
+
+	# fig = plt.figure(figsize=plt.figaspect(0.5))
+	# plt.suptitle(f'Model: {title},$\\quad u$ Example Epoch {epoch}\n' \
+	# 	      f'MAE Error: {np.round(float(mae_error_u), 7)}' \
+	# 	      )
+	# ax = fig.add_subplot(1, 1, 1, projection='3d')
+	# surf = ax.plot_surface(X, Y, uhat-uu, cmap=cm.coolwarm,
+	#                        linewidth=0, antialiased=False)
+	# plt.xlim(-1,1)
+	# plt.ylim(-1,1)
+	# plt.grid(alpha=0.618)
+	# plt.xlabel('$x$')
+	# plt.ylabel('$y$')
+	# # ax.set_zlim(-1, 1)
+	# ax.set_zlabel('$u(x,y)$')
+	# plt.title("Diff")
+	# plt.tight_layout()
+	# plt.savefig(f'{path}/pics/epoch{str(epoch).zfill(5)}_u_pwe.png', bbox_inches='tight')
+	# # plt.show()
+	# plt.close()
 
 
 def loss_plot(gparams):
@@ -370,4 +438,7 @@ def periodic_report(model, batch, equation, epsilon, shape, epoch, xx, phi_x, ph
 		f_pred = None
 	elif equation in ('Standard', 'Helmholtz'):
 		f_pred = ODE2(epsilon, u_pred, a_pred, phi_x, phi_xx, equation=equation)
-	plotter(xx, batch, epoch, a=a_pred, u=u_pred, f=f_pred, title=model, ks=ks, path=path)
+	if equation == 'Standard2D':
+		plotter2D(xx, batch, epoch, a=a_pred, u=u_pred, f=f_pred, title=model, ks=ks, path=path)
+	else:
+		plotter(xx, batch, epoch, a=a_pred, u=u_pred, f=f_pred, title=model, ks=ks, path=path)
