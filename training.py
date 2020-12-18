@@ -52,6 +52,8 @@ args = parser.parse_args()
 gparams = args.__dict__
 pprint(gparams)
 
+if args.equation == 'Standard2D' and args.model != 'Net2D':
+	raise Exception "Incorrect model for a 2D equation."
 
 EQUATION = args.equation
 epsilons = {
