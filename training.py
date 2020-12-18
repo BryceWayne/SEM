@@ -107,7 +107,7 @@ elif os.path.isdir(PATH) == True:
 # CREATE BASIS VECTORS
 xx, lepolys, lepoly_x, lepoly_xx, phi, phi_x, phi_xx = basis_vectors(D_out, equation=EQUATION)
 
-if args.model != 'ResNet' and args.model != 'Net2D':
+if args.model != 'ResNet' and args.model != 'Net2D' and args.model != 'Standard2D':
 	# NORMALIZE DATASET
 	NORM = True
 	gparams['norm'] = True

@@ -283,7 +283,6 @@ class FC(nn.Module):
         return out
 
 
-
 # class Net2D(nn.Module) :
 #     def __init__(self, d_in, filters, d_out, kernel_size=7, padding=3, blocks=0) :
 #         super(Net2D, self).__init__()

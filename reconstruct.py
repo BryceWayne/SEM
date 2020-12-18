@@ -266,15 +266,13 @@ def weak_form2(eps, N, f, u, alphas, lepolys, phi, phi_x, equation, nbfuncs, ind
 		phi = torch.transpose(phi, 0, 1)
 		denom = torch.square(torch.from_numpy(lepolys[N]).to(device).float())
 		denom = torch.transpose(denom, 0, 1)
-		diffusion = 6*eps*alphas[:,:,0]
+		diffusion = 6*eps*alphas[:,:,:,0]
 		if equation == 'Standard2D':
 			u_x = reconstruct(alphas, phi_x)
 			ux_phi = u_x*phi[:,0]
 			convection = torch.sum(ux_phi*2/(N*(N+1))/denom, axis=2)
 			LHS[:,0] = diffusion - convection
 			RHS[:,0] = torch.sum(2*f*phi[:,0]/(N*(N+1))/denom, axis=2)
-			# LHS = diffusion - convection
-			# RHS = torch.sum(2*f*phi[:,0]/(N*(N+1))/denom, axis=2)
 			if nbfuncs > 1:
 				for i in range(1, nbfuncs):
 					diffusion = -eps*(4*i+6)*(-1)*alphas[:,:,i]
@@ -282,6 +280,4 @@ def weak_form2(eps, N, f, u, alphas, lepolys, phi, phi_x, equation, nbfuncs, ind
 					convection = torch.sum(ux_phi*2/(N*(N+1))/denom, axis=2)
 					LHS[:,i] = diffusion - convection
 					RHS[:,i] = torch.sum(2*f*phi[:,i]/(N*(N+1))/denom, axis=2)
-					# LHS += diffusion - convection
-					# RHS += torch.sum(2*f*phi[:,i]/(N*(N+1))/denom, axis=2)			
 	return LHS, RHS
