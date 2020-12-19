@@ -36,7 +36,7 @@ parser.add_argument("--blocks", type=int, default=0)
 parser.add_argument("--loss", type=str, default='MSE', choices=['MAE', 'MSE', 'RMSE', 'RelMSE'])
 parser.add_argument("--file", type=str, default='10000N15', help='Example: --file 2000N31') # 2^5-1, 2^6-1
 parser.add_argument("--forcing", type=str, default='normal', choices=['normal', 'uniform'])
-parser.add_argument("--epochs", type=int, default=75000)
+parser.add_argument("--epochs", type=int, default=50000)
 parser.add_argument("--ks", type=int, default=5, choices=[3, 5, 7, 9, 11, 13, 15, 17])
 parser.add_argument("--filters", type=int, default=32, choices=[8, 16, 32, 64])
 parser.add_argument("--nbfuncs", type=int, default=1, choices=[1, 2, 3])
@@ -53,7 +53,7 @@ gparams = args.__dict__
 pprint(gparams)
 
 if args.equation == 'Standard2D' and args.model != 'Net2D':
-	raise Exception "Incorrect model for a 2D equation."
+	raise Exception("Incorrect model for a 2D equation.")
 
 EQUATION = args.equation
 epsilons = {
@@ -193,7 +193,6 @@ def closure(a, f, u, fn=0):
 	a_pred = model(fn)
 	loss_a = 0
 	u_pred = reconstruct(a_pred, phi)
-	# print('\n', u_pred.shape, u.shape)
 	loss_u = U*criterion_u(u_pred, u)
 	f_pred, loss_f = None, 0
 	if WF != 0:
@@ -211,7 +210,6 @@ def closure(a, f, u, fn=0):
 	if loss.requires_grad:
 		loss.backward()
 	return a_pred, u_pred, f_pred, loss_a, loss_u, loss_f, loss_wf1, loss_wf2, loss_wf3, loss
-
 
 ################################################
 time0 = time.time()

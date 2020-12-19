@@ -326,7 +326,7 @@ class Net2D(nn.Module) : # Linear
         self.kern = kernel_size
         self.pad = padding
         self.conv1 = conv2d(d_in, filters, kernel_size=self.kern, padding=self.pad)
-        self.fcH = nn.Linear(8192, self.d_out**2, bias=True)
+        self.fcH = nn.Linear(8192, self.d_out*self.d_out, bias=True)
 
     def forward(self, x):
         out = self.conv1(x)

@@ -53,6 +53,16 @@ def validate(gparams, model, optim, criterion, lepolys, phi, phi_x, phi_xx, vali
 			a_pred = model(fn)
 			loss_a = 0
 			u_pred = reconstruct(a_pred, phi)
+			# if u_pred.shape[1] == 2: # B, 2, N+1
+			# 	T1 = u_pred[:,0:1,:].permute(0,2,1)
+			# 	T1 = T1.reshape(BATCH_SIZE, SHAPE, 1)
+			# 	T2 = u_pred[:,1:2,:]
+			# 	T2 = T2.reshape(BATCH_SIZE, 1, SHAPE)
+			# 	uu = torch.bmm(T1, T2)
+			# 	uu = uu.reshape(BATCH_SIZE, 1,  SHAPE, SHAPE)
+			# 	u = u.reshape(BATCH_SIZE, 1,  SHAPE, SHAPE)
+			# else:
+			# 	uu = None
 			loss_u = U*criterion_u(u_pred, u)
 			f_pred, loss_f = None, 0
 			if WF != 0:

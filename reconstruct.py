@@ -121,6 +121,7 @@ def reconstruct(alphas, phi):
 		T = torch.bmm(alphas, P)
 	# 2D case
 	elif len(alphas.shape) == 4:
+		# """
 		# Dim alphas: (B, 1, N-1, N-1)
 		B, _, i, j = alphas.shape
 		alphas = alphas[:,0,:,:].to(device)
@@ -130,6 +131,11 @@ def reconstruct(alphas, phi):
 		T = torch.bmm(PT, alphas)
 		T = torch.bmm(T, P)
 		T = T.reshape(B, 1, j+2, j+2)
+		# """
+		# T = torch.zeros((B, 2, j+2), requires_grad=False).to(device)
+		# alphas_x , alphas_y= alphas[:,0:1,:], alphas[:,1:2,:]
+		# T[:, 0:1, :] = torch.bmm(alphas_x,P) # B, 1, N basis1
+		# T[:, 1:2, :] = torch.bmm(alphas_y,P) # B, 1, N basis2
 	return T
 
 
