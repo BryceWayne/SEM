@@ -5,7 +5,6 @@ import time
 import datetime
 import subprocess
 import os
-import LG_1d
 import argparse
 import gc
 import torch.nn as nn
